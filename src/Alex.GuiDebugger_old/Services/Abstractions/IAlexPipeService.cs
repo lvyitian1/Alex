@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using Alex.GuiDebugger.Common.Services;
-using EasyPipes;
 
 namespace Alex.GuiDebugger.Services
 {

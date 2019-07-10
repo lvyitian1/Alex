@@ -72,9 +72,9 @@ namespace Alex.GuiDebugger.Services
         public override async Task InitializeAfterCreatingShellAsync()
         {
 
-            Log.Info("Delay to show the splash screen");
+            //Log.Info("Delay to show the splash screen");
 
-            Thread.Sleep(2500);
+            //Thread.Sleep(2500);
         }
 
         private async Task InitializePerformanceAsync()

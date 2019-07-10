@@ -18,34 +18,64 @@
 				<ColumnDefinition Width="*" SharedSizeGroup="NameCol" />
 				<ColumnDefinition Width="5" SharedSizeGroup="PaddingCol2" />
 				<ColumnDefinition Width="2*" SharedSizeGroup="ValueCol" />
+				<ColumnDefinition Width="2*" SharedSizeGroup="ValueTypeCol" />
 			</Grid.ColumnDefinitions>
 		</Grid>
 
 		<TreeView ItemsSource="{Binding Properties, Mode=OneWay}">
 			<TreeView.Resources>
 				<ResourceDictionary>
-					<DataTemplate DataType="{x:Type models:GuiDebuggerElementPropertyInfo}">
-						<Grid>
+					<HierarchicalDataTemplate DataType="{x:Type models:GuiDebuggerElementPropertyInfo}">
+						<Grid Background="Transparent" IsHitTestVisible="True">
 							<Grid.ColumnDefinitions>
 								<ColumnDefinition SharedSizeGroup="PaddingCol" />
 								<ColumnDefinition SharedSizeGroup="NameCol" />
 								<ColumnDefinition SharedSizeGroup="PaddingCol2" />
 								<ColumnDefinition SharedSizeGroup="ValueCol" />
+								<ColumnDefinition SharedSizeGroup="ValueTypeCol" />
 							</Grid.ColumnDefinitions>
 
-							<TextBlock Grid.Column="1" Text="{Binding Name}" />
+							<TextBlock
+								Grid.Column="1"
+								Margin="0"
+								Text="{Binding Name}" />
 
 							<ContentPresenter
 								Grid.Column="3"
-								Content="{Binding Path=Value}"
+								Margin="0"
+								Content="{Binding Path=Value, Mode=OneWay}"
 								Style="{DynamicResource GuiElementPropertyEditor}" />
 
-							<!--<TextBox Grid.Column="3" Text="{Binding StringValue}" />-->
+							<TextBox
+								Grid.Column="4"
+								Margin="0"
+								Text="{Binding ValueType.FullName, Mode=OneWay}" />
 
 						</Grid>
-					</DataTemplate>
+					</HierarchicalDataTemplate>
 				</ResourceDictionary>
 			</TreeView.Resources>
+			<TreeView.Template>
+				<ControlTemplate TargetType="TreeView">
+					<Border
+						Name="Border"
+						BorderThickness="0"
+						CornerRadius="1">
+						<ScrollViewer
+							Padding="4"
+							CanContentScroll="True"
+							Focusable="False">
+							<ItemsPresenter />
+						</ScrollViewer>
+					</Border>
+				</ControlTemplate>
+			</TreeView.Template>
+			<TreeView.ItemContainerStyle>
+				<Style TargetType="{x:Type TreeViewItem}">
+					<Setter Property="Margin" Value="0" />
+					<Setter Property="Padding" Value="0" />
+				</Style>
+			</TreeView.ItemContainerStyle>
 		</TreeView>
 
 	</Grid>

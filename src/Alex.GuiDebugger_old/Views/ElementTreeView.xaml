@@ -19,14 +19,21 @@
 			SelectedItemChanged="OnTreeViewSelectedItemChanged">
 			<TreeView.Resources>
 				<HierarchicalDataTemplate DataType="{x:Type models:GuiDebuggerElementInfo}" ItemsSource="{Binding ChildElements}">
-					<StackPanel Orientation="Horizontal">
-						<TextBlock Text="{Binding ElementType}" />
-						<TextBlock Foreground="Blue" Text=" [" />
-						<TextBlock Foreground="Blue" Text="{Binding ChildElements.Count}" />
-						<TextBlock Foreground="Blue" Text="]" />
-					</StackPanel>
+					<Grid Background="Transparent" IsHitTestVisible="True">
+						<StackPanel Orientation="Horizontal">
+							<TextBlock Text="{Binding ElementType}" />
+							<TextBlock Foreground="Blue" Text=" [" />
+							<TextBlock Foreground="Blue" Text="{Binding ChildElements.Count}" />
+							<TextBlock Foreground="Blue" Text="]" />
+						</StackPanel>
+					</Grid>
 				</HierarchicalDataTemplate>
 			</TreeView.Resources>
+			<TreeView.ItemContainerStyle>
+				<Style TargetType="{x:Type TreeViewItem}">
+					<Setter Property="HorizontalAlignment" Value="Stretch" />
+				</Style>
+			</TreeView.ItemContainerStyle>
 		</TreeView>
 	</Grid>
 </catel:UserControl>

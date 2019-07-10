@@ -15,7 +15,6 @@ using Alex.GuiDebugger.Fonts;
 using Catel.IoC;
 using Catel.Logging;
 using Catel.Services;
-using EasyPipes;
 using Fluent;
 using Orchestra.Markup;
 using Orchestra.Services;

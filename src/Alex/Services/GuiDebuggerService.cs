@@ -136,7 +136,7 @@ namespace Alex.Services
 			info.ChildElements = guiElement.ChildElements.ToArray().Select(BuildGuiElementInfo).ToArray();
 			return info;
 		}
-
+		
 		private GuiElementPropertyInfo[] BuildGuiElementPropertyInfos(IGuiElement guiElement)
 		{
 			var properties = guiElement.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
@@ -172,11 +172,11 @@ namespace Alex.Services
 				var propType = prop.PropertyType;
 
 
-				if (propType.Assembly != typeof(IGuiDebuggerService).Assembly)
-				{
-					propType = typeof(string);
-					val = val?.ToString();
-				}
+				//if (propType.Assembly != typeof(IGuiDebuggerService).Assembly)
+				//{
+				//	propType = typeof(string);
+				//	val = val?.ToString();
+				//}
 
 				infos.Add(new GuiElementPropertyInfo()
 				{

@@ -5,7 +5,6 @@ using System.Text;
 using Alex.GuiDebugger.Common;
 using Alex.GuiDebugger.Common.Services;
 using Catel.IoC;
-using EasyPipes;
 using JKang.IpcServiceFramework;
 
 namespace Alex.GuiDebugger.Services

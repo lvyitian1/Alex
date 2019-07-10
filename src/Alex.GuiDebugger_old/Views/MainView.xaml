@@ -14,7 +14,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
@@ -25,21 +25,17 @@
 
         <HeaderedContentControl
             Grid.Row="0"
-            Grid.RowSpan="3"
             Grid.Column="0"
-            HorizontalContentAlignment="Stretch"
-            VerticalContentAlignment="Stretch"
-            Header="Element Tree">
+            Header="Element Tree"
+            Style="{DynamicResource ToolPanel}">
             <views:ElementTreeView />
         </HeaderedContentControl>
 
         <HeaderedContentControl
             Grid.Row="0"
-            Grid.RowSpan="3"
             Grid.Column="2"
-            HorizontalContentAlignment="Stretch"
-            VerticalContentAlignment="Stretch"
-            Header="Element Inspector">
+            Header="Element Inspector"
+            Style="{DynamicResource ToolPanel}">
             <views:ElementInspectorView />
         </HeaderedContentControl>
 

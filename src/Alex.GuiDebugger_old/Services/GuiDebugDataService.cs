@@ -65,6 +65,7 @@ namespace Alex.GuiDebugger.Services
 					elementInfo.Properties.Add(elementProp);
 				}
 
+				elementProp.ValueType = property.Type;
 				elementProp.Value = property.Value;
 			}
 

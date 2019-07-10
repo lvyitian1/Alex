@@ -28,7 +28,6 @@
     <PackageReference Include="Catel.Core" Version="5.10.0" />
     <PackageReference Include="Catel.MVVM" Version="5.10.0" />
     <PackageReference Include="Catel.Fody" Version="3.9.0" />
-    <PackageReference Include="EasyPipes" Version="1.1.0" />
     <PackageReference Include="Fluent.Ribbon" Version="6.1.0.326" />
     <PackageReference Include="Fody" Version="4.2.1">
       <PrivateAssets>all</PrivateAssets>
@@ -46,6 +45,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="MonoGame.Framework.DesktopGL.Core" Version="3.7.0.7" />
   </ItemGroup>
 
   <ItemGroup>
@@ -70,6 +70,7 @@
 
   <ItemGroup>
     <None Remove="Views\ElementInspectorView.xaml" />
+    <None Remove="Views\GpuResourceView.xaml" />
   </ItemGroup>
 
 </Project>
