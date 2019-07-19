@@ -33,6 +33,7 @@ namespace Alex.GuiDebugger.Services
 		public AlexGuiDebuggerInteraction()
 		{
 			_ipcServiceClient = new IpcServiceClientBuilder<IGuiDebuggerService>()
+								.WithIpcMessageSerializer(new GuiDebuggerIpcMessageSerializer())
 				.UseNamedPipe(GuiDebuggerConstants.NamedPipeName)
 				.UseTcp(IPAddress.Loopback, GuiDebuggerConstants.TcpEndpointPort)
 				.Build();
@@ -72,7 +73,7 @@ namespace Alex.GuiDebugger.Services
 
 		private ElementTreeItemProperty ConvertItem(Guid elementId, GuiElementPropertyInfo guiElementPropertyInfo)
 		{
-			return new ElementTreeItemProperty(elementId, guiElementPropertyInfo.Name, guiElementPropertyInfo.Type,
+			return new ElementTreeItemProperty(elementId, guiElementPropertyInfo.Name, guiElementPropertyInfo.Type, guiElementPropertyInfo.Category,
 											   guiElementPropertyInfo.Value);
 		}
 	}

@@ -18,6 +18,7 @@ namespace Alex.GuiDebugger.Services
         public AlexPipeService()
         {
             _ipcServiceClient = new IpcServiceClientBuilder<IGuiDebuggerService>()
+                                .WithIpcMessageSerializer(new GuiDebuggerIpcMessageSerializer())
                                 .UseNamedPipe(GuiDebuggerConstants.NamedPipeName)
                                 .UseTcp(IPAddress.Loopback, GuiDebuggerConstants.TcpEndpointPort)
                                 .Build();

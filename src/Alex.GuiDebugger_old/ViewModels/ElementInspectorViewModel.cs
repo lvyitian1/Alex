@@ -18,7 +18,8 @@ namespace Alex.GuiDebugger.ViewModels
 
         [Model]
         [Expose(nameof(GuiDebuggerElementInfo.Properties))]
-        public GuiDebuggerElementInfo ElementInfo { get; private set; }
+        [Expose(nameof(GuiDebuggerElementInfo.PropertyGroups))]
+        public GuiDebuggerElementInfo ElementInfo { get; protected set; }
 
 
         /// <summary>
@@ -33,6 +34,11 @@ namespace Alex.GuiDebugger.ViewModels
             Title = "Element Inspector";
 
             ElementInfo = _guiDebuggerElementInfoSelectionManager.GetSelectedItem();
+        }
+
+        protected ElementInspectorViewModel()
+        {
+            Title = "Element Inspector";
         }
 
         private void GuiDebuggerElementInfoSelectionManagerOnSelectionChanged(object sender, SelectionChangedEventArgs<GuiDebuggerElementInfo> e)

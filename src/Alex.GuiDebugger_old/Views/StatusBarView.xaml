@@ -10,13 +10,19 @@
 	d:DesignWidth="600"
 	mc:Ignorable="d">
 
-	<Grid HorizontalAlignment="Right">
+	<Grid>
 		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="Auto" />
 			<ColumnDefinition Width="*" />
+			<ColumnDefinition Width="Auto" />
 		</Grid.ColumnDefinitions>
-
+		<StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+			<Label Content="Updating search index..." Visibility="{Binding IsUpdatingSearch, Converter={catel:BooleanToCollapsingVisibilityConverter}}" />
+			<Label Content="Searching..." Visibility="{Binding IsSearching, Converter={catel:BooleanToCollapsingVisibilityConverter}}" />
+		</StackPanel>
 		<StackPanel
 			x:Name="stackPanel"
+			Grid.Column="2"
 			HorizontalAlignment="Right"
 			Orientation="Horizontal">
 

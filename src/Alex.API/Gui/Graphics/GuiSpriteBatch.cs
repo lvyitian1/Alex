@@ -78,7 +78,7 @@ namespace Alex.API.Gui.Graphics
         {
             if (_hasBegun) return;
 			
-            SpriteBatch.Begin(SpriteSortMode.Deferred, Context.BlendState, Context.SamplerState, Context.DepthStencilState, RasterizerState, null, ScaledResolution.TransformMatrix * _renderMatrix);
+            SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, Context.SamplerState, Context.DepthStencilState, RasterizerState, null, ScaledResolution.TransformMatrix * _renderMatrix);
         
             _hasBegun = true;
 

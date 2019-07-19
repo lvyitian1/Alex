@@ -8,6 +8,8 @@ namespace RocketUI
 
         public bool Visible { get; set; } = true;
 
+        public string Category { get; set; } = string.Empty;
+
         public DebuggerVisibleAttribute()
         {
 

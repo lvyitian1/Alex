@@ -131,7 +131,7 @@ namespace Alex.Services
 
 		private GuiElementInfo BuildGuiElementInfo(IGuiElement guiElement)
 		{
-			var info = new GuiElementInfo(guiElement.Id, guiElement.GetType().Name);
+			var info = new GuiElementInfo(guiElement.Id, guiElement.GetType().Name, guiElement.Name);
 
 			info.ChildElements = guiElement.ChildElements.ToArray().Select(BuildGuiElementInfo).ToArray();
 			return info;
@@ -181,7 +181,8 @@ namespace Alex.Services
 				infos.Add(new GuiElementPropertyInfo()
 				{
 					Name        = prop.Name,
-					Type        = propType,
+					Type        = propType?.FullName,
+					Category = attr.Category,
 					Value       = val,
 					StringValue = val?.ToString()
 				});

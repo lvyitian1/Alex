@@ -10,6 +10,7 @@ namespace Alex.API.Gui
     public interface IGuiElement
     {
         [DebuggerVisible] Guid Id { get; }
+        [DebuggerVisible] string Name { get; }
 
         IGuiScreen Screen { get; }
         IGuiElement ParentElement { get; set; }

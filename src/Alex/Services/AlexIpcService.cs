@@ -4,6 +4,7 @@ using Alex.GuiDebugger.Common;
 using Alex.GuiDebugger.Common.Services;
 using JKang.IpcServiceFramework;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Alex.Services
 {
@@ -45,6 +46,8 @@ namespace Alex.Services
 				x.AddNamedPipe(options => { options.ThreadCount = 2; })
 				 .AddService<IGuiDebuggerService, GuiDebuggerService>();
 			});
+
+			services.Replace(ServiceDescriptor.Scoped<IIpcMessageSerializer, GuiDebuggerIpcMessageSerializer>());
 
 			return services;
 		}

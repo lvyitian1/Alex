@@ -559,6 +559,7 @@ namespace Alex.GuiDebugger.Fonts
         public static readonly string Youtube = GetCharacter("&#xf167");
         public static readonly string YoutubePlay = GetCharacter("&#xf16a");
         public static readonly string YoutubeSquare = GetCharacter("&#xf166");
+        public static readonly string MousePointer = GetCharacter("&#xf245");
 
         private static string GetCharacter(string unicode)
         {

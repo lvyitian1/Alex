@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Alex.GuiDebugger.Common;
 using Alex.GuiDebugger.Common.Services;
@@ -8,6 +9,8 @@ using Alex.GuiDebugger.Models;
 using Catel.Caching;
 using Catel.Collections;
 using Catel.IoC;
+using Microsoft.Xna.Framework;
+using RocketUI;
 
 namespace Alex.GuiDebugger.Services
 {
@@ -31,12 +34,11 @@ namespace Alex.GuiDebugger.Services
 
 			var elements = GuiDebuggerData.Elements;
 
-			var newItems = allElementInfos.Select(Convert).ToArray();
+			var newItems = allElementInfos.Select(ConvertGuiElementInfo).ToArray();
 
 			//using (elements.SuspendChangeNotifications(SuspensionMode.MixedConsolidate))
 			{
-				elements.Clear();
-				elements.AddItems(newItems);
+				elements.ReplaceRange(newItems);
 			}
 		}
 
@@ -65,13 +67,52 @@ namespace Alex.GuiDebugger.Services
 					elementInfo.Properties.Add(elementProp);
 				}
 
-				elementProp.ValueType = property.Type;
-				elementProp.Value = property.Value;
+				var targetType = Type.GetType(property.Type);
+
+				object value = ConvertPropertyToEditableIfNeeded(property.Value, targetType);
+
+				elementProp.ValueType = value?.GetType() ?? targetType;
+				elementProp.Value = value;
 			}
 
 		}
 
-		private GuiDebuggerElementInfo Convert(GuiElementInfo guiElementInfo)
+		private object ConvertPropertyToEditableIfNeeded(object propValue, Type type)
+		{
+			if (type == typeof(Thickness))
+			{
+				return (EditableThickness) ((Thickness)propValue);
+			}
+
+			if (type == typeof(Size))
+			{
+				return (EditableSize) ((Size)propValue);
+			}
+
+			if (type == typeof(Rectangle))
+			{
+				return (EditableRectangle) ((Rectangle) propValue);
+			}
+
+			if (type == typeof(Alignment))
+			{
+				return (EditableAlignment) ((Alignment) propValue);
+			}
+
+			if (type == typeof(Color))
+			{
+				return (EditableColor) ((Color)propValue);
+			}
+
+			if (propValue.GetType() != type)
+			{
+				return Convert.ChangeType(propValue, type);
+			}
+
+			return propValue;
+		}
+
+		private GuiDebuggerElementInfo ConvertGuiElementInfo(GuiElementInfo guiElementInfo)
 		{
 			var model = _guiDebuggerElementInfoCache.GetFromCacheOrFetch(guiElementInfo.Id, () => new GuiDebuggerElementInfo()
 			{
@@ -79,15 +120,16 @@ namespace Alex.GuiDebugger.Services
 			});
 
 			model.ElementType = guiElementInfo.ElementType;
+			model.ElementName = guiElementInfo.ElementName;
 
 			if (guiElementInfo.ChildElements != null && guiElementInfo.ChildElements.Any())
 			{
-				var newChildElements = guiElementInfo.ChildElements.Select(Convert).ToArray();
+				var newChildElements = guiElementInfo.ChildElements.Select(ConvertGuiElementInfo).ToArray();
 
 				//using (model.ChildElements.SuspendChangeNotifications(SuspensionMode.MixedConsolidate))
 				{
 					model.ChildElements.Clear();
-					model.ChildElements.AddItems(newChildElements);
+					model.ChildElements.AddRange(newChildElements);
 				}
 			}
 

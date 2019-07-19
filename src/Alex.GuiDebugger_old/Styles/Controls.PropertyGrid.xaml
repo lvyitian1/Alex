@@ -1,0 +1,331 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fonts="clr-namespace:Alex.GuiDebugger.Fonts"
+    xmlns:framework="clr-namespace:Microsoft.Xna.Framework;assembly=MonoGame.Framework"
+    xmlns:markup="clr-namespace:Alex.GuiDebugger.Markup"
+    xmlns:models="clr-namespace:Alex.GuiDebugger.Models"
+    xmlns:rui="clr-namespace:RocketUI;assembly=RocketUI"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <DataTemplate x:Key="ThicknessPropertyEditorTemplate" DataType="{x:Type models:EditableThickness}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+
+                <ColumnDefinition Width="12" />
+
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Image
+                Grid.Row="0"
+                Grid.Column="0"
+                Source="{markup:FontImage {x:Static fonts:FontAwesome.ArrowLeft}}" />
+            <TextBox
+                Grid.Row="0"
+                Grid.Column="1"
+                Margin="0"
+                Text="{Binding Left}" />
+
+            <Image
+                Grid.Row="0"
+                Grid.Column="3"
+                Source="{markup:FontImage {x:Static fonts:FontAwesome.ArrowRight}}" />
+            <TextBox
+                Grid.Row="0"
+                Grid.Column="4"
+                Margin="0"
+                Text="{Binding Right}" />
+
+            <Image
+                Grid.Row="1"
+                Grid.Column="0"
+                Source="{markup:FontImage {x:Static fonts:FontAwesome.ArrowUp}}" />
+            <TextBox
+                Grid.Row="1"
+                Grid.Column="1"
+                Margin="0"
+                Text="{Binding Top}" />
+
+            <Image
+                Grid.Row="1"
+                Grid.Column="3"
+                Source="{markup:FontImage {x:Static fonts:FontAwesome.ArrowDown}}" />
+            <TextBox
+                Grid.Row="1"
+                Grid.Column="4"
+                Margin="0"
+                Text="{Binding Bottom}" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="SizePropertyEditorTemplate" DataType="{x:Type models:EditableSize}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                Grid.Column="0"
+                Margin="0"
+                Text="{Binding Width, Mode=OneWay}" />
+            <TextBox
+                Grid.Column="1"
+                Margin="0"
+                Text="{Binding Height, Mode=OneWay}" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="PointPropertyEditorTemplate" DataType="{x:Type Point}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                Grid.Column="0"
+                Margin="0"
+                Text="{Binding X, Mode=OneWay}" />
+            <TextBox
+                Grid.Column="1"
+                Margin="0"
+                Text="{Binding Y, Mode=OneWay}" />
+        </Grid>
+    </DataTemplate>
+    <DataTemplate x:Key="Vector2PropertyEditorTemplate" DataType="{x:Type framework:Vector2}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <!--<TextBox Grid.Column="0" Text="{Binding X}" />
+            <TextBox Grid.Column="1" Text="{Binding Y}" />-->
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="RectanglePropertyEditorTemplate" DataType="{x:Type models:EditableRectangle}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                Grid.Column="0"
+                Margin="0"
+                Text="{Binding Left, Mode=OneWay}" />
+            <TextBox
+                Grid.Column="1"
+                Margin="0"
+                Text="{Binding Top, Mode=OneWay}" />
+            <TextBox
+                Grid.Column="2"
+                Margin="0"
+                Text="{Binding Right, Mode=OneWay}" />
+            <TextBox
+                Grid.Column="3"
+                Margin="0"
+                Text="{Binding Bottom, Mode=OneWay}" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="AlignmentPropertyEditorTemplate" DataType="{x:Type models:EditableAlignment}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <ToggleButton
+                Grid.Row="0"
+                Grid.Column="0"
+                IsChecked="{Binding IsHorizontalLeft}">
+                <Image Source="/Resources/Images/AlignLeft_16x.png" />
+            </ToggleButton>
+            <ToggleButton
+                Grid.Row="0"
+                Grid.Column="1"
+                IsChecked="{Binding IsHorizontalCenter}">
+                <Image Source="/Resources/Images/TextCenterInFormHorizontal_exp_16x.png" />
+            </ToggleButton>
+            <ToggleButton
+                Grid.Row="0"
+                Grid.Column="2"
+                IsChecked="{Binding IsHorizontalRight}">
+                <Image Source="/Resources/Images/AlignRight_16x.png" />
+            </ToggleButton>
+            <ToggleButton
+                Grid.Row="0"
+                Grid.Column="3"
+                IsChecked="{Binding IsHorizontalFill}">
+                <Image Source="/Resources/Images/DistributeHorizontalCenter_16x.png" />
+            </ToggleButton>
+
+
+            <ToggleButton
+                Grid.Row="1"
+                Grid.Column="0"
+                IsChecked="{Binding IsVerticalTop}">
+                <Image Source="/Resources/Images/AlignTop_16x.png" />
+            </ToggleButton>
+            <ToggleButton
+                Grid.Row="1"
+                Grid.Column="1"
+                IsChecked="{Binding IsVerticalCenter}">
+                <Image Source="/Resources/Images/CenterInFormVertical_exp_16x.png" />
+            </ToggleButton>
+            <ToggleButton
+                Grid.Row="1"
+                Grid.Column="2"
+                IsChecked="{Binding IsVerticalBottom}">
+                <Image Source="/Resources/Images/AlignBottom_16x.png" />
+            </ToggleButton>
+            <ToggleButton
+                Grid.Row="1"
+                Grid.Column="3"
+                IsChecked="{Binding IsVerticalFill}">
+                <Image Source="/Resources/Images/DistributeVerticalCenter_16x.png" />
+            </ToggleButton>
+
+        </Grid>
+    </DataTemplate>
+
+    <ObjectDataProvider
+        x:Key="AutoSizeModeEnumValues"
+        MethodName="GetValues"
+        ObjectType="{x:Type sys:Enum}">
+        <ObjectDataProvider.MethodParameters>
+            <x:Type TypeName="rui:AutoSizeMode" />
+        </ObjectDataProvider.MethodParameters>
+    </ObjectDataProvider>
+
+    <DataTemplate x:Key="AutoSizeModePropertyEditorTemplate" DataType="{x:Type rui:AutoSizeMode}">
+        <ComboBox
+            Margin="0"
+            ItemsSource="{Binding Source={StaticResource AutoSizeModeEnumValues}}"
+            SelectedItem="{Binding .}" />
+    </DataTemplate>
+
+    <ObjectDataProvider
+        x:Key="OrientationEnumValues"
+        MethodName="GetValues"
+        ObjectType="{x:Type sys:Enum}">
+        <ObjectDataProvider.MethodParameters>
+            <x:Type TypeName="rui:Orientation" />
+        </ObjectDataProvider.MethodParameters>
+    </ObjectDataProvider>
+
+    <DataTemplate x:Key="OrientationPropertyEditorTemplate" DataType="{x:Type rui:Orientation}">
+        <ComboBox
+            Margin="0"
+            ItemsSource="{Binding Source={StaticResource OrientationEnumValues}}"
+            SelectedItem="{Binding .}" />
+    </DataTemplate>
+
+    <ObjectDataProvider
+        x:Key="ScrollModeEnumValues"
+        MethodName="GetValues"
+        ObjectType="{x:Type sys:Enum}">
+        <ObjectDataProvider.MethodParameters>
+            <x:Type TypeName="rui:ScrollMode" />
+        </ObjectDataProvider.MethodParameters>
+    </ObjectDataProvider>
+
+    <DataTemplate x:Key="ScrollModePropertyEditorTemplate" DataType="{x:Type rui:ScrollMode}">
+        <ComboBox
+            Margin="0"
+            ItemsSource="{Binding Source={StaticResource ScrollModeEnumValues}}"
+            SelectedItem="{Binding .}" />
+    </DataTemplate>
+
+    <ObjectDataProvider
+        x:Key="TextureRepeatModeEnumValues"
+        MethodName="GetValues"
+        ObjectType="{x:Type sys:Enum}">
+        <ObjectDataProvider.MethodParameters>
+            <x:Type TypeName="rui:TextureRepeatMode" />
+        </ObjectDataProvider.MethodParameters>
+    </ObjectDataProvider>
+
+    <DataTemplate x:Key="TextureRepeatModePropertyEditorTemplate" DataType="{x:Type rui:TextureRepeatMode}">
+        <ComboBox
+            Margin="0"
+            ItemsSource="{Binding Source={StaticResource TextureRepeatModeEnumValues}}"
+            SelectedItem="{Binding .}" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="FloatPropertyEditorTemplate" DataType="{x:Type sys:Single}">
+        <TextBox Margin="0" Text="{Binding .}" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="Int32PropertyEditorTemplate" DataType="{x:Type sys:Int32}">
+        <TextBox Margin="0" Text="{Binding .}" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="Int64PropertyEditorTemplate" DataType="{x:Type sys:Int64}">
+        <TextBox Margin="0" Text="{Binding .}" />
+    </DataTemplate>
+
+
+    <DataTemplate x:Key="StringPropertyEditorTemplate" DataType="{x:Type sys:String}">
+        <TextBox Margin="0" Text="{Binding .}" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="BooleanPropertyEditorTemplate" DataType="{x:Type sys:Boolean}">
+        <CheckBox Margin="0" IsChecked="{Binding .}" />
+    </DataTemplate>
+
+
+    <!--<Style x:Key="PropertyGridTreeView" TargetType="TreeView" />
+    <Style TargetType="{x:Type TreeView}">
+        <Setter Property="Background" Value="#1c1c1c" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>-->
+
+    <markup:DynamicTemplateDictionary x:Key="PropertyGridEditorTemplates">
+        <StaticResource x:Key="{x:Type framework:Point}" ResourceKey="PointPropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type sys:String}" ResourceKey="StringPropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type sys:Boolean}" ResourceKey="BooleanPropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type sys:Single}" ResourceKey="FloatPropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type sys:Int32}" ResourceKey="Int32PropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type sys:Int64}" ResourceKey="Int64PropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type models:EditableThickness}" ResourceKey="ThicknessPropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type models:EditableRectangle}" ResourceKey="RectanglePropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type framework:Vector2}" ResourceKey="Vector2PropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type models:EditableSize}" ResourceKey="SizePropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type rui:Alignment}" ResourceKey="AlignmentPropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type rui:AutoSizeMode}" ResourceKey="AutoSizeModePropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type models:EditableAlignment}" ResourceKey="AlignmentPropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type rui:Orientation}" ResourceKey="OrientationPropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type rui:ScrollMode}" ResourceKey="ScrollModePropertyEditorTemplate" />
+        <StaticResource x:Key="{x:Type rui:TextureRepeatMode}" ResourceKey="TextureRepeatModePropertyEditorTemplate" />
+    </markup:DynamicTemplateDictionary>
+
+    <Style x:Key="GuiElementPropertyEditor" TargetType="ContentPresenter">
+        <Setter Property="ContentTemplateSelector">
+            <Setter.Value>
+                <markup:DynamicTemplateSelectorExt TemplateDictionary="{StaticResource ResourceKey=PropertyGridEditorTemplates}" Property="Content" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+</ResourceDictionary>
