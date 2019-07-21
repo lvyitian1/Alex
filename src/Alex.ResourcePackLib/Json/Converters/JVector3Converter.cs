@@ -23,29 +23,13 @@ namespace Alex.ResourcePackLib.Json.Converters
 
 		public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
 		{
-			var obj = JToken.Load(reader);
+			if (!typeof(Vector3).IsAssignableFrom(objectType)) return null;
 
-			if (obj.Type == JTokenType.Array)
+			var arr = serializer.Deserialize<float[]>(reader);
+
+			if (arr.Length == 3)
 			{
-				var arr = (JArray)obj;
-				if (arr.Count == 3 && arr.All(token => token.Type == JTokenType.Integer))
-				{
-					return new Vector3()
-					{
-						X = arr[0].Value<int>(),
-						Y = arr[1].Value<int>(),
-						Z = arr[2].Value<int>()
-					};
-				}
-				else if(arr.Count == 3 && arr.All(token => token.Type == JTokenType.Float))
-				{
-					return new Vector3()
-					{
-						X = arr[0].Value<float>(),
-						Y = arr[1].Value<float>(),
-						Z = arr[2].Value<float>()
-					};
-				}
+				return new Vector3(arr[0], arr[1], arr[2]);
 			}
 
 			return null;

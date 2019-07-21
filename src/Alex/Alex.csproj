@@ -52,8 +52,12 @@
     <Compile Remove="Graphics\Items\**" />
     <EmbeddedResource Remove="Graphics\Items\**" />
     <None Remove="Graphics\Items\**" />
+    <None Remove="Gui\Screens\TitleScreen.xaml" />
     <None Remove="Resources\DebugFont.xnb" />
     <None Remove="Resources\ScrollBar.png" />
+    <EmbeddedResource Include="Gui\Screens\TitleScreen.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources\DebugFont.xnb" />
     <None Remove="Resources\logo2.png" />
     <EmbeddedResource Include="Resources\logo2.png" />
@@ -124,6 +128,8 @@
     <ProjectReference Include="..\Alex.GuiDebugger.Common\Alex.GuiDebugger.Common.csproj" />
     <ProjectReference Include="..\Alex.Networking\Alex.Networking.csproj" />
     <ProjectReference Include="..\Alex.ResourcePackLib\Alex.ResourcePackLib.csproj" />
+    <ProjectReference Include="..\RocketUI.Serialization.Xaml\RocketUI.Serialization.Xaml.csproj" />
+    <ProjectReference Include="..\RocketUI\RocketUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

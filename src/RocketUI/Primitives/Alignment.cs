@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace RocketUI
 {
     [Flags]
+    [TypeConverter(typeof(EnumTypeConverter<Alignment>))]
 
     public enum Alignment
     {

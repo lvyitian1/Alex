@@ -17,6 +17,7 @@ using Alex.GameStates;
 using Alex.GameStates.Gui.MainMenu;
 using Alex.GameStates.Playing;
 using Alex.Gui;
+using Alex.Gui.Screens;
 using Alex.Networking.Java.Packets;
 using Alex.Plugins;
 using Alex.Services;
@@ -362,7 +363,7 @@ namespace Alex
 			GuiRenderer.LoadResourcePack(Resources.ResourcePack);
 			AnvilWorldProvider.LoadBlockConverter();
 
-			GameStateManager.AddState<TitleState>("title");
+			GameStateManager.AddState<TitleScreen>("title");
 
 			if (LaunchSettings.ConnectOnLaunch && ProfileService.CurrentProfile != null)
 			{
@@ -370,7 +371,7 @@ namespace Alex
 			}
 			else
 			{
-				GameStateManager.SetActiveState<TitleState>("title");
+				GameStateManager.SetActiveState<TitleScreen>("title");
 			}
 
 			GameStateManager.RemoveState("splash");

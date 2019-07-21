@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using Alex.API.Gui.Graphics;
 using Microsoft.Xna.Framework;
+using Portable.Xaml.Markup;
 using RocketUI;
 
 namespace Alex.API.Gui.Elements
@@ -12,7 +15,9 @@ namespace Alex.API.Gui.Elements
 	public delegate bool GuiElementPredicate<in TGuiElement>(TGuiElement element)
 		where TGuiElement : class, IGuiElement;
 
-	public partial class GuiElement : IGuiElement
+	[RuntimeNameProperty(nameof(Id))]
+	[ContentProperty(nameof(Children))]
+	public partial class GuiElement : VisualElement, IGuiElement
 	{
 		[DebuggerVisible]
 		public Guid Id { get; } = Guid.NewGuid();
@@ -73,10 +78,20 @@ namespace Alex.API.Gui.Elements
 			get => Children.ToArray();
 		}
 
-
-		[DebuggerVisible(Visible = false)]
-		protected List<IGuiElement> Children { get; } = new List<IGuiElement>();
-
+		private ObservableCollection<IGuiElement> _children;
+		public ObservableCollection<IGuiElement> Children
+		{
+			get
+			{
+				if (_children == null)
+				{
+					_children = new ObservableCollection<IGuiElement>();
+					_children.CollectionChanged += ChildrenOnCollectionChanged;
+				}
+				return _children;
+			}
+		}
+		
 		[DebuggerVisible(Visible = false)]
 		public bool HasChildren => Children.Any();
 
@@ -171,6 +186,7 @@ namespace Alex.API.Gui.Elements
 		}
 
 
+		[Obsolete("Use Children.Add instead.")]
 		public void AddChild(IGuiElement element)
 		{
 			if (element == this) return;
@@ -190,6 +206,7 @@ namespace Alex.API.Gui.Elements
 			InvalidateLayout();
 		}
 
+		[Obsolete("Use Children.Remove instead.")]
 		public void RemoveChild(IGuiElement element)
 		{
 			if (element == this) return;
@@ -204,6 +221,37 @@ namespace Alex.API.Gui.Elements
 			InvalidateLayout();
 		}
 
+
+		private void ChildrenOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		{
+			if (e.NewItems != null)
+			{
+				foreach (IGuiElement item in e.NewItems)
+				{
+					item.ParentElement = this;
+					if(_initialised)
+						item.Init(_guiRenderer, true);
+
+					OnChildAdded(item);
+
+					InvalidateLayout();
+				}
+			}
+
+			if (e.OldItems != null)
+			{
+				foreach (IGuiElement item in e.OldItems)
+				{
+					OnChildRemoved(item);
+
+					if (item.ParentElement == this)
+						item.ParentElement = null;
+					
+					InvalidateLayout();
+				}
+			}
+
+		}
 		#endregion
 
 

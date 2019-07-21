@@ -7,7 +7,7 @@ using RocketUI;
 
 namespace Alex.API.Gui
 {
-    public interface IGuiElement
+    public interface IGuiElement : IVisualElement
     {
         [DebuggerVisible] Guid Id { get; }
 

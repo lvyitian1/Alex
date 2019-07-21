@@ -1,10 +1,12 @@
 ﻿using Alex.API.Gui.Elements;
+using Alex.API.Gui.Elements.Layout;
 using Microsoft.Xna.Framework;
 using RocketUI;
 
 namespace Alex.API.Gui
 {
-    public class GuiScreen : GuiElement, IGuiScreen
+    //[ContentProperty(nameof(Children))]
+    public class GuiScreen : GuiContainer, IGuiScreen
     {
         public bool IsLayoutInProgress { get; protected set; } = false;
 

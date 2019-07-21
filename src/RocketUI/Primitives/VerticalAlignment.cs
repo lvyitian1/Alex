@@ -1,5 +1,8 @@
-﻿namespace RocketUI
+﻿using System.ComponentModel;
+
+namespace RocketUI
 {
+	[TypeConverter(typeof(EnumTypeConverter<VerticalAlignment>))]
 	public enum VerticalAlignment
 	{
 		None		= Alignment.NoneY,

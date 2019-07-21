@@ -1,0 +1,25 @@
+﻿using Portable.Xaml.Markup;
+
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.Gui))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.GameStates))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.GameStates.Gui))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.GameStates.Gui.Common))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.GameStates.Gui.InGame))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.GameStates.Gui.MainMenu))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.GameStates.Gui.Multiplayer))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.Gui.Elements))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.Gui.Dialogs))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.Gui.Screens))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.Graphics))]
+
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.API), AssemblyName = nameof(Alex.API))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.API.Gui), AssemblyName = nameof(Alex.API))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.API.Gui.Dialogs), AssemblyName = nameof(Alex.API))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.API.Gui.Elements), AssemblyName = nameof(Alex.API))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.API.Gui.Graphics), AssemblyName = nameof(Alex.API))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.API.Gui.Events), AssemblyName = nameof(Alex.API))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.API.Gui.Layout), AssemblyName = nameof(Alex.API))]
+[assembly: XmlnsDefinition("http://schemas.kennyvv.nl/2019/alex", nameof(Alex.API.Graphics), AssemblyName = nameof(Alex.API))]
+
+[assembly:XmlnsPrefix("http://schemas.kennyvv.nl/2019/alex", "alex")]

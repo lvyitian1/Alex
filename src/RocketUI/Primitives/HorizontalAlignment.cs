@@ -1,5 +1,8 @@
-﻿namespace RocketUI
+﻿using System.ComponentModel;
+
+namespace RocketUI
 {
+	[TypeConverter(typeof(EnumTypeConverter<HorizontalAlignment>))]
     public enum HorizontalAlignment
 	{
 		None		= Alignment.None,
@@ -9,6 +12,5 @@
 		Right		= Alignment.MaxX,
 
 		FillParent	= Alignment.FillX,
-
 	}
 }

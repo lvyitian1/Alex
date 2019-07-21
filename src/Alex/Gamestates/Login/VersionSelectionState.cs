@@ -8,6 +8,7 @@ using Alex.API.Utils;
 using Alex.GameStates;
 using Alex.GameStates.Gui.Common;
 using Alex.Gui;
+using Alex.Gui.Screens;
 using Alex.Networking.Java;
 using Microsoft.Xna.Framework;
 using MiNET.Net;
@@ -94,7 +95,7 @@ namespace Alex.Gamestates.Login
 
 		private void MenuButtonClicked()
 		{
-			Alex.GameStateManager.SetActiveState<TitleState>();
+			Alex.GameStateManager.SetActiveState<TitleScreen>();
 		}
 
 		protected override void OnUpdate(GameTime gameTime)

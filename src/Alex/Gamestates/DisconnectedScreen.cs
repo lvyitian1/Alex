@@ -3,9 +3,10 @@ using Alex.API.Gui.Elements.Controls;
 using Alex.API.Utils;
 using Alex.GameStates;
 using Alex.GameStates.Gui.Common;
+using Alex.Gui.Screens;
 using RocketUI;
 
-namespace Alex.Gamestates
+namespace Alex.GameStates
 {
     public class DisconnectedScreen : GuiMenuStateBase
     {
@@ -33,7 +34,7 @@ namespace Alex.Gamestates
 
 		private void MenuButtonClicked()
 		{
-			Alex.GameStateManager.SetActiveState<TitleState>("title");
+			Alex.GameStateManager.SetActiveState<TitleScreen>("title");
 		}
 
 	    protected override void OnShow()

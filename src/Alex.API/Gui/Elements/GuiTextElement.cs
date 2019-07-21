@@ -8,6 +8,7 @@ using Alex.API.Gui.Graphics;
 using Alex.API.Utils;
 
 using Microsoft.Xna.Framework;
+using Portable.Xaml.Markup;
 using RocketUI;
 
 namespace Alex.API.Gui.Elements
@@ -17,7 +18,8 @@ namespace Alex.API.Gui.Elements
 		public Uri ClickedText;
 	}
 
-    public class GuiTextElement : GuiControl
+	[ContentProperty(nameof(GuiTextElement.Text))]
+	public class GuiTextElement : GuiControl
 	{
 	    public static readonly Color DefaultTextBackgroundColor = new Color(Color.Black, 0.6f);
         
