@@ -17,7 +17,7 @@ namespace Alex.API.Gui.Elements
 
 	[RuntimeNameProperty(nameof(Id))]
 	[ContentProperty(nameof(Children))]
-	public partial class GuiElement : VisualElement, IGuiElement
+	public partial class GuiElement : RocketElement, IGuiElement
 	{
 		[DebuggerVisible]
 		public Guid Id { get; } = Guid.NewGuid();

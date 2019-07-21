@@ -5,7 +5,7 @@ using System.Text;
 namespace RocketUI
 {
 
-	public abstract class VisualElement : IVisualElement
+	public abstract class RocketElement : IRocketElement
 	{
 		private PropertyStore _properties;
 
@@ -14,7 +14,7 @@ namespace RocketUI
 		/// </summary>
 		public PropertyStore Properties => _properties ?? (_properties = new PropertyStore(this));
 
-		public virtual IList<IVisualElement> Children
+		public virtual IList<IRocketElement> Children
 		{
 			get => null;
 		}

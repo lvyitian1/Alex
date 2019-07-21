@@ -166,7 +166,7 @@ namespace RocketUI
 		/// <param name="value">Delegate to add to the event</param>
 		public void AddHandlerEvent(string key, Delegate value)
 		{
-			var parentWidget = Parent as IVisualElement;
+			var parentWidget = Parent as IRocketElement;
 			if (parentWidget == null)
 				throw new InvalidOperationException("Parent must subclass Widget");
 			object existingDelegate;

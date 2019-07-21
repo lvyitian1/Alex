@@ -19,7 +19,7 @@ namespace RocketUI.Serialization.Xaml
 		
 		public bool DesignMode { get; set; }
 
-		private static readonly Assembly RocketAssembly = typeof(RocketUI.Platform).GetTypeInfo().Assembly;
+		private static readonly Assembly RocketAssembly = typeof(Platform).GetTypeInfo().Assembly;
 
 
 		protected override XamlType GetXamlType(string xamlNamespace, string name, params XamlType[] typeArguments)
@@ -46,7 +46,7 @@ namespace RocketUI.Serialization.Xaml
 			var info = type.GetTypeInfo();
 
 			if (
-				info.IsSubclassOf(typeof(VisualElement))
+				info.IsSubclassOf(typeof(RocketElement))
 				|| info.Assembly == RocketAssembly // struct
 				|| (
 					   // nullable struct
@@ -77,7 +77,7 @@ namespace RocketUI.Serialization.Xaml
 				isInResourceMember = true;
 				try
 				{
-					resourceMember = typeof(VisualElement).GetRuntimeProperty("Properties");
+					resourceMember = typeof(RocketElement).GetRuntimeProperty("Properties");
 				}
 				finally
 				{
@@ -129,16 +129,16 @@ namespace RocketUI.Serialization.Xaml
 
 		}
 
-		class EmptyConverter : System.ComponentModel.TypeConverter
+		class EmptyConverter : TypeConverter
 		{
-			public override bool CanConvertFrom(System.ComponentModel.ITypeDescriptorContext context, Type sourceType) => true;
+			public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => true;
 
-			public override object ConvertFrom(System.ComponentModel.ITypeDescriptorContext context, CultureInfo culture, object value) => null;
+			public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => null;
 		}
 
-		protected override XamlValueConverter<System.ComponentModel.TypeConverter> LookupTypeConverter()
+		protected override XamlValueConverter<TypeConverter> LookupTypeConverter()
 		{
-			return new XamlValueConverter<System.ComponentModel.TypeConverter>(typeof(EmptyConverter), Type);
+			return new XamlValueConverter<TypeConverter>(typeof(EmptyConverter), Type);
 		}
 	}
 
@@ -157,10 +157,10 @@ namespace RocketUI.Serialization.Xaml
 			return UnderlyingType.GetTypeInfo().GetCustomAttribute<T>(inherit);
 		}
 
-		XamlValueConverter<System.ComponentModel.TypeConverter> typeConverter;
+		XamlValueConverter<TypeConverter> typeConverter;
 		bool                                 gotTypeConverter;
 
-		protected override XamlValueConverter<System.ComponentModel.TypeConverter> LookupTypeConverter()
+		protected override XamlValueConverter<TypeConverter> LookupTypeConverter()
 		{
 			if (gotTypeConverter)
 				return typeConverter;
@@ -199,7 +199,7 @@ namespace RocketUI.Serialization.Xaml
 
 		protected override bool LookupIsAmbient()
 		{
-			if (this.UnderlyingType != null && UnderlyingType == typeof(PropertyStore))
+			if (UnderlyingType != null && UnderlyingType == typeof(PropertyStore))
 				return true;
 			return base.LookupIsAmbient();
 		}
@@ -212,11 +212,11 @@ namespace RocketUI.Serialization.Xaml
 			if (gotContentProperty)
 				return contentProperty;
 			gotContentProperty = true;
-			var contentAttribute = GetCustomAttribute<ContentPropertyAttribute>();
-			if (contentAttribute == null || contentAttribute.Name == null)
+			var pXamlcontentAttribute = GetCustomAttribute<ContentPropertyAttribute>();
+			if (pXamlcontentAttribute == null || pXamlcontentAttribute.Name == null)
 				contentProperty = base.LookupContentProperty();
 			else
-				contentProperty = GetMember(contentAttribute.Name);
+				contentProperty = GetMember(pXamlcontentAttribute.Name);
 			return contentProperty;
 		}
 

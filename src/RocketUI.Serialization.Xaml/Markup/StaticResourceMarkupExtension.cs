@@ -40,7 +40,7 @@ namespace RocketUI.Serialization.Xaml.Markup
 			};
 			var members = new[]
 			{
-				schemaContext.GetXamlType(typeof(VisualElement)).GetMember("Properties")
+				schemaContext.GetXamlType(typeof(RocketElement)).GetMember("Properties")
 			};
 			var values = ambientProvider.GetAllAmbientValues(null, true, types, members);
 			foreach (var dictionary in values.Select(r => r.Value).OfType<PropertyStore>())

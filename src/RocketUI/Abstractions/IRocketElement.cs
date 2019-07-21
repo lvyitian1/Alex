@@ -4,9 +4,9 @@ using System.Text;
 
 namespace RocketUI
 {
-	public interface IVisualElement
+	public interface IRocketElement
 	{
 		PropertyStore Properties { get; }
-		IList<IVisualElement> Children { get; }
+		IList<IRocketElement> Children { get; }
 	}
 }

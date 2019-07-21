@@ -30,7 +30,7 @@ namespace RocketUI.Serialization.Xaml
 				return;
 
 			var instanceType = Instance.GetType();
-			var obj          = scopedElement as IVisualElement;
+			var obj          = scopedElement as IRocketElement;
 			if (obj != null && !string.IsNullOrEmpty(name))
 			{
 				var property = instanceType.GetRuntimeProperties()
