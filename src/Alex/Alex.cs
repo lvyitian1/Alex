@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading;
@@ -16,14 +18,18 @@ using Alex.GameStates.Gui.MainMenu;
 using Alex.GameStates.Playing;
 using Alex.Gui;
 using Alex.Networking.Java.Packets;
+using Alex.Plugins;
 using Alex.Services;
 using Alex.Utils;
+using Alex.Worlds;
 using Alex.Worlds.Bedrock;
 using Alex.Worlds.Java;
-using Eto.Forms;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MiNET.Utils;
 using Newtonsoft.Json;
+using NLog;
+using StackExchange.Profiling;
 using GuiDebugHelper = Alex.Gui.GuiDebugHelper;
 using TextInputEventArgs = Microsoft.Xna.Framework.TextInputEventArgs;
 
@@ -31,7 +37,7 @@ namespace Alex
 {
 	public partial class Alex : Microsoft.Xna.Framework.Game
 	{
-		//private static readonly Logger Log = LogManager.GetCurrentClassLogger(typeof(Alex));
+		private static readonly Logger Log = LogManager.GetCurrentClassLogger(typeof(Alex));
 
 		public static string DotnetRuntime { get; } =
 			$"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}";
@@ -65,12 +71,11 @@ namespace Alex
 
 		private LaunchSettings LaunchSettings { get; }
 		//public ChromiumWebBrowser CefWindow { get; private set; }
-		
-		private Application EtoApplication { get; }
-		public Alex(LaunchSettings launchSettings, Application app)
+		public PluginManager PluginManager { get; }
+        public FpsMonitor FpsMonitor { get; }
+        private IPlayerProfileService ProfileService { get; set; }
+        public Alex(LaunchSettings launchSettings)
 		{
-			EtoApplication = app;
-			
 			Instance = this;
 			LaunchSettings = launchSettings;
 
@@ -78,8 +83,10 @@ namespace Alex
 			{
 				PreferMultiSampling = false,
 				SynchronizeWithVerticalRetrace = false,
-				GraphicsProfile = GraphicsProfile.HiDef,
+				GraphicsProfile = GraphicsProfile.Reach,
 			};
+			
+
 			Content.RootDirectory = "assets";
 
 			IsFixedTimeStep = false;
@@ -91,8 +98,17 @@ namespace Alex
 				if (DeviceManager.PreferredBackBufferWidth != Window.ClientBounds.Width ||
 				    DeviceManager.PreferredBackBufferHeight != Window.ClientBounds.Height)
 				{
-					DeviceManager.PreferredBackBufferWidth = Window.ClientBounds.Width;
-					DeviceManager.PreferredBackBufferHeight = Window.ClientBounds.Height;
+					if (DeviceManager.IsFullScreen)
+					{
+						DeviceManager.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+						DeviceManager.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+					}
+					else
+					{
+						DeviceManager.PreferredBackBufferWidth = Window.ClientBounds.Width;
+						DeviceManager.PreferredBackBufferHeight = Window.ClientBounds.Height;
+					}
+
 					DeviceManager.ApplyChanges();
 
 					//CefWindow.Size = new System.Drawing.Size(Window.ClientBounds.Width, Window.ClientBounds.Height);
@@ -110,6 +126,9 @@ namespace Alex
 			};
 
 			UIThreadQueue = new ConcurrentQueue<Action>();
+
+            PluginManager = new PluginManager(this);
+            FpsMonitor = new FpsMonitor();
 		}
 
 		public static EventHandler<TextInputEventArgs> OnCharacterInput;
@@ -119,35 +138,29 @@ namespace Alex
 			OnCharacterInput?.Invoke(this, e);
 		}
 
-		public void SaveSettings()
-		{
-			if (GameSettings.IsDirty)
-			{
-				Storage.TryWrite("settings", GameSettings);
-			}
-		}
-
-		internal Settings GameSettings { get; private set; }
-
 		protected override void Initialize()
 		{
 			Window.Title = "Alex - " + Version;
 
 			// InitCamera();
 			this.Window.TextInput += Window_TextInput;
-
+			
+			var currentAdapter = GraphicsAdapter.Adapters.FirstOrDefault(x => x == GraphicsDevice.Adapter);
+			if (currentAdapter != null)
+			{
+				if (currentAdapter.IsProfileSupported(GraphicsProfile.HiDef))
+				{
+					DeviceManager.GraphicsProfile = GraphicsProfile.HiDef;
+				}
+			}
+			
+			DeviceManager.ApplyChanges();
+			
 			base.Initialize();
 		}
 
 		protected override void LoadContent()
 		{
-			//	if (!File.Exists(Path.Combine("assets", "DebugFont.xnb")))
-			//	{
-			//		File.WriteAllBytes(Path.Combine("assets", "DebugFont.xnb"), global::Alex.Resources.DebugFont);
-			//	}
-			//DebugFont = (WrappedSpriteFont) Content.Load<SpriteFont>("DebugFont");
-			//CefWindow = new ChromiumWebBrowser(GraphicsDevice, "http://google.com/");
-
 			var fontStream = Assembly.GetEntryAssembly().GetManifestResourceStream("Alex.Resources.DebugFont.xnb");
 			
 			DebugFont = (WrappedSpriteFont) Content.Load<SpriteFont>(fontStream.ReadAllBytes());
@@ -171,12 +184,47 @@ namespace Alex
 			GameStateManager.AddState("splash", splash);
 			GameStateManager.SetActiveState("splash");
 
+			WindowSize = this.Window.ClientBounds.Size;
 			//	Log.Info($"Initializing Alex...");
-			ThreadPool.QueueUserWorkItem(o => { InitializeGame(splash); });
+			ThreadPool.QueueUserWorkItem((o) => { InitializeGame(splash); });
 		}
 
 		private AlexIpcService AlexIpcService;
 
+		private void SetVSync(bool enabled)
+		{
+			UIThreadQueue.Enqueue(() =>
+			{
+				base.IsFixedTimeStep = enabled;
+				DeviceManager.SynchronizeWithVerticalRetrace = enabled;
+				DeviceManager.ApplyChanges();
+			});
+		}
+
+		private Point WindowSize { get; set; }
+		private void SetFullscreen(bool enabled)
+		{
+			UIThreadQueue.Enqueue(() =>
+			{
+				if (this.DeviceManager.IsFullScreen != enabled)
+				{
+					if (enabled)
+					{
+						WindowSize = Window.ClientBounds.Size;
+					}
+					else
+					{
+						DeviceManager.PreferredBackBufferWidth = WindowSize.X;
+						DeviceManager.PreferredBackBufferHeight =WindowSize.Y;
+						this.DeviceManager.ApplyChanges();
+					}
+					
+					this.DeviceManager.IsFullScreen = enabled;
+					this.DeviceManager.ApplyChanges();
+				}
+			});
+		}
+		
 		private void ConfigureServices()
 		{
 			XBLMSAService msa;
@@ -189,27 +237,43 @@ namespace Alex
 			var optionsProvider = new OptionsProvider(storage);
 			optionsProvider.Load();
 			
+			optionsProvider.AlexOptions.VideoOptions.UseVsync.Bind((value, newValue) => { SetVSync(newValue); });
+			if (optionsProvider.AlexOptions.VideoOptions.UseVsync.Value)
+			{
+				SetVSync(true);
+			}
+			
+			optionsProvider.AlexOptions.VideoOptions.Fullscreen.Bind((value, newValue) => { SetFullscreen(newValue); });
+			if (optionsProvider.AlexOptions.VideoOptions.Fullscreen.Value)
+			{
+				SetFullscreen(true);
+			}
+			
 			Services.AddService<IOptionsProvider>(optionsProvider);
 
 			Services.AddService<IListStorageProvider<SavedServerEntry>>(new SavedServerDataProvider(storage));
 			
-			Services.AddService(msa = new XBLMSAService(EtoApplication));
+			Services.AddService(msa = new XBLMSAService());
 			
 			Services.AddService<IServerQueryProvider>(new ServerQueryProvider(this));
-			Services.AddService<IPlayerProfileService>(new PlayerProfileService(msa, ProfileManager));
-			
-			Storage = storage;
+			Services.AddService<IPlayerProfileService>(ProfileService = new PlayerProfileService(msa, ProfileManager));
+
+            var profilingService = new ProfilerService();
+            Services.AddService<ProfilerService>(profilingService);
+
+            Storage = storage;
 		}
 
 		protected override void UnloadContent()
 		{
-			SaveSettings();
 			ProfileManager.SaveProfiles();
 			
 			Services.GetService<IOptionsProvider>().Save();
 			AlexIpcService.Stop();
 			GuiDebugHelper.Dispose();
-		}
+
+            PluginManager.UnloadAll();
+        }
 
 		protected override void Update(GameTime gameTime)
 		{
@@ -227,47 +291,66 @@ namespace Alex
 				{
 					a.Invoke();
 				}
-				catch { }
+				catch (Exception ex)
+				{
+					Log.Warn($"Exception on UIThreadQueue: {ex.ToString()}");
+				}
 			}
 		}
 
 		protected override void Draw(GameTime gameTime)
 		{
-			GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
-			GameStateManager.Draw(gameTime);
-
+            FpsMonitor.Update();
+            GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
+            
+            GameStateManager.Draw(gameTime);
 			GuiManager.Draw(gameTime);
-			//	CefWindow.Draw(gameTime);
-
+			
 			base.Draw(gameTime);
 		}
 
 		private void InitializeGame(IProgressReceiver progressReceiver)
 		{
-			MCPacketFactory.Load();
 			progressReceiver.UpdateProgress(0, "Initializing...");
-			
-			ConfigureServices();
-			
-			if (Storage.TryRead("settings", out Settings settings))
-			{
-				GameSettings = settings;
-				//Console.WriteLine($"OLD SETTINGS: {settings.RenderDistance}");
-			}
-			else
-			{
-				GameSettings = new Settings(string.Empty);
-				GameSettings.IsDirty = true;
-				//Console.WriteLine($"NEW GAMESETTINGS");
-			}
-
 			Extensions.Init(GraphicsDevice);
+			MCPacketFactory.Load();
 
-			ProfileManager.LoadProfiles(progressReceiver);
+			ConfigureServices();
+
+			var options = Services.GetService<IOptionsProvider>();
+
+			string pluginDirectoryPaths = Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath);
+
+            var pluginDir = options.AlexOptions.ResourceOptions.PluginDirectory;
+            if (!string.IsNullOrWhiteSpace(pluginDir))
+            {
+                pluginDirectoryPaths = pluginDir;
+            }
+            else
+            {
+	            if (!string.IsNullOrWhiteSpace(LaunchSettings.WorkDir) && Directory.Exists(LaunchSettings.WorkDir))
+	            {
+		            pluginDirectoryPaths = LaunchSettings.WorkDir;
+	            }
+            }
+
+            foreach (string dirPath in pluginDirectoryPaths.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                string directory = dirPath;
+                if (!Path.IsPathRooted(directory))
+                {
+                    directory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), dirPath);
+                }
+
+                PluginManager.DiscoverPlugins(directory);
+            }
+
+
+            ProfileManager.LoadProfiles(progressReceiver);
 
 			//	Log.Info($"Loading resources...");
-			Resources = new ResourceManager(GraphicsDevice, Storage);
-			if (!Resources.CheckResources(GraphicsDevice, GameSettings, progressReceiver,
+			Resources = new ResourceManager(GraphicsDevice, Storage, options);
+			if (!Resources.CheckResources(GraphicsDevice, progressReceiver,
 				OnResourcePackPreLoadCompleted))
 			{
                 Console.WriteLine("Press enter to exit...");
@@ -277,12 +360,18 @@ namespace Alex
 			}
 
 			GuiRenderer.LoadResourcePack(Resources.ResourcePack);
+			AnvilWorldProvider.LoadBlockConverter();
 
 			GameStateManager.AddState<TitleState>("title");
-			GameStateManager.AddState("options", new OptionsState());
 
-			GameStateManager.SetActiveState<TitleState>("title");
-
+			if (LaunchSettings.ConnectOnLaunch && ProfileService.CurrentProfile != null)
+			{
+				ConnectToServer(LaunchSettings.Server, ProfileService.CurrentProfile, LaunchSettings.ConnectToBedrock);
+			}
+			else
+			{
+				GameStateManager.SetActiveState<TitleState>("title");
+			}
 
 			GameStateManager.RemoveState("splash");
 

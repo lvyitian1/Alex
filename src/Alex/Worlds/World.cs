@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
+using System.Threading;
 using Alex.API.Blocks.State;
 using Alex.API.Data.Options;
 using Alex.API.Entities;
@@ -15,8 +17,12 @@ using Alex.Graphics.Camera;
 using Alex.Graphics.Models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MiNET.Utils;
 using NLog;
+using BlockCoordinates = Alex.API.Utils.BlockCoordinates;
+using ChunkCoordinates = Alex.API.Utils.ChunkCoordinates;
 using Color = Microsoft.Xna.Framework.Color;
+using PlayerLocation = Alex.API.Utils.PlayerLocation;
 
 //using System.Reflection.Metadata.Ecma335;
 
@@ -34,20 +40,24 @@ namespace Alex.Worlds
 		public Player Player { get; set; }
 		private Alex Alex { get; }
 		private AlexOptions Options { get; }
-		public World(Alex alex, GraphicsDevice graphics, AlexOptions options, Camera camera, INetworkProvider networkProvider)
+
+		public World(Alex alex, GraphicsDevice graphics, AlexOptions options, Camera camera,
+			INetworkProvider networkProvider)
 		{
 			Alex = alex;
-            Graphics = graphics;
-	        Camera = camera;
-	        Options = options;
-	        
+			Graphics = graphics;
+			Camera = camera;
+			Options = options;
+
 			PhysicsEngine = new PhysicsManager(alex, this);
 			ChunkManager = new ChunkManager(alex, graphics, options, this);
 			EntityManager = new EntityManager(graphics, this, networkProvider);
 			Ticker = new TickManager(this);
-			 
+			PlayerList = new PlayerList();
+
 			ChunkManager.Start();
 			var profileService = alex.Services.GetService<IPlayerProfileService>();
+			string username = string.Empty;
 			Skin skin = profileService?.CurrentProfile?.Skin;
 			if (skin == null)
 			{
@@ -60,15 +70,20 @@ namespace Alex.Worlds
 				};
 			}
 
-			Player = new Player(graphics, alex, alex.GameSettings.Username, this, skin, networkProvider, PlayerIndex.One);
+			if (!string.IsNullOrWhiteSpace(profileService?.CurrentProfile?.Username))
+			{
+				username = profileService.CurrentProfile.Username;
+			}
 
-	        Player.KnownPosition = new PlayerLocation(GetSpawnPoint());
-	        Camera.MoveTo(Player.KnownPosition, Vector3.Zero);
+			Player = new Player(graphics, alex, username, this, skin, networkProvider, PlayerIndex.One);
 
-	        Options.FieldOfVision.ValueChanged += FieldOfVisionOnValueChanged;
-	        Camera.FOV = Options.FieldOfVision.Value;
-		        
-	        PhysicsEngine.AddTickable(Player);
+			Player.KnownPosition = new PlayerLocation(GetSpawnPoint());
+			Camera.MoveTo(Player.KnownPosition, Vector3.Zero);
+
+			Options.FieldOfVision.ValueChanged += FieldOfVisionOnValueChanged;
+			Camera.FOV = Options.FieldOfVision.Value;
+
+			PhysicsEngine.AddTickable(Player);
 		}
 
 		private void FieldOfVisionOnValueChanged(int oldvalue, int newvalue)
@@ -79,12 +94,11 @@ namespace Alex.Worlds
 		//public long WorldTime { get; private set; } = 6000;
 		public bool FreezeWorldTime { get; set; } = false;
 
-		public PlayerList PlayerList { get; } = new PlayerList();
+		public PlayerList PlayerList { get; }
 		public TickManager Ticker { get; }
 		public EntityManager EntityManager { get; }
 		public ChunkManager ChunkManager { get; private set; }
 		public PhysicsManager PhysicsEngine { get; set; }
-		//	private WorldProvider WorldProvider { get; set; }
 
 		public long Vertices
         {
@@ -148,13 +162,11 @@ namespace Alex.Worlds
 		}
 
 		private float _fovModifier = -1;
-		private Vector3 PreviousDirection = Vector3.Zero;
 		private bool UpdatingPriorities = false;
+		private float BrightnessMod = 0f;
         public void Update(UpdateArgs args, SkyBox skyRenderer)
 		{
-			ChunkCoordinates oldPosition = new ChunkCoordinates(Player.KnownPosition);
-
-            args.Camera = Camera;
+			args.Camera = Camera;
 			if (Player.FOVModifier != _fovModifier)
 			{
 				_fovModifier = Player.FOVModifier;
@@ -165,10 +177,12 @@ namespace Alex.Worlds
 			}
 			Camera.Update(args, Player);
 
+			BrightnessMod = skyRenderer.BrightnessModifier;
 			ChunkManager.Update(args);
 			EntityManager.Update(args, skyRenderer);
-
-			var diffuseColor = Color.White.ToVector3() * skyRenderer.BrightnessModifier;
+			PhysicsEngine.Update(args.GameTime);
+			
+			var diffuseColor = Color.White.ToVector3() * BrightnessModifier;
 			ChunkManager.AmbientLightColor = diffuseColor;
 
 			Player.ModelRenderer.DiffuseColor = diffuseColor;
@@ -176,7 +190,7 @@ namespace Alex.Worlds
 
 			if (Player.IsInWater)
 			{
-				ChunkManager.FogColor = new Vector3(0.2666667F, 0.6862745F, 0.9607844F) * skyRenderer.BrightnessModifier;
+				ChunkManager.FogColor = new Vector3(0.2666667F, 0.6862745F, 0.9607844F) * BrightnessModifier;
 				ChunkManager.FogDistance = (float)Math.Pow(Options.VideoOptions.RenderDistance, 2) * 0.15f;
 			}
 			else
@@ -184,58 +198,23 @@ namespace Alex.Worlds
 				ChunkManager.FogColor = skyRenderer.WorldFogColor.ToVector3();
 				ChunkManager.FogDistance = (float) Math.Pow(Options.VideoOptions.RenderDistance, 2) * 0.8f;
 			}
-
-			PhysicsEngine.Update(args.GameTime);
-
-			/*var dir = Camera.Direction;
-			if (dir != PreviousDirection && !UpdatingPriorities)
-			{
-				UpdatingPriorities = true;
-                ChunkManager.SkylightCalculator.UpdatePriority().ContinueWith((o) =>
-	                {
-		                UpdatingPriorities = false;
-	                });
-			}*/
-
-			//PreviousDirection = dir;
-
-            ChunkCoordinates c = new ChunkCoordinates(Player.KnownPosition);
-			if (c != oldPosition)
-			{
-				UpdateLightingAroundPlayer(c);
-			}
-
-
+			
 			if (Ticker.Update(args))
 			{
 				if (!FreezeWorldTime)
 				{
 					WorldInfo.Time++;
 				}
-
-				
-				//if (Player.IsSpawned)
 			}
 		}
+        
+        public Vector3 SpawnPoint { get; set; } = Vector3.Zero;
 
-        private void UpdateLightingAroundPlayer(ChunkCoordinates center)
-		{
-			return;
-			int radiusSquared = 6;// (int) Math.Pow(Options.VideoOptions.RenderDistance, 2) / 3;
-			for (int x = -radiusSquared; x < radiusSquared; x++)
-			{
-				for (int z = -radiusSquared; z < radiusSquared; z++)
-				{
-					var cc = GetChunkColumn(center.X + x, center.Z + z);
-					if (cc != null && cc.SkyLightDirty)
-					{
-						ChunkUpdate(cc, ScheduleType.Lighting);
-					}
-				}
-			}
+        public float BrightnessModifier
+        {
+	        get { return (BrightnessMod + ((Options.VideoOptions.Brightness - 50f) * (0.5f / 100f))); }
         }
 
-		public Vector3 SpawnPoint { get; set; } = Vector3.Zero;
         public Vector3 GetSpawnPoint()
         {
 	        return SpawnPoint;
@@ -330,7 +309,6 @@ namespace Alex.Worlds
 				var cz = z & 0xf;
 
                 chunk.SetBlock(cx, cy, cz, block);
-				ChunkManager.SkylightCalculator.UpdateHeightMap(new BlockCoordinates(x, y, z));
                 ChunkManager.ScheduleChunkUpdate(new ChunkCoordinates(x >> 4, z >> 4), ScheduleType.Scheduled | ScheduleType.Lighting, true);
 
 				UpdateNeighbors(x, y, z);
@@ -355,12 +333,11 @@ namespace Alex.Worlds
 			    var cz = z & 0xf;
 
                 chunk.SetBlock(cx, cy, cz, block);
-				ChunkManager.SkylightCalculator.UpdateHeightMap(new BlockCoordinates(x,y,z));
 
-				ChunkManager.ScheduleChunkUpdate(chunkCoords, ScheduleType.Scheduled | ScheduleType.Lighting, true);
-
-			    UpdateNeighbors(x, y, z);
+                UpdateNeighbors(x, y, z);
 			    CheckForUpdate(chunkCoords, cx, cz);
+			    
+			    ChunkManager.ScheduleChunkUpdate(chunkCoords, ScheduleType.Scheduled | ScheduleType.Lighting, true);
             } 
 	    }
 
@@ -375,13 +352,12 @@ namespace Alex.Worlds
 				var cy = y & 0xff;
 				var cz = z & 0xf;
 
-                chunk.SetBlockState(cx, cy, cz, block);
-				ChunkManager.SkylightCalculator.UpdateHeightMap(new BlockCoordinates(x, y, z));
-
-				ChunkManager.ScheduleChunkUpdate(chunkCoords, ScheduleType.Scheduled | ScheduleType.Lighting, true);
+				chunk.SetBlockState(cx, cy, cz, block);
 
                 UpdateNeighbors(x,y,z);
 				CheckForUpdate(chunkCoords, cx, cz);
+				
+				ChunkManager.ScheduleChunkUpdate(chunkCoords, ScheduleType.Scheduled | ScheduleType.Lighting, true);
             }
 		}
 
@@ -424,7 +400,8 @@ namespace Alex.Worlds
 		{
 			Ticker.ScheduleTick(() =>
 			{
-				GetBlock(block).BlockUpdate(this, block, updatedBlock);
+				GetBlockState(block).Block.BlockUpdate(this, block, updatedBlock);
+				//GetBlock(block).BlockUpdate(this, block, updatedBlock);
 			}, 1);
 		}
 
@@ -528,45 +505,7 @@ namespace Alex.Worlds
 			ChunkManager.TryGetChunk(new ChunkCoordinates(coords.X >> 4, coords.Z >> 4), out chunk);
 			return new BlockCoordinates(coords.X & 0xf, coords.Y & 0xff, coords.Z & 0xf);
 		}
-
-		public void TickChunk(ChunkColumn chunkColumn)
-		{
-			var chunkCoords = new Vector3(chunkColumn.X >> 4, 0, chunkColumn.Z >> 4);
-
-			for (int x = 0; x < 16; x++)
-			{
-				for (int z = 0; z < 16; z++)
-				{
-					for (int y = chunkColumn.GetHeight(x, z); y > 1; y--)
-					{
-						var block = chunkColumn.GetBlock(x, y, z);
-						if (block.Tick(this, chunkCoords + new Vector3(x, y, z)))
-						{
-
-						}
-					}
-				}
-			}
-		}
-
-		private void InitiateChunk(ChunkColumn chunkColumn)
-		{
-			var chunkCoords = new BlockCoordinates(chunkColumn.X >> 4, 0, chunkColumn.Z >> 4);
-
-			for (int x = 0; x < 16; x++)
-			{
-				for (int z = 0; z < 16; z++)
-				{
-					for (int y = 255; y > 0; y--)
-					{
-						var block = (Block)chunkColumn.GetBlock(x, y, z);
-						block.BlockPlaced(this, chunkCoords + new BlockCoordinates(x, y, z));
-					}
-				}
-			}
-		}
-
-		private bool _destroyed = false;
+        private bool _destroyed = false;
 		public void Destroy()
 		{
 			if (_destroyed) return;

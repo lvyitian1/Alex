@@ -25,9 +25,7 @@ namespace Alex.GameStates.Playing
 		private SkyBox SkyRenderer { get; }
 		public World World { get; }
 
-		private FpsMonitor FpsCounter { get; set; }
-
-		private WorldProvider WorldProvider { get; }
+        private WorldProvider WorldProvider { get; }
 		public INetworkProvider NetworkProvider { get; }
 
 		private readonly PlayingHud _playingHud;
@@ -57,8 +55,7 @@ namespace Alex.GameStates.Playing
 
 			_playingHud = new PlayingHud(Alex, World.Player, chat, title);
 			_debugInfo = new GuiDebugInfo();
-			FpsCounter = new FpsMonitor();
-			InitDebugInfo();
+            InitDebugInfo();
 		}
 
 		protected override void OnLoad(IRenderArgs args)
@@ -95,7 +92,7 @@ namespace Alex.GameStates.Playing
 				//FpsCounter.Update();
 				//World.ChunkManager.GetPendingLightingUpdates(out int lowLight, out int midLight, out int highLight);
 
-				return $"Alex {Alex.Version} ({FpsCounter.Value:##} FPS, Chunk Updates: {World.EnqueuedChunkUpdates} queued, {World.ConcurrentChunkUpdates} active"/*, H: {highLight} M: {midLight} L: {lowLight} lighting updates)"*/;
+				return $"Alex {Alex.Version} ({Alex.FpsMonitor.Value:##} FPS, Chunk Updates: {World.EnqueuedChunkUpdates} queued, {World.ConcurrentChunkUpdates} active"/*, H: {highLight} M: {midLight} L: {lowLight} lighting updates)"*/;
 			});
 			_debugInfo.AddDebugLeft(() =>
 			{
@@ -144,6 +141,8 @@ namespace Alex.GameStates.Playing
 					sb.AppendLine($"Target: {_raytracedBlock} Face: {face}");
 					sb.AppendLine(
 						$"Skylight: {World.GetSkyLight(_raytracedBlock)} Face Skylight: {World.GetSkyLight(_adjacentBlock)}");
+					sb.AppendLine(
+						$"Blocklight: {World.GetBlockLight(_raytracedBlock)} Face Blocklight: {World.GetBlockLight(_adjacentBlock)}");
 					sb.AppendLine($"{SelBlock}");
 
 					if (SelBlock.BlockState != null)
@@ -353,17 +352,21 @@ namespace Alex.GameStates.Playing
 				{
 					if (World.Camera is FirstPersonCamera)
 					{
-						World.Camera = new ThirdPersonCamera(Options.VideoOptions.RenderDistance, World.Camera.Position, Vector3.Zero)
+						World.Camera = new ThirdPersonCamera(Options.VideoOptions.RenderDistance, World.Camera.Position, World.Camera.Rotation)
 						{
 							FOV = World.Camera.FOV
 						};
+						
+						World.Camera.UpdateAspectRatio(Graphics.Viewport.AspectRatio);
 					}
 					else
 					{
-						World.Camera = new FirstPersonCamera(Options.VideoOptions.RenderDistance, World.Camera.Position, Vector3.Zero)
+						World.Camera = new FirstPersonCamera(Options.VideoOptions.RenderDistance, World.Camera.Position, World.Camera.Rotation)
 						{
 							FOV = World.Camera.FOV
 						};
+						
+						World.Camera.UpdateAspectRatio(Graphics.Viewport.AspectRatio);
 					}
 				}
 
@@ -400,6 +403,19 @@ namespace Alex.GameStates.Playing
 						{
 							args.SpriteBatch.RenderBoundingBox(entity.GetBoundingBox(), World.Camera.ViewMatrix,
 								World.Camera.ProjectionMatrix, entity == hitEntity ? Color.Red : Color.Yellow);
+						}
+					}
+					
+					if (World?.Player != null)
+						args.SpriteBatch.RenderBoundingBox(World.Player.GetBoundingBox(), World.Camera.ViewMatrix,
+							World.Camera.ProjectionMatrix, Color.Red);
+
+					if (World.PhysicsEngine.LastKnownHit != null)
+					{
+						foreach (var bb in World.PhysicsEngine.LastKnownHit)
+						{
+							args.SpriteBatch.RenderBoundingBox(bb, World.Camera.ViewMatrix,
+								World.Camera.ProjectionMatrix, Color.YellowGreen);
 						}
 					}
 				}
@@ -518,9 +534,7 @@ namespace Alex.GameStates.Playing
 		{
 			args.Camera = World.Camera;
 
-			FpsCounter.Update();
-			
-			SkyRenderer.Draw(args);
+            SkyRenderer.Draw(args);
 
 			World.Render(args);
 

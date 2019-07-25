@@ -12,6 +12,7 @@ using Alex.API.Utils;
 using Alex.Entities;
 using Alex.GameStates.Gui.Common;
 using Alex.Gamestates.Gui.MainMenu;
+using Alex.GameStates.Gui.MainMenu;
 using Alex.GameStates.Gui.Multiplayer;
 using Alex.Gui;
 using Alex.Gui.Elements;
@@ -93,7 +94,7 @@ namespace Alex.GameStates
 
 			_debugMenu.AddMenuItem("Debug Blockstates", DebugWorldButtonActivated);
 			_debugMenu.AddMenuItem("Debug Flatland", DebugFlatland);
-			_debugMenu.AddMenuItem("Debug Anvil", DebugAnvil);
+			//_debugMenu.AddMenuItem("Debug Anvil", DebugAnvil);
 			_debugMenu.AddMenuItem("Debug Chunk", DebugChunkButtonActivated);
 		//	_debugMenu.AddMenuItem("Debug XBL Login", BedrockEditionButtonPressed);
             _debugMenu.AddMenuItem("Go Back", DebugGoBackPressed);
@@ -142,16 +143,13 @@ namespace Alex.GameStates
 			});
 
 			_debugInfo = new GuiDebugInfo();
-			_debugInfo.AddDebugRight(() =>
-				$"Cursor RenderPosition: {Alex.InputManager.CursorInputListener.GetCursorPosition()} / {Alex.GuiManager.FocusManager.CursorPosition}");
-			_debugInfo.AddDebugRight(() =>
-				$"Cursor Delta: {Alex.InputManager.CursorInputListener.GetCursorPositionDelta()}");
-			_debugInfo.AddDebugRight(() => $"Splash Text Scale: {_splashText.Scale:F3}");
 			_debugInfo.AddDebugRight(() => $"GPU Memory: {API.Extensions.GetBytesReadable(GpuResourceManager.GetMemoryUsage)}");
 			_debugInfo.AddDebugLeft(() => $"FPS: {FpsMonitor.Value:F0}");
 
 			_playerProfileService = Alex.Services.GetService<IPlayerProfileService>();
 			_playerProfileService.ProfileChanged += PlayerProfileServiceOnProfileChanged;
+			
+			Alex.GameStateManager.AddState("options", new OptionsState(_backgroundSkyBox));
 		}
 
 		private bool _mpEnabled = true;
@@ -327,7 +325,7 @@ namespace Alex.GameStates
 
 		private void LoginBtnPressed()
 		{
-			Alex.GameStateManager.SetActiveState(new ProfileSelectionState(_backgroundSkyBox), true);
+			Alex.GameStateManager.SetActiveState(new ProfileSelectionState(_backgroundSkyBox, Alex), true);
 			//Alex.GameStateManager.SetActiveState(new VersionSelectionState());
 		}
 
@@ -358,7 +356,7 @@ namespace Alex.GameStates
 			var pitch = (float)mouseDelta.GetPitch();
 			var yaw = (float)headYaw;
 
-			_playerView.SetEntityRotation(-yaw, -pitch, -headYaw);
+			_playerView.SetEntityRotation(-yaw, pitch, -headYaw);
 
 			KeyboardState s = Keyboard.GetState();
 			if (_prevKeyboardState.IsKeyDown(Keys.M) && s.IsKeyUp(Keys.M))
@@ -428,7 +426,7 @@ namespace Alex.GameStates
 
 		private void DebugAnvil()
 		{
-			Debug(new AnvilWorldProvider(Alex.GameSettings.Anvil)
+			Debug(new AnvilWorldProvider()
 			{
 				MissingChunkProvider = new EmptyWorldGenerator()
 			});

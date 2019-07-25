@@ -30,6 +30,11 @@ namespace Alex.GuiDebugger.Services
 		
 		public void RefreshElements()
 		{
+            if (!_guiDebuggerService.IsUIDebuggingEnabled())
+            {
+                _guiDebuggerService.EnableUIDebugging();
+            }
+
 			var allElementInfos = _guiDebuggerService.GetAllGuiElementInfos();
 
 			var elements = GuiDebuggerData.Elements;
@@ -112,7 +117,12 @@ namespace Alex.GuiDebugger.Services
 			return propValue;
 		}
 
-		private GuiDebuggerElementInfo ConvertGuiElementInfo(GuiElementInfo guiElementInfo)
+        public void HighlightGuiElement(GuiDebuggerElementInfo elementInfo)
+        {
+            _guiDebuggerService.HighlightGuiElement(elementInfo.Id);
+        }
+
+        private GuiDebuggerElementInfo Convert(GuiElementInfo guiElementInfo)
 		{
 			var model = _guiDebuggerElementInfoCache.GetFromCacheOrFetch(guiElementInfo.Id, () => new GuiDebuggerElementInfo()
 			{

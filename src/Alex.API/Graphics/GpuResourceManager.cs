@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using Microsoft.Xna.Framework.Graphics;
 using NLog;
@@ -17,10 +19,12 @@ namespace Alex.API.Graphics
         {
             _instance = new GpuResourceManager();
         }
+
+        public static GpuResourceManager Instance => _instance;
         
-        private Dictionary<long, PooledTexture2D> Textures { get; }
-        private Dictionary<long, PooledVertexBuffer> Buffers { get; }
-        private Dictionary<long, PooledIndexBuffer> IndexBuffers { get; }
+        private ConcurrentDictionary<long, PooledTexture2D> Textures { get; }
+        private ConcurrentDictionary<long, PooledVertexBuffer> Buffers { get; }
+        private ConcurrentDictionary<long, PooledIndexBuffer> IndexBuffers { get; }
         
         private long _bufferId = 0;
       //  private long _estMemoryUsage = 0;
@@ -33,21 +37,67 @@ namespace Alex.API.Graphics
         
      //   private long _textureMemoryUsage = 0;
       //  private long _indexMemoryUsage = 0;
-        
+        private Timer DisposalTimer { get; }
         public GpuResourceManager()
         {
-            Textures = new Dictionary<long, PooledTexture2D>();
-            Buffers = new Dictionary<long, PooledVertexBuffer>();
-            IndexBuffers = new Dictionary<long, PooledIndexBuffer>();
+            Textures = new ConcurrentDictionary<long, PooledTexture2D>();
+            Buffers = new ConcurrentDictionary<long, PooledVertexBuffer>();
+            IndexBuffers = new ConcurrentDictionary<long, PooledIndexBuffer>();
+            
+            DisposalTimer = new Timer(state =>
+            {
+               HandleDisposeQueue();
+            }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(5));
         }
+
+        private object _resourceLock = new object();
+        private List<IGpuResource> _resources = new List<IGpuResource>();
+        private Queue<(bool, IGpuResource)> _buffer = new Queue<(bool, IGpuResource)>();
+        private ConcurrentQueue<IGpuResource> _disposalQueue = new ConcurrentQueue<IGpuResource>();
         
+        public IEnumerable<IGpuResource> GetResources()
+        {
+            lock (_resourceLock)
+            {
+                foreach (var r in _resources.ToArray())
+                {
+                    yield return r;
+                }
+            }
+
+            while (_buffer.TryDequeue(out var resource))
+            {
+                if (resource.Item1)
+                {
+                    _resources.Add(resource.Item2);
+                    yield return resource.Item2;
+                }
+                else
+                {
+                    _resources.Remove(resource.Item2);
+                }
+            }
+        }
+
+        private void HandleDisposeQueue()
+        {
+            while (_disposalQueue.TryDequeue(out IGpuResource resource))
+            {
+                resource.Dispose();
+            }
+        }
+
         public PooledVertexBuffer CreateBuffer(object caller, GraphicsDevice device, VertexDeclaration vertexDeclaration,
             int vertexCount, BufferUsage bufferUsage)
         {
             long id = Interlocked.Increment(ref _bufferId);
             PooledVertexBuffer buffer = new PooledVertexBuffer(this, id, caller, device, vertexDeclaration, vertexCount, bufferUsage);
-            Buffers.Add(id, buffer);
-
+            buffer.Name = $"{caller.ToString()} - {id}";
+            
+            Buffers.TryAdd(id, buffer);
+            
+            _buffer.Enqueue((true, buffer));
+            
             var size = Interlocked.Add(ref _totalMemoryUsage, buffer.MemoryUsage);
             return buffer;
         }
@@ -56,9 +106,11 @@ namespace Alex.API.Graphics
         {
             var id = Interlocked.Increment(ref _textureId);
             var texture = new PooledTexture2D(_instance, id, caller, graphicsDevice, width, height); 
+            texture.Name = $"{caller.ToString()} - {id}";
             
-            Textures.Add(id, texture);
-
+            Textures.TryAdd(id, texture);
+            _buffer.Enqueue((true, texture));
+            
           //  Interlocked.Add(ref _textureMemoryUsage, texture.Height * texture.Width * 4);
           Interlocked.Add(ref _totalMemoryUsage, texture.MemoryUsage);
             return texture;
@@ -68,8 +120,11 @@ namespace Alex.API.Graphics
         {
             var id = Interlocked.Increment(ref _textureId);
             var texture = new PooledTexture2D(_instance, id, caller, graphicsDevice, width, height, mipmap, format); 
+            texture.Name = $"{caller.ToString()} - {id}";
             
-            Textures.Add(id, texture);
+            _buffer.Enqueue((true,texture));
+            
+            Textures.TryAdd(id, texture);
             
         //    Interlocked.Add(ref _textureMemoryUsage, texture.Height * texture.Width * 4);
         Interlocked.Add(ref _totalMemoryUsage, texture.MemoryUsage);
@@ -80,8 +135,11 @@ namespace Alex.API.Graphics
         {
             var id = Interlocked.Increment(ref _textureId);
             var texture = new PooledTexture2D(_instance, id, caller, graphicsDevice, width, height, mipmap, format, arraySize); 
+            texture.Name = $"{caller.ToString()} - {id}";
             
-            Textures.Add(id, texture);
+            _buffer.Enqueue((true,texture));
+            
+            Textures.TryAdd(id, texture);
             
         //    Interlocked.Add(ref _textureMemoryUsage, texture.Height * texture.Width * 4);
         Interlocked.Add(ref _totalMemoryUsage, texture.MemoryUsage);
@@ -93,8 +151,11 @@ namespace Alex.API.Graphics
         {
             var id = Interlocked.Increment(ref _indexBufferId);
             var buffer = new PooledIndexBuffer(this, id, caller, graphicsDevice, indexElementSize, indexCount, bufferUsage);
+            buffer.Name = $"{caller.ToString()} - {id}";
             
-            IndexBuffers.Add(id, buffer);
+            _buffer.Enqueue((true,buffer));
+            
+            IndexBuffers.TryAdd(id, buffer);
 
             //   Interlocked.Add(ref _indexMemoryUsage, size);
          Interlocked.Add(ref _totalMemoryUsage, buffer.MemoryUsage);
@@ -103,32 +164,43 @@ namespace Alex.API.Graphics
 
         public void Disposed(PooledVertexBuffer buffer)
         {
-            Log.Debug($"Disposing of buffer {buffer.PoolId}, lifetime: {DateTime.UtcNow - buffer.CreatedTime} Creator: {buffer.Owner ?? "N/A"} Memory usage: {Extensions.GetBytesReadable(buffer.MemoryUsage)}");
+            if (!buffer.MarkedForDisposal)
+                Log.Debug($"Incorrectly disposing of buffer {buffer.PoolId}, lifetime: {DateTime.UtcNow - buffer.CreatedTime} Creator: {buffer.Owner ?? "N/A"} Memory usage: {Extensions.GetBytesReadable(buffer.MemoryUsage)}");
 
             //Interlocked.Add(ref _estMemoryUsage, -size);
-            Buffers.Remove(buffer.PoolId);
+            Buffers.Remove(buffer.PoolId, out _);
+            _buffer.Enqueue((false,buffer));
             
             Interlocked.Add(ref _totalMemoryUsage, -buffer.MemoryUsage);
         }
         
         public void Disposed(PooledTexture2D buffer)
         {
-            Log.Debug($"Disposing of texture {buffer.PoolId}, lifetime: {DateTime.UtcNow - buffer.CreatedTime} Creator: {buffer.Owner ?? "N/A"} Memory usage: {Extensions.GetBytesReadable(buffer.MemoryUsage)}");
+            if (!buffer.MarkedForDisposal)
+                Log.Debug($"Incorrectly disposing of texture {buffer.PoolId}, lifetime: {DateTime.UtcNow - buffer.CreatedTime} Creator: {buffer.Owner ?? "N/A"} Memory usage: {Extensions.GetBytesReadable(buffer.MemoryUsage)}");
 
             //Interlocked.Add(ref _estMemoryUsage, -size);
-            Textures.Remove(buffer.PoolId);
+            Textures.Remove(buffer.PoolId, out _);
+            _buffer.Enqueue((false,buffer));
             Interlocked.Add(ref _totalMemoryUsage, -buffer.MemoryUsage);
            // Interlocked.Add(ref _textureMemoryUsage, -(buffer.Height * buffer.Width * 4));
         }
 
         public void Disposed(PooledIndexBuffer buffer)
         {
-            Log.Debug($"Disposing of indexbuffer {buffer.PoolId}, lifetime: {DateTime.UtcNow - buffer.CreatedTime} Creator: {buffer.Owner ?? "N/A"} Memory usage: {Extensions.GetBytesReadable(buffer.MemoryUsage)}");
+            if (!buffer.MarkedForDisposal)
+                Log.Debug($"Incorrectly disposing of indexbuffer {buffer.PoolId}, lifetime: {DateTime.UtcNow - buffer.CreatedTime} Creator: {buffer.Owner ?? "N/A"} Memory usage: {Extensions.GetBytesReadable(buffer.MemoryUsage)}");
 
             //Interlocked.Add(ref _estMemoryUsage, -size);
-            IndexBuffers.Remove(buffer.PoolId);
+            IndexBuffers.Remove(buffer.PoolId, out _);
+            _buffer.Enqueue((false,buffer));
             Interlocked.Add(ref _totalMemoryUsage, -buffer.MemoryUsage);
            // Interlocked.Add(ref _indexMemoryUsage, -size);
+        }
+
+        internal void QueueForDisposal(IGpuResource resource)
+        {
+            _disposalQueue.Enqueue(resource);
         }
         
         public static PooledVertexBuffer GetBuffer(object caller, GraphicsDevice device, VertexDeclaration vertexDeclaration,
@@ -192,6 +264,16 @@ namespace Alex.API.Graphics
             Owner = owner;
         }
 
+        public bool MarkedForDisposal { get; private set; }
+        public void MarkForDisposal()
+        {
+            if (!MarkedForDisposal)
+            {
+                MarkedForDisposal = true;
+                Parent?.QueueForDisposal(this);
+            }
+        }
+        
         protected override void Dispose(bool disposing)
         {
             //  if (!IsDisposed)
@@ -279,6 +361,16 @@ namespace Alex.API.Graphics
             PoolId = id;
             CreatedTime = DateTime.UtcNow;
         }*/
+        
+        public bool MarkedForDisposal { get; private set; }
+        public void MarkForDisposal()
+        {
+            if (!MarkedForDisposal)
+            {
+                MarkedForDisposal = true;
+                Parent?.QueueForDisposal(this);
+            }
+        }
 
         protected override void Dispose(bool disposing)
         {
@@ -298,7 +390,7 @@ namespace Alex.API.Graphics
         {
             get { return (IndexElementSize == IndexElementSize.SixteenBits ? 2 : 4) * IndexCount; }
         }
-        
+
         public PooledIndexBuffer(GpuResourceManager parent, long id, object owner, GraphicsDevice graphicsDevice, IndexElementSize indexElementSize, int indexCount, BufferUsage bufferUsage) : base(graphicsDevice, indexElementSize, indexCount, bufferUsage)
         {
             Parent = parent;
@@ -307,6 +399,16 @@ namespace Alex.API.Graphics
             Owner = owner;
         }
 
+        public bool MarkedForDisposal { get; private set; }
+        public void MarkForDisposal()
+        {
+            if (!MarkedForDisposal)
+            {
+                MarkedForDisposal = true;
+                Parent?.QueueForDisposal(this);
+            }
+        }
+        
         protected override void Dispose(bool disposing)
         {
             Parent?.Disposed(this);
@@ -315,7 +417,7 @@ namespace Alex.API.Graphics
         }
     }
 
-    public interface IGpuResource
+    public interface IGpuResource : IDisposable
     {
         GpuResourceManager Parent { get; }
         DateTime CreatedTime { get; }
@@ -324,5 +426,8 @@ namespace Alex.API.Graphics
         object Owner { get; }
         
         long MemoryUsage { get; }
+
+        bool MarkedForDisposal { get; }
+        void MarkForDisposal();
     }
 }

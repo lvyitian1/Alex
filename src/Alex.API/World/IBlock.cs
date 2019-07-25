@@ -10,6 +10,7 @@ namespace Alex.API.World
 	{
 		bool Solid { get; set; }
 		bool Transparent { get; set; }
+		bool Animated { get; set; }
 		bool Renderable { get; set; }
 		bool HasHitbox { get; set; }
 		float Drag { get; set; }
@@ -20,6 +21,7 @@ namespace Alex.API.World
 		bool IsFullBlock { get; set; }
 		bool RandomTicked { get; set; }
 		bool IsReplacible { get; set; }
+		bool RequiresUpdate { get; set; }
 		//IBlockState BlockState { get; set; }
 
 		double AmbientOcclusionLightValue { get; set; }
@@ -30,9 +32,10 @@ namespace Alex.API.World
 		bool IsSourceBlock { get; set; }
 		IMaterial BlockMaterial { get; set; }
 		float Hardness { get; set; }
-
+		
         bool Tick(IWorld world, Vector3 position);
 		void BlockUpdate(IWorld world, BlockCoordinates position, BlockCoordinates updatedBlock);
+		IBlockState BlockPlaced(IWorld world, IBlockState state, BlockCoordinates position);
 		double GetBreakTime(IItem miningTool);
 
 	}

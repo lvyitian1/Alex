@@ -17,10 +17,11 @@ namespace Alex.Blocks.Minecraft
 
 			IsWater = true;
 			IsSourceBlock = true;
+			Animated = true;
 			//BlockMaterial = Material.Water;
 		}
 
-		public override void BlockPlaced(IWorld world, BlockCoordinates position)
+		/*public override void BlockPlaced(IWorld world, BlockCoordinates position)
 		{
 			if (BlockState != null)
 			{
@@ -34,6 +35,6 @@ namespace Alex.Blocks.Minecraft
 				}
 			}
 			base.BlockPlaced(world, position);
-		}
+		}*/
 	}
 }

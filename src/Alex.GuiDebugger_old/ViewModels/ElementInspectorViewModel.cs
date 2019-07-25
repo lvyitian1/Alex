@@ -48,6 +48,7 @@ namespace Alex.GuiDebugger.ViewModels
             if (ElementInfo != null)
             {
                 _guiDebugDataService.RefreshProperties(ElementInfo);
+                _guiDebugDataService.HighlightGuiElement(ElementInfo);
             }
         }
     }

@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
-using Eto.Forms;
+using System.Threading;
+using Alex.Worlds.Bedrock;
 using log4net;
 using NLog;
 using LogManager = NLog.LogManager;
@@ -39,21 +41,11 @@ namespace Alex
 			//Cef.Initialize(new Settings());
 
 			Log.Info($"Starting...");
-			Application application = null;
-			/*if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-			{
-				application = new Application();
-				var appThread = new Thread(() => application.Run());
-				//appThread.SetApartmentState(ApartmentState.STA);
-				appThread.Start();
-			}*/
 
-			using (var game = new Alex(launchSettings, application))
+			using (var game = new Alex(launchSettings))
 			{
 				game.Run();
 			}
-            
-            application?.Quit();
 		}
 
 		private static void ConfigureNLog(string baseDir)
@@ -133,6 +125,11 @@ namespace Alex
 					nextIsServer = true;
 				}
 
+				if (arg == "--bedrock")
+				{
+					launchSettings.ConnectToBedrock = true;
+				}
+
 				if (arg == "--accessToken")
 				{
 					nextIsaccessToken = true;
@@ -179,11 +176,48 @@ namespace Alex
 		public string AccesToken;
 		public bool ShowConsole = false;
 		public string WorkDir;
+		public bool ConnectToBedrock = false;
 
 		public LaunchSettings()
 		{
 			var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.Create);
 			WorkDir = Path.Combine(appData, "Alex");
         }
+	}
+	
+	public class Testing
+	{
+		private ChunkProcessor _chunkProcessor { get; set; }
+		// private Queue<byte[]> _
+		private byte[][] data;
+
+		public Testing()
+		{
+			_chunkProcessor = new ChunkProcessor(4, false, CancellationToken.None);
+            
+			Random rnd = new Random();
+			var files = Directory.GetFiles("samplechunkdata");
+			data = new byte[files.Length][];
+			for (var index = 0; index < files.Length; index++)
+			{
+				var file = files[index];
+				data[index] = File.ReadAllBytes(file);
+			}
+			//var file = files[rnd.Next() % files.Length - 1];
+
+			//data = File.ReadAllBytes(file);
+		}
+
+
+		public void Run()
+		{
+			Stopwatch sw = Stopwatch.StartNew();
+			for (int i = 0; i < 100000; i++)
+			{
+				_chunkProcessor.HandleChunkData(data[i % data.Length], 0, 0, column => { });
+			}
+			sw.Stop();
+			Console.WriteLine($"Processing 100000 chunks took: {sw.ElapsedMilliseconds}ms");
+		}
 	}
 }

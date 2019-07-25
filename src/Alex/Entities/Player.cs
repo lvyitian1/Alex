@@ -40,12 +40,17 @@ namespace Alex.Entities
 		{
 		//	DoRotationCalculations = false;
 			PlayerIndex = playerIndex;
-		    Controller = new PlayerController(graphics, world, alex.GameSettings, alex.InputManager, this, playerIndex); 
+		    Controller = new PlayerController(graphics, world, alex.InputManager, this, playerIndex); 
 		    NoAi = false;
 
 			Inventory = new Inventory(46);
 			Inventory.SelectedHotbarSlotChanged += SelectedHotbarSlotChanged;
-			MovementSpeed = 0.1;
+			MovementSpeed = 4.317f;
+			FlyingSpeed = 10.89f;
+
+			SnapHeadYawRotationOnMovement = false;
+
+			RenderEntity = true;
 		}
 
 	    private void SelectedHotbarSlotChanged(object sender, SelectedSlotChangedEventArgs e)
@@ -153,6 +158,14 @@ namespace Alex.Entities
 						handledClick = HandleRightClick(Inventory.OffHand, 1);
 					}
 
+					if (!handledClick)
+					{
+						var flooredAdj = AdjacentRaytrace.Floor();
+						var remainder = new Vector3(AdjacentRaytrace.X - flooredAdj.X, AdjacentRaytrace.Y - flooredAdj.Y, AdjacentRaytrace.Z - flooredAdj.Z);
+						Network?.BlockPlaced(Raytraced, GetTargetFace(), 0, remainder);
+
+						handledClick = true;
+					}
 				}
             }
 			else if (_destroyingBlock)

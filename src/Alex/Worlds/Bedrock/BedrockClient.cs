@@ -85,16 +85,17 @@ namespace Alex.Worlds.Bedrock
         private DedicatedThreadPool _threadPool;
         
         public PlayerProfile PlayerProfile { get; }
+        private CancellationTokenSource CancellationTokenSource { get; }
 		public BedrockClient(Alex alex, IPEndPoint endpoint, PlayerProfile playerProfile, DedicatedThreadPool threadPool, BedrockWorldProvider wp) : base(endpoint,
 			playerProfile.Username, threadPool)
 		{
 			PlayerProfile = playerProfile;
-	        
+			CancellationTokenSource = new CancellationTokenSource();
+			
             Alex = alex;
 			WorldProvider = wp;
 			ConnectionAcceptedWaitHandle = new ManualResetEventSlim(false);
-			MessageDispatcher = new McpeClientMessageDispatcher(new BedrockClientPacketHandler(this, alex));
-			IsEmulator = true;
+			MessageDispatcher = new McpeClientMessageDispatcher(new BedrockClientPacketHandler(this, alex, CancellationTokenSource.Token));
 			CurrentLocation = new MiNET.Utils.PlayerLocation(0,0,0);
 			OptionsProvider = alex.Services.GetService<IOptionsProvider>();
 			XblmsaService = alex.Services.GetService<XBLMSAService>();
@@ -146,11 +147,10 @@ namespace Alex.Worlds.Bedrock
         public override void OnConnectionRequestAccepted()
 		{
 			ConnectionAcceptedWaitHandle.Set();
-
-            Thread.Sleep(50);
+			
             SendNewIncomingConnection();
             //_connectedPingTimer = new Timer(state => SendConnectedPing(), null, 1000, 1000);
-            Thread.Sleep(50);
+
             SendAlexLogin(Username);
         }
 
@@ -202,7 +202,7 @@ namespace Alex.Worlds.Bedrock
                     RandomNonce = new Random().Next(),
                 };
 
-                certChain = EncodeJwt(certificateData, b64Key, signKey, IsEmulator);
+                certChain = EncodeJwt(certificateData, b64Key, signKey);
             }
 
             var skinData = EncodeSkinJwt(clientKey, signKey, username, b64Key);
@@ -246,15 +246,9 @@ namespace Alex.Worlds.Bedrock
             return ECDsa.Create(signParam);
         }
 
-        private byte[] EncodeJwt(CertificateData certificateData, string b64Key, ECDsa signKey, bool isEmulator)
+        private byte[] EncodeJwt(CertificateData certificateData, string b64Key, ECDsa signKey)
         {
-           // long iat = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-           // long exp = DateTimeOffset.UtcNow.AddDays(1).ToUnixTimeSeconds();
-
-            //ECDsa signKey = ConvertToSingKeyFormat(newKey);
-         //   b64Key = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(newKey.Public).GetEncoded().EncodeBase64();
-
-            string val = JWT.Encode(certificateData, signKey, JwsAlgorithm.ES384, new Dictionary<string, object> { { "x5u", b64Key } }, new JwtSettings()
+	        string val = JWT.Encode(certificateData, signKey, JwsAlgorithm.ES384, new Dictionary<string, object> { { "x5u", b64Key } }, new JwtSettings()
             {
                 JsonMapper = new JWTMapper()
             });
@@ -310,15 +304,10 @@ namespace Alex.Worlds.Bedrock
 	""IsAlex"": 1
 }}";
 
-         //  ECDsa signKey = ConvertToSingKeyFormat(newKey);
-           // string b64Key = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(newKey.Public).GetEncoded().EncodeBase64();
-
             string val = JWT.Encode(skinData, signKey, JwsAlgorithm.ES384, new Dictionary<string, object> { { "x5u", x5u } }, new JwtSettings()
             {
                 JsonMapper = new JWTMapper()
             });
-
-          //  Log.Warn(JWT.Payload(val));
 
             return Encoding.UTF8.GetBytes(val);
         }
@@ -459,6 +448,26 @@ namespace Alex.Worlds.Bedrock
 		    }
 	    }
 
+	    public void WorldInteraction(BlockCoordinates position, BlockFace face, int hand, Vector3 cursorPosition)
+	    {
+		    var packet = McpeInventoryTransaction.CreateObject();
+		    packet.transaction = new Transaction()
+		    {
+			    ActionType = (int)McpeInventoryTransaction.ItemUseAction.Use,
+			    ClickPosition =
+				    new System.Numerics.Vector3(cursorPosition.X, cursorPosition.Y, cursorPosition.Z),
+			    TransactionType = McpeInventoryTransaction.TransactionType.ItemUse,
+			    EntityId = NetworkEntityId,
+			    Position = new MiNET.Utils.BlockCoordinates(position.X, position.Y, position.Z),
+			    Face = (int)face,
+                
+			    //Item = MiNET.Items.ItemFactory.GetItem()
+
+		    };
+
+		    SendPacket(packet);
+	    }
+
 	    public void UseItem(int hand)
 		{
 			Log.Warn("TODO: Implement UseItem");
@@ -471,6 +480,7 @@ namespace Alex.Worlds.Bedrock
 
 		public void Close()
 		{
+			CancellationTokenSource?.Cancel();
 			SendDisconnectionNotification();
 
 			Task.Delay(500).ContinueWith(task => { base.StopClient(); });

@@ -24,18 +24,16 @@ namespace Alex.GameStates.Playing
 
         private GraphicsDevice Graphics { get; }
         private World World { get; }
-        private Settings GameSettings { get; }
 
-		private Player Player { get; }
+        private Player Player { get; }
 		private InputManager GlobalInputManager { get; }
 
-		public PlayerController(GraphicsDevice graphics, World world, Settings settings, InputManager inputManager, Player player, PlayerIndex playerIndex)
+		public PlayerController(GraphicsDevice graphics, World world, InputManager inputManager, Player player, PlayerIndex playerIndex)
 		{
 			Player = player;
             Graphics = graphics;
             World = world;
-            GameSettings = settings;
-			PlayerIndex = playerIndex;
+            PlayerIndex = playerIndex;
 
             IsFreeCam = true;
 
@@ -112,16 +110,16 @@ namespace Alex.GameStates.Playing
 			}
 			else if (Player.IsSprinting && !Player.IsSneaking)
 			{	
-				modifier = 1.30000001192092896f;
+				modifier = 1.29997683577f;
 			    //speedFactor *= 0.2806f; 
 		    }
 		    else if (Player.IsSneaking && !Player.IsSprinting)
 		    {
-			    modifier = 0.1f;
+			    modifier = 0.29997683576f;
 		    }
 
 		//	float speedFactor = (((float) Player.MovementSpeed) * modifier);
-		    float speedFactor = ((float) Player.MovementSpeed * modifier);
+		    float speedFactor = (Player.IsFlying ? (float)Player.FlyingSpeed : (float) Player.MovementSpeed) * modifier;
 
 			if (InputManager.IsDown(InputCommand.MoveForwards))
 			{
@@ -156,8 +154,8 @@ namespace Alex.GameStates.Playing
 
 			if (Player.IsFlying)
 			{
-				speedFactor *= 1f + (float)Player.FlyingSpeed;
-				speedFactor *= 2.5f;
+				//speedFactor *= 1f + (float)Player.FlyingSpeed;
+				//speedFactor *= 2.5f;
 
 				if (InputManager.IsDown(InputCommand.MoveUp))
 					moveVector.Y += 1;
@@ -185,7 +183,7 @@ namespace Alex.GameStates.Playing
 						if (Player.KnownPosition.OnGround && Math.Abs(Math.Floor(Player.KnownPosition.Y) - Player.KnownPosition.Y) < 0.001f)
 						{
 						//	moveVector.Y += 42f;
-							Player.Velocity += new Vector3(0f, 0.42f, 0f);// //, 0);
+							Player.Velocity += new Vector3(0f, 2.25f, 0f);// //, 0);
 						}
 					}
 				}
@@ -203,10 +201,36 @@ namespace Alex.GameStates.Playing
 				}
 			}
 
-			if (moveVector != Vector3.Zero)
+		//	if (moveVector != Vector3.Zero)
 			{
+				var velocity = moveVector * speedFactor;
+				if (Player.IsFlying)
+				{
+					if ((Player.Velocity * new Vector3(1, 1, 1)).Length() < velocity.Length())
+					{
+						var old = Player.Velocity;
+						Player.Velocity += new Vector3(velocity.X - old.X, velocity.Y - old.Y, velocity.Z - old.Z);
+					}
+					else
+					{
+						Player.Velocity = new Vector3(velocity.X, velocity.Y, velocity.Z);
+					}
+				}
+				else
+				{
+					if ((Player.Velocity * new Vector3(1, 0, 1)).Length() < velocity.Length())
+					{
+						var old = Player.Velocity;
+						Player.Velocity += new Vector3(velocity.X - old.X, 0, velocity.Z - old.Z);
+					}
+					else
+					{
+						Player.Velocity = new Vector3(velocity.X, Player.Velocity.Y, velocity.Z);
+					}
+				}
+
 				//speedFactor *= 20;
-				Player.Velocity += (moveVector * speedFactor);// new Vector3(moveVector.X * speedFactor, moveVector.Y * (speedFactor), moveVector.Z * speedFactor);
+				//Player.Velocity += (moveVector * speedFactor);// new Vector3(moveVector.X * speedFactor, moveVector.Y * (speedFactor), moveVector.Z * speedFactor);
 			}
 
 		    LastSpeedFactor = speedFactor;

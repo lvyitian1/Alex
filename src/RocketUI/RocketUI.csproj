@@ -2,7 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Platforms>AnyCPU;x64;x86</Platforms>
+    <Platforms>AnyCPU;x64</Platforms>
+    <Configurations>Debug;Release;Appveyor</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <LangVersion>8</LangVersion>
+    <MonoGamePlatform>DesktopGL</MonoGamePlatform>
   </PropertyGroup>
 
   <ItemGroup>
