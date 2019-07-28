@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
@@ -132,8 +133,22 @@ namespace Alex.API.Data.Options
                 existingValue.SetValue(value);
             }
 
+            Type valueType = null;
             var d1 = typeof(OptionsProperty<>);
-            Type[] typeArgs = { value.GetType() };
+
+            if (objectType.IsGenericType)
+            {
+                var generic = objectType.GetGenericTypeDefinition();
+                if (generic == d1)
+                {
+                    valueType = objectType.GetGenericArguments().First();
+                }
+            }
+
+            if (valueType == null)
+                valueType = value?.GetType();
+
+            Type[] typeArgs = { valueType };
             var makeme = d1.MakeGenericType(typeArgs);
             return (IOptionsProperty) Activator.CreateInstance(makeme);
             

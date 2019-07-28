@@ -27,6 +27,7 @@ namespace Alex.API.Gui
         [DebuggerVisible] Size RenderSize { get; }
         [DebuggerVisible] Rectangle RenderBounds { get; }
         [DebuggerVisible] bool ClipToBounds { get; }
+        [DebuggerVisible] bool IsVisible { get; }
 
 
 
@@ -44,7 +45,7 @@ namespace Alex.API.Gui
         bool TryFindParent(GuiElementPredicate predicate, out IGuiElement parentElement);
         bool TryFindParentOfType<TGuiElement>(GuiElementPredicate<TGuiElement> predicate, out TGuiElement parentElement) where TGuiElement : class, IGuiElement;
 
-        bool TryTranscendChildren(GuiElementPredicate predicate, bool recurse = true);
+        bool TryTranscendChildren(GuiElementPredicate predicate, out IGuiElement matchedElement, bool recurse = true);
 
         bool TryFindDeepestChild(GuiElementPredicate predicate, out IGuiElement childElement);
         bool TryFindDeepestChildOfType<TGuiElement>(GuiElementPredicate<TGuiElement> predicate, out TGuiElement childElement) where TGuiElement : class, IGuiElement;

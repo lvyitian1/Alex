@@ -10,7 +10,7 @@ using RocketUI;
 
 namespace Alex.API.Gui.Elements.Layout
 {
-	public class GuiScrollableStackContainer : GuiStackContainer
+	public class GuiScrollableStackContainer : GuiStackContainer, IScrollable
 	{
 		private static readonly ILogger Log = LogManager.GetCurrentClassLogger();
 		
@@ -97,8 +97,8 @@ namespace Alex.API.Gui.Elements.Layout
 
 			//Log.Info($"{GetType().Name}.ScrollOffset.Changed {{ScrollOffset=({oldValue} => {newValue}), RenderTransform=({prevTransform} => {_childRenderTransform})}}");
 			//Debug.WriteLine($"{GetType().Name}.ScrollOffset.Changed {{ScrollOffset=({oldValue} => {newValue}), RenderTransform=({prevTransform} => {_childRenderTransform})}}");
-			Log.Info($"{GetType().Name}.ScrollOffset.Changed {{ScrollOffset=({oldValue} => {newValue})}}");
-			Debug.WriteLine($"{GetType().Name}.ScrollOffset.Changed {{ScrollOffset=({oldValue} => {newValue})}}");
+			//Log.Info($"{GetType().Name}.ScrollOffset.Changed {{ScrollOffset=({oldValue} => {newValue})}}");
+			//Debug.WriteLine($"{GetType().Name}.ScrollOffset.Changed {{ScrollOffset=({oldValue} => {newValue})}}");
 		}
 
 		protected override void OnAfterMeasure()
@@ -108,7 +108,6 @@ namespace Alex.API.Gui.Elements.Layout
 
 			VerticalScrollBar.MaxScrollOffset   = Math.Max(0, sizeDiff.Height);
 			HorizontalScrollBar.MaxScrollOffset = Math.Max(0, sizeDiff.Width);
-
 		}
 
 		protected override void OnUpdate(GameTime gameTime)
@@ -150,6 +149,7 @@ namespace Alex.API.Gui.Elements.Layout
 
 			HorizontalScrollBar.IsVisible = _hasHorizontalScroll;
 
+
 			ScrollOffset = new Vector2(HorizontalScrollBar.ScrollOffsetValue, VerticalScrollBar.ScrollOffsetValue);
 		}
 
@@ -158,6 +158,8 @@ namespace Alex.API.Gui.Elements.Layout
 			//var contentRect = new Rectangle(finalRect.Location  - new Thickness((int) ScrollOffset.X, (int)ScrollOffset.Y, 0, 0), finalRect.Size + new Thickness((int)ScrollOffset.X, (int)ScrollOffset.Y, 0, 0));
 			var contentRect = new Rectangle(finalRect.Location, Size.Max(finalRect.Size, ContentSize));
 			contentRect.Offset(-ScrollOffset);
+			
+			contentRect.Size = new Point(VerticalScrollBar.IsVisible ? contentRect.Width - VerticalScrollBar.Width : contentRect.Width, HorizontalScrollBar.IsVisible ? contentRect.Height - HorizontalScrollBar.Height : contentRect.Height);
 
 			base.ArrangeChildrenCore(contentRect, children);
 			
@@ -216,6 +218,46 @@ namespace Alex.API.Gui.Elements.Layout
 			}
 
 			return baseVal;
+		}
+
+		public bool CanScrollUp(bool alternateDirection = false)
+		{
+			if (alternateDirection)
+				return HorizontalScrollBar.IsVisible && HorizontalScrollBar.CanScrollUp;
+			else
+				return VerticalScrollBar.IsVisible && VerticalScrollBar.CanScrollUp;
+		}
+
+		public bool CanScrollDown(bool alternateDirection = false)
+		{
+			if (alternateDirection)
+				return HorizontalScrollBar.IsVisible && HorizontalScrollBar.CanScrollDown;
+			else
+				return VerticalScrollBar.IsVisible && VerticalScrollBar.CanScrollDown;
+		}
+
+		public void InvokeScrollUp(bool alternateDirection = false)
+		{
+			if (alternateDirection)
+			{
+				HorizontalScrollBar.ScrollOffsetValue -= HorizontalScrollBar.ScrollButtonStep;
+			}
+			else
+			{
+				VerticalScrollBar.ScrollOffsetValue -= VerticalScrollBar.ScrollButtonStep;
+			}
+		}
+
+		public void InvokeScrollDown(bool alternateDirection = false)
+		{
+			if (alternateDirection)
+			{
+				HorizontalScrollBar.ScrollOffsetValue += HorizontalScrollBar.ScrollButtonStep;
+			}
+			else
+			{
+				VerticalScrollBar.ScrollOffsetValue += VerticalScrollBar.ScrollButtonStep;
+			}
 		}
 	}
 }

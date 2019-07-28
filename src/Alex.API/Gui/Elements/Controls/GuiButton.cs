@@ -24,8 +24,11 @@ namespace Alex.API.Gui.Elements.Controls
         protected GuiTextElement TextElement { get; }
         protected Action Action { get; }
 
+		public bool InvokeOnPress { get; set; } = true;
+
 		public TextColor DisabledTextColor = TextColor.DarkGray;
 		public TextColor EnabledTextColor = TextColor.White;
+
 		public GuiButton(Action action = null) : this(string.Empty, action)
 	    {
 			
@@ -142,7 +145,18 @@ namespace Alex.API.Gui.Elements.Controls
 		protected override void OnCursorPressed(Point cursorPosition)
 		{
 			//Focus();
-			Action?.Invoke();
+			if(InvokeOnPress)
+				Action?.Invoke();
+		}
+
+		protected override void OnCursorDown(Point cursorPosition)
+		{
+			base.OnCursorDown(cursorPosition);
+
+			if (!InvokeOnPress)
+			{
+				Action?.Invoke();
+			}
 		}
 
 		protected override void OnDraw(GuiSpriteBatch graphics, GameTime gameTime)

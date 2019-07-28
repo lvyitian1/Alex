@@ -46,6 +46,11 @@
         LeftClick,
         MiddleClick,
         RightClick,
+
+		ScrollUp,
+		ScrollDown,
+		ScrollAlternateModifier,
+
         Exit,
 
         A,

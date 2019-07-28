@@ -47,6 +47,8 @@ namespace Alex.API.Input.Listeners
 	        RegisterMap(InputCommand.Left, Keys.Left);
 	        RegisterMap(InputCommand.Up, Keys.Up);
 	        RegisterMap(InputCommand.Down, Keys.Down);
+
+	        RegisterMap(InputCommand.ScrollAlternateModifier, Keys.LeftAlt);
 		}
 
         protected override KeyboardState GetCurrentState()

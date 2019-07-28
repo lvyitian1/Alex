@@ -46,7 +46,10 @@ namespace Alex.API.Gui.Elements.Controls
 		private int         _maxScrollOffset = 0;
 		private int         _scrollOffsetValue;
 
-		public int ScrollButtonStep { get; set; } = 5;
+		public bool CanScrollUp { get; private set; }
+		public bool CanScrollDown { get; private set; }
+
+		public int ScrollButtonStep { get; set; } = 25;
 
 		public int ScrollOffsetValue
 		{
@@ -104,6 +107,8 @@ namespace Alex.API.Gui.Elements.Controls
 				HighlightedBackground = GuiTextures.ScrollBarDownButtonHover,
 				FocusedBackground     = GuiTextures.ScrollBarDownButtonFocused,
 				DisabledBackground    = GuiTextures.ScrollBarDownButtonDisabled,
+				
+				InvokeOnPress = false
 			});
 
 			AddChild(ScrollUpButton = new GuiButton(() => ScrollOffsetValue -= ScrollButtonStep)
@@ -115,7 +120,9 @@ namespace Alex.API.Gui.Elements.Controls
 				Background            = GuiTextures.ScrollBarUpButtonDefault,
 				HighlightedBackground = GuiTextures.ScrollBarUpButtonHover,
 				FocusedBackground     = GuiTextures.ScrollBarUpButtonFocused,
-				DisabledBackground    = GuiTextures.ScrollBarUpButtonDisabled
+				DisabledBackground    = GuiTextures.ScrollBarUpButtonDisabled,
+
+				InvokeOnPress = false
 			});
 
 			AddChild(Track = new GuiButton()
@@ -183,6 +190,8 @@ namespace Alex.API.Gui.Elements.Controls
 
 				ScrollUpButton.Anchor = Alignment.TopFill;
 				ScrollUpButton.Margin = new Thickness(0, 0, 0, 10);
+				
+				Track.Anchor = Alignment.TopFill;
 			}
 			else
 			{
@@ -191,6 +200,8 @@ namespace Alex.API.Gui.Elements.Controls
 
 				ScrollUpButton.Anchor = Alignment.FillLeft;
 				ScrollUpButton.Margin = new Thickness(0, 0, 10, 0);
+
+				Track.Anchor = Alignment.FillLeft;
 
 				ScrollUpButton.Rotation   = 270f;
 				ScrollDownButton.Rotation = 270f;
@@ -216,10 +227,13 @@ namespace Alex.API.Gui.Elements.Controls
 					Track.Height = trackSize;
 				else
 					Track.Width = trackSize;
-
+				
+				Track.Margin = Thickness.Zero;
+				
 				Track.Enabled            = false;
-				ScrollUpButton.Enabled   = false;
-				ScrollDownButton.Enabled = false;
+
+				ScrollUpButton.Enabled   = CanScrollUp = false;
+				ScrollDownButton.Enabled = CanScrollDown = false;
 			}
 			else
 			{
@@ -231,10 +245,23 @@ namespace Alex.API.Gui.Elements.Controls
 				else
 					Track.Width = size;
 
+				var trackMaxOffset = trackSize - size;
+				var trackOffset = (int)((double) trackMaxOffset *
+								  (double) ((double) ScrollOffsetValue / (double) MaxScrollOffset));
+
+				if (Orientation == Orientation.Vertical)
+				{
+					Track.Margin = new Thickness(0, trackOffset, 0, 0);
+				}
+				else
+				{
+					Track.Margin = new Thickness(trackOffset, 0, 0, 0);
+				}
+
 				Track.Enabled = true;
 
-				ScrollUpButton.Enabled   = (ScrollOffsetValue > 0);
-				ScrollDownButton.Enabled = (ScrollOffsetValue < MaxScrollOffset);
+				ScrollUpButton.Enabled   = CanScrollUp = (ScrollOffsetValue > 0);
+				ScrollDownButton.Enabled = CanScrollDown = (ScrollOffsetValue < MaxScrollOffset);
 			}
 		}
 	}

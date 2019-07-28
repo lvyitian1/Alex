@@ -8,232 +8,273 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Alex.API.Gui
 {
-    public class GuiFocusHelper
-    {
-        private GuiManager GuiManager { get; }
-        private GraphicsDevice GraphicsDevice { get; }
-        private InputManager InputManager { get; }
+	public class GuiFocusHelper
+	{
+		private GuiManager     GuiManager     { get; }
+		private GraphicsDevice GraphicsDevice { get; }
+		private InputManager   InputManager   { get; }
 
-        private ICursorInputListener CursorInputListener => InputManager.CursorInputListener;
+		private ICursorInputListener CursorInputListener => InputManager.CursorInputListener;
 
-        private Viewport Viewport => GraphicsDevice.Viewport;
+		private Viewport Viewport => GraphicsDevice.Viewport;
 
-        private Vector2 _previousCursorPosition;
-        public Vector2 CursorPosition { get; private set; }
+		private Vector2 _previousCursorPosition;
+		public  Vector2 CursorPosition { get; private set; }
 
-        
-        private IGuiControl _highlightedElement;
-        private IGuiControl _focusedElement;
 
-        public IGuiControl HighlightedElement
-        {
-            get => _highlightedElement;
-            set
-            {
-                _highlightedElement?.InvokeHighlightDeactivate();
-                _highlightedElement = value;
-                _highlightedElement?.InvokeHighlightActivate();
-            }
-        }
-        public IGuiControl FocusedElement
-        {
-            get => _focusedElement;
-            set
-            {
-                _focusedElement?.InvokeFocusDeactivate();
-                _focusedElement = value;
-                _focusedElement?.InvokeFocusActivate();
-            }
-        }
+		private IGuiControl _highlightedElement;
+		private IGuiControl _focusedElement;
 
-        private IGuiFocusContext _activeFocusContext;
-        public IGuiFocusContext ActiveFocusContext
-        {
-            get => _activeFocusContext;
-            set
-            {
-                if (_activeFocusContext == value) return;
+		public IGuiControl HighlightedElement
+		{
+			get => _highlightedElement;
+			set
+			{
+				_highlightedElement?.InvokeHighlightDeactivate();
+				_highlightedElement = value;
+				_highlightedElement?.InvokeHighlightActivate();
+			}
+		}
 
-                _activeFocusContext?.HandleContextInactive();
-                _activeFocusContext = value;
-                _activeFocusContext?.HandleContextActive();
+		public IGuiControl FocusedElement
+		{
+			get => _focusedElement;
+			set
+			{
+				_focusedElement?.InvokeFocusDeactivate();
+				_focusedElement = value;
+				_focusedElement?.InvokeFocusActivate();
+			}
+		}
 
-            }
-        }
+		private IGuiFocusContext _activeFocusContext;
 
-        public GuiFocusHelper(GuiManager guiManager, InputManager inputManager, GraphicsDevice graphicsDevice)
-        {
-            GuiManager = guiManager;
-            InputManager = inputManager;
-            GraphicsDevice = graphicsDevice;
-        }
-        
+		public IGuiFocusContext ActiveFocusContext
+		{
+			get => _activeFocusContext;
+			set
+			{
+				if (_activeFocusContext == value) return;
 
-        public void Update(GameTime gameTime)
-        {
-            UpdateHighlightedElement();
-            UpdateInput();
-        }
+				_activeFocusContext?.HandleContextInactive();
+				_activeFocusContext = value;
+				_activeFocusContext?.HandleContextActive();
+			}
+		}
 
-        public void OnTextInput(object sender, TextInputEventArgs args)
-        {
-            //if (args.Key == Keys.None) return;
+		public GuiFocusHelper(GuiManager guiManager, InputManager inputManager, GraphicsDevice graphicsDevice)
+		{
+			GuiManager     = guiManager;
+			InputManager   = inputManager;
+			GraphicsDevice = graphicsDevice;
+		}
 
-            if (args.Key != Keys.None && TryGetElement(e => e is IGuiControl c && c.AccessKey == args.Key, out var controlByAccessKey))
-            {
-                FocusedElement = controlByAccessKey as IGuiControl;
-                return;
-            }
 
-	        if (FocusedElement == null || !FocusedElement.InvokeKeyInput(args.Character, args.Key))
-	        {
-		        if (args.Key == Keys.Tab)
-		        {
-			        // Switch to next control
-			        var activeTabIndex = FocusedElement?.TabIndex ?? -1;
-			        var nextControl = GetNextTabIndexedControl(activeTabIndex);
+		public void Update(GameTime gameTime)
+		{
+			UpdateHighlightedElement();
+			UpdateInput();
+			UpdateScrollables();
+		}
 
-			        if (nextControl == null)
-			        {
-				        nextControl = GetNextTabIndexedControl(-1);
-			        }
+		public void OnTextInput(object sender, TextInputEventArgs args)
+		{
+			//if (args.Key == Keys.None) return;
 
-			        FocusedElement = nextControl;
-		        }
-		        else if (args.Key == Keys.Escape)
-		        {
-			        // Exit focus
-			        FocusedElement = null;
-		        }
-		        else
-		        {
+			if (args.Key != Keys.None &&
+				TryGetElement(e => e is IGuiControl c && c.AccessKey == args.Key, out var controlByAccessKey))
+			{
+				FocusedElement = controlByAccessKey as IGuiControl;
+				return;
+			}
 
-		        }
-	        }
-        }
+			if (FocusedElement == null || !FocusedElement.InvokeKeyInput(args.Character, args.Key))
+			{
+				if (args.Key == Keys.Tab)
+				{
+					// Switch to next control
+					var activeTabIndex = FocusedElement?.TabIndex ?? -1;
+					var nextControl    = GetNextTabIndexedControl(activeTabIndex);
 
-        private void UpdateHighlightedElement()
-        {
-            var rawCursorPosition = CursorInputListener.GetCursorPosition();
+					if (nextControl == null)
+					{
+						nextControl = GetNextTabIndexedControl(-1);
+					}
 
-            var cursorPosition = GuiManager.GuiRenderer.Unproject(rawCursorPosition);
+					FocusedElement = nextControl;
+				}
+				else if (args.Key == Keys.Escape)
+				{
+					// Exit focus
+					FocusedElement = null;
+				}
+				else
+				{
+				}
+			}
+		}
 
-            if (Vector2.DistanceSquared(rawCursorPosition, _previousCursorPosition) >= 1)
-            {
-                _previousCursorPosition = CursorPosition;
-                CursorPosition = cursorPosition;
-            }
+		private void UpdateHighlightedElement()
+		{
+			var rawCursorPosition = CursorInputListener.GetCursorPosition();
 
-            IGuiControl newHighlightedElement = null;
+			var cursorPosition = GuiManager.GuiRenderer.Unproject(rawCursorPosition);
 
-            if (TryGetElementAt(CursorPosition, e => e is IGuiControl c && c.Enabled, out var controlMatchingPosition))
-            {
-                newHighlightedElement = controlMatchingPosition as IGuiControl;
-            }
+			if (Vector2.DistanceSquared(rawCursorPosition, _previousCursorPosition) >= 1)
+			{
+				_previousCursorPosition = CursorPosition;
+				CursorPosition          = cursorPosition;
+			}
 
-            if (newHighlightedElement != HighlightedElement)
-            {
-                HighlightedElement?.InvokeCursorLeave(CursorPosition);
-                HighlightedElement = newHighlightedElement;
-                HighlightedElement?.InvokeCursorEnter(CursorPosition);
-            }
-        }
+			IGuiControl newHighlightedElement = null;
 
-        private bool _cursorDown = false;
-        private void UpdateInput()
-        {
-            if (HighlightedElement == null) return;
+			if (TryGetElementAt(CursorPosition, e => e is IGuiControl c && c.Enabled && c.IsVisible, out var controlMatchingPosition))
+			{
+				newHighlightedElement = controlMatchingPosition as IGuiControl;
+			}
 
-            if (CursorInputListener.IsBeginPress(InputCommand.LeftClick))
-            {
-                FocusedElement = HighlightedElement;
-            }
+			if (newHighlightedElement != HighlightedElement)
+			{
+				HighlightedElement?.InvokeCursorLeave(CursorPosition);
+				HighlightedElement = newHighlightedElement;
+				HighlightedElement?.InvokeCursorEnter(CursorPosition);
+			}
+		}
 
-            var isDown = CursorInputListener.IsDown(InputCommand.LeftClick);
-            if (CursorPosition != _previousCursorPosition)
-            {
-                HighlightedElement?.InvokeCursorMove(CursorPosition, _previousCursorPosition, isDown);
-            }
+		private bool _cursorDown = false;
 
-            if (isDown)
-            {
-                HighlightedElement?.InvokeCursorDown(CursorPosition);
-            }
+		private void UpdateInput()
+		{
+			if (HighlightedElement == null) return;
 
-            if (HighlightedElement == FocusedElement && CursorInputListener.IsPressed(InputCommand.LeftClick))
-            {
-                HighlightedElement?.InvokeCursorPressed(CursorPosition);
-            }
+			if (CursorInputListener.IsBeginPress(InputCommand.LeftClick))
+			{
+				FocusedElement = HighlightedElement;
+			}
 
-            if (!isDown && _cursorDown)
-            {
-                HighlightedElement?.InvokeCursorUp(CursorPosition);
-            }
-            
-            _cursorDown = isDown;
-        }
 
-        private bool TryFindNextControl(Vector2 scanVector, out IGuiElement nextControl)
-        {
-            Vector2 scan = CursorPosition + scanVector;
+			var isDown = CursorInputListener.IsDown(InputCommand.LeftClick);
+			if (CursorPosition != _previousCursorPosition)
+			{
+				HighlightedElement?.InvokeCursorMove(CursorPosition, _previousCursorPosition, isDown);
+			}
 
-            while (Viewport.Bounds.Contains(scan))
-            {
-                if (TryGetElementAt(scan, e => true, out var matchedElement))
-                {
-                    if (matchedElement != HighlightedElement)
-                    {
-                        nextControl = matchedElement;
-                        return true;
-                    }
-                }
+			if (isDown)
+			{
+				HighlightedElement?.InvokeCursorDown(CursorPosition);
+			}
 
-                scan += scanVector;
-            }
+			if (HighlightedElement == FocusedElement && CursorInputListener.IsPressed(InputCommand.LeftClick))
+			{
+				HighlightedElement?.InvokeCursorPressed(CursorPosition);
+			}
 
-            nextControl = null;
-            return false;
-        }
+			if (!isDown && _cursorDown)
+			{
+				HighlightedElement?.InvokeCursorUp(CursorPosition);
+			}
 
-        public bool TryGetElementAt(Vector2 position, GuiElementPredicate predicate, out IGuiElement element)
-        {
-            foreach (var screen in GuiManager.Screens.ToArray().Reverse())
-            {
-                if (screen.TryFindDeepestChild(e => e.RenderBounds.Contains(position) && predicate(e), out var matchedChild))
-                {
-                    element = matchedChild;
-                    return true;
-                }
-            }
+			_cursorDown = isDown;
+		}
 
-            element = null;
-            return false;
-        }
+		private void UpdateScrollables()
+		{
+			if (CursorInputListener.IsDown(InputCommand.ScrollUp) &&
+				!CursorInputListener.IsDown(InputCommand.ScrollDown))
+			{
+				var modifier = InputManager.Any(p => p.IsDown(InputCommand.ScrollAlternateModifier));
 
-        private bool TryGetElement(GuiElementPredicate predicate, out IGuiElement element)
-        {
-            foreach (var screen in GuiManager.Screens.ToArray().Reverse())
-            {
-                if (screen.TryFindDeepestChild(predicate, out var matchedChild))
-                {
-                    element = matchedChild;
-                    return true;
-                }
-            }
+				if (TryGetElementAt(CursorPosition, e => e is IScrollable scrollable && scrollable.CanScrollUp(modifier), out var element))
+					((IScrollable)element)?.InvokeScrollUp(modifier);
+			}
 
-            element = null;
-            return false;
-        }
+			if (CursorInputListener.IsDown(InputCommand.ScrollDown) &&
+				!CursorInputListener.IsDown(InputCommand.ScrollUp))
+			{
+				var modifier = InputManager.Any(p => p.IsDown(InputCommand.ScrollAlternateModifier));
 
-        private IGuiControl GetNextTabIndexedControl(int activeIndex)
-        {
-            var allControls = GuiManager.Screens
-                                        .SelectMany(e => e.AllChildren)
-                                        .OfType<IGuiControl>();
+				if (TryGetElementAt(CursorPosition, e => e is IScrollable scrollable && scrollable.CanScrollDown(modifier), out var element))
+					((IScrollable)element)?.InvokeScrollDown(modifier);
+			}
+		}
 
-            return allControls.Where(c => c.TabIndex > activeIndex && activeIndex > -1)
-                              .OrderBy(c => c.TabIndex)
-                              .FirstOrDefault();
-        }
-    }
+		private bool TryFindNextControl(Vector2 scanVector, out IGuiElement nextControl)
+		{
+			Vector2 scan = CursorPosition + scanVector;
+
+			while (Viewport.Bounds.Contains(scan))
+			{
+				if (TryGetElementAt(scan, e => true, out var matchedElement))
+				{
+					if (matchedElement != HighlightedElement)
+					{
+						nextControl = matchedElement;
+						return true;
+					}
+				}
+
+				scan += scanVector;
+			}
+
+			nextControl = null;
+			return false;
+		}
+
+		public bool TryGetFirstElementAt(Vector2 position, GuiElementPredicate predicate, out IGuiElement element)
+		{
+			foreach (var screen in GuiManager.Screens.ToArray().Reverse())
+			{
+				if (screen.TryTranscendChildren(e => e.RenderBounds.Contains(position) && predicate(e),
+											   out var matchedChild))
+				{
+					element = matchedChild;
+					return true;
+				}
+			}
+
+			element = null;
+			return false;
+		}
+		public bool TryGetElementAt(Vector2 position, GuiElementPredicate predicate, out IGuiElement element)
+		{
+			foreach (var screen in GuiManager.Screens.ToArray().Reverse())
+			{
+				if (screen.TryFindDeepestChild(e => e.RenderBounds.Contains(position) && predicate(e),
+											   out var matchedChild))
+				{
+					element = matchedChild;
+					return true;
+				}
+			}
+
+			element = null;
+			return false;
+		}
+
+		private bool TryGetElement(GuiElementPredicate predicate, out IGuiElement element)
+		{
+			foreach (var screen in GuiManager.Screens.ToArray().Reverse())
+			{
+				if (screen.TryFindDeepestChild(predicate, out var matchedChild))
+				{
+					element = matchedChild;
+					return true;
+				}
+			}
+
+			element = null;
+			return false;
+		}
+
+		private IGuiControl GetNextTabIndexedControl(int activeIndex)
+		{
+			var allControls = GuiManager.Screens
+										.SelectMany(e => e.AllChildren)
+										.OfType<IGuiControl>();
+
+			return allControls.Where(c => c.TabIndex > activeIndex && activeIndex > -1)
+							  .OrderBy(c => c.TabIndex)
+							  .FirstOrDefault();
+		}
+	}
 }

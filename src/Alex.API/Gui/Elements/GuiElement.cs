@@ -213,8 +213,9 @@ namespace Alex.API.Gui.Elements
 
 		#region Hierachy Transcending
 
-		public bool TryTranscendChildren(GuiElementPredicate predicate, bool recurse = true)
+		public bool TryTranscendChildren(GuiElementPredicate predicate, out IGuiElement matchedElement, bool recurse = true)
 		{
+			matchedElement = null;
 			if (!HasChildren) return false;
 
 			var children = Children.ToArray();
@@ -224,6 +225,7 @@ namespace Alex.API.Gui.Elements
 			{
 				if (predicate(child))
 				{
+					matchedElement = child;
 					return true;
 				}
 			}
@@ -233,7 +235,7 @@ namespace Alex.API.Gui.Elements
 			// If the children on this level do not match, check their children.
 			foreach (var child in children)
 			{
-				if (child.TryTranscendChildren(predicate, true))
+				if (child.TryTranscendChildren(predicate, out matchedElement, true))
 				{
 					return true;
 				}

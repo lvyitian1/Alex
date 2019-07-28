@@ -378,6 +378,11 @@ namespace Alex.GameStates
 				}
 			}
 
+			if (_prevKeyboardState.IsKeyDown(Keys.F7) && s.IsKeyUp(Keys.F7))
+			{
+				Alex.GameStateManager.SetActiveState<GuiDebugState>();
+			}
+
 			_prevKeyboardState = s;
 		}
 
