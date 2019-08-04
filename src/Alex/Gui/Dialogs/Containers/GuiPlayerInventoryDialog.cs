@@ -29,7 +29,7 @@ namespace Alex.Gui.Dialogs.Containers
 
             if(_guiHotBarInventoryItems.Length != 46) throw new ArgumentOutOfRangeException(nameof(inventory), inventory?.SlotCount ?? 0, "Expected player inventory containing 46 slots.");
 
-            ContentContainer.Background = GuiTextures.InventoryPlayerBackground;
+            ContentContainer.Background = "InventoryPlayerBackground";
             ContentContainer.Width = ContentContainer.MinWidth = ContentContainer.MaxWidth = 176;
             ContentContainer.Height = ContentContainer.MinHeight = ContentContainer.MaxHeight = 166;
             ContentContainer.AutoSizeMode = AutoSizeMode.None;

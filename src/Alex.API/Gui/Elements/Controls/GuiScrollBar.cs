@@ -84,8 +84,8 @@ namespace Alex.API.Gui.Elements.Controls
 		public GuiScrollBar()
 		{
 			Background               = Color.Black;
-			ThumbBackground          = GuiTextures.ButtonDefault;
-			ThumbHighlightBackground = GuiTextures.ButtonHover;
+			ThumbBackground          = "ButtonDefault";
+			ThumbHighlightBackground = "ButtonHover";
 
 			Background.RepeatMode               = TextureRepeatMode.NoScaleCenterSlice;
 			ThumbBackground.RepeatMode          = TextureRepeatMode.NoScaleCenterSlice;
@@ -103,11 +103,11 @@ namespace Alex.API.Gui.Elements.Controls
 				Height = 10,
 				Margin = new Thickness(0, 0, 0, 0),
 
-				Background            = GuiTextures.ScrollBarDownButtonDefault,
-				HighlightedBackground = GuiTextures.ScrollBarDownButtonHover,
-				FocusedBackground     = GuiTextures.ScrollBarDownButtonFocused,
-				DisabledBackground    = GuiTextures.ScrollBarDownButtonDisabled,
-				
+				Background            = "ScrollBarDownButtonDefault",
+				HighlightedBackground = "ScrollBarDownButtonHover",
+				FocusedBackground     = "ScrollBarDownButtonFocused",
+				DisabledBackground    = "ScrollBarDownButtonDisabled",
+
 				InvokeOnPress = false
 			});
 
@@ -117,10 +117,11 @@ namespace Alex.API.Gui.Elements.Controls
 				Height = 10,
 				Margin = new Thickness(0, 0, 0, 0),
 
-				Background            = GuiTextures.ScrollBarUpButtonDefault,
-				HighlightedBackground = GuiTextures.ScrollBarUpButtonHover,
-				FocusedBackground     = GuiTextures.ScrollBarUpButtonFocused,
-				DisabledBackground    = GuiTextures.ScrollBarUpButtonDisabled,
+				Background            = "ScrollBarUpButtonDefault",
+				HighlightedBackground = "ScrollBarUpButtonHover",
+				FocusedBackground     = "ScrollBarUpButtonFocused",
+				DisabledBackground    = "ScrollBarUpButtonDisabled",
+
 
 				InvokeOnPress = false
 			});
@@ -131,10 +132,10 @@ namespace Alex.API.Gui.Elements.Controls
 				MinHeight = 10,
 				Margin    = new Thickness(0, 0, 0, 0),
 
-				Background            = GuiTextures.ScrollBarTrackDefault,
-				HighlightedBackground = GuiTextures.ScrollBarTrackHover,
-				FocusedBackground     = GuiTextures.ScrollBarTrackFocused,
-				DisabledBackground    = GuiTextures.ScrollBarTrackDisabled
+				Background            = "ScrollBarTrackDefault",
+				HighlightedBackground = "ScrollBarTrackHover",
+				FocusedBackground     = "ScrollBarTrackFocused",
+				DisabledBackground    = "ScrollBarTrackDisabled"
 			});
 
 			Track.Background.RepeatMode            = TextureRepeatMode.NoScaleCenterSlice;

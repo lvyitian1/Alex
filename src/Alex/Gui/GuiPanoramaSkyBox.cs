@@ -40,12 +40,12 @@ namespace Alex.Gui
         {
 	        _textures = new Texture2D[]
 	        {
-		        renderer.GetTexture2D(GuiTextures.Panorama0),
-		        renderer.GetTexture2D(GuiTextures.Panorama1),
-		        renderer.GetTexture2D(GuiTextures.Panorama2),
-		        renderer.GetTexture2D(GuiTextures.Panorama3),
-		        renderer.GetTexture2D(GuiTextures.Panorama4),
-		        renderer.GetTexture2D(GuiTextures.Panorama5),
+		        renderer.GetTexture2D("Panorama0"),
+		        renderer.GetTexture2D("Panorama1"),
+		        renderer.GetTexture2D("Panorama2"),
+		        renderer.GetTexture2D("Panorama3"),
+		        renderer.GetTexture2D("Panorama4"),
+		        renderer.GetTexture2D("Panorama5"),
 	        };
 
 			CreateSkybox(Game.GraphicsDevice);

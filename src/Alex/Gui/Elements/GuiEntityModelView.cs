@@ -49,7 +49,7 @@ namespace Alex.Gui.Elements
 
             Entity         = entity;
             EntityPosition = new PlayerLocation(Vector3.Zero);
-            Background     = GuiTextures.PanelGeneric;
+            Background     = "PanelGeneric";
 
             //Camera = new GuiEntityModelViewCamera(this);
             Camera = new GuiEntityModelViewCamera(EntityPosition);
@@ -225,7 +225,7 @@ namespace Alex.Gui.Elements
 
                 ModelExplorer  = modelExplorer;
                 EntityPosition = new PlayerLocation(Vector3.Zero);
-                Background     = GuiTextures.PanelGeneric;
+                Background     = "PanelGeneric";
 
                 //Camera = new GuiEntityModelViewCamera(this);
                 Camera = new GuiEntityModelViewCamera(EntityPosition);

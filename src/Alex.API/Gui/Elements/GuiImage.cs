@@ -6,7 +6,7 @@ namespace Alex.API.Gui.Elements
 {
     public class GuiImage : GuiElement
     {
-        public GuiImage(GuiTextures texture, TextureRepeatMode mode = TextureRepeatMode.Stretch)
+        public GuiImage(GuiTexture2D texture, TextureRepeatMode mode = TextureRepeatMode.Stretch)
         {
             Background = texture;
             Background.RepeatMode = mode;

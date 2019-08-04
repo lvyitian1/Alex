@@ -47,7 +47,7 @@ namespace Alex.GameStates.Gui.Common
         {
             Background = new GuiTexture2D
             { 
-                TextureResource = GuiTextures.OptionsBackground, 
+                TextureName = "OptionsBackground", 
                 RepeatMode = TextureRepeatMode.Tile,
                 Scale =  new Vector2(2f, 2f),
             };

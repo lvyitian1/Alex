@@ -38,7 +38,7 @@ namespace Alex.GameStates
         public SplashScreen()
 		{
 			Background = Color.White;
-			Background.TextureResource = GuiTextures.SplashBackground;
+			Background.TextureName = "SplashBackground";
 			Background.RepeatMode = TextureRepeatMode.ScaleToFit;
 
 			AddChild(_progressBarContainer = new GuiContainer()

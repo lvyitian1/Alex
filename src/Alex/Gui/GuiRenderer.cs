@@ -39,7 +39,7 @@ namespace Alex.Gui
 		private GraphicsDevice  _graphicsDevice;
 		private ResourceManager _resourceManager;
 
-		private Dictionary<GuiTextures, TextureSlice2D> _textureCache = new Dictionary<GuiTextures, TextureSlice2D>();
+		private Dictionary<string, TextureSlice2D> _textureCache = new Dictionary<string, TextureSlice2D>();
 
 		private Texture2D _widgets;
 		private Texture2D _icons;
@@ -158,18 +158,18 @@ namespace Alex.Gui
 
 		private void LoadEmbeddedTextures()
 		{
-			LoadTextureFromEmbeddedResource(GuiTextures.AlexLogo,
+			LoadTextureFromEmbeddedResource("AlexLogo",
 											ResourceManager.ReadResource("Alex.Resources.logo2.png"));
-			LoadTextureFromEmbeddedResource(GuiTextures.ProgressBar,
+			LoadTextureFromEmbeddedResource("ProgressBar",
 											ResourceManager.ReadResource("Alex.Resources.ProgressBar.png"));
-			LoadTextureFromEmbeddedResource(GuiTextures.SplashBackground,
+			LoadTextureFromEmbeddedResource("SplashBackground",
 											ResourceManager.ReadResource("Alex.Resources.Splash.png"));
 		}
 
 
 		private void LoadResourcePackTextures(McResourcePack resourcePack)
 		{
-			LoadTextureFromResourcePack(GuiTextures.AlexLogo, resourcePack, "");
+			LoadTextureFromResourcePack("AlexLogo", resourcePack, "");
 
 			// First load Widgets
 			resourcePack.TryGetTexture("gui/widgets", out _widgets);
@@ -182,113 +182,113 @@ namespace Alex.Gui
 			LoadScrollBar(_scrollbar);
 
 			// Backgrounds
-			LoadTextureFromResourcePack(GuiTextures.OptionsBackground, resourcePack, "gui/options_background", 2f);
+			LoadTextureFromResourcePack("OptionsBackground", resourcePack, "gui/options_background", 2f);
 
 			// Load Gui Containers
 			{
 				Texture2D containerSprite;
 				if (resourcePack.TryGetTexture("gui/container/inventory", out containerSprite))
 				{
-					LoadTextureFromSpriteSheet(GuiTextures.InventoryPlayerBackground, containerSprite, new Rectangle(0, 0, 176, 166));
+					LoadTextureFromSpriteSheet("InventoryPlayerBackground", containerSprite, new Rectangle(0, 0, 176, 166));
 				}
 			}
 
 			// Panorama
-			LoadTextureFromResourcePack(GuiTextures.Panorama0, resourcePack, "gui/title/background/panorama_0");
-			LoadTextureFromResourcePack(GuiTextures.Panorama1, resourcePack, "gui/title/background/panorama_1");
-			LoadTextureFromResourcePack(GuiTextures.Panorama2, resourcePack, "gui/title/background/panorama_2");
-			LoadTextureFromResourcePack(GuiTextures.Panorama3, resourcePack, "gui/title/background/panorama_3");
-			LoadTextureFromResourcePack(GuiTextures.Panorama4, resourcePack, "gui/title/background/panorama_4");
-			LoadTextureFromResourcePack(GuiTextures.Panorama5, resourcePack, "gui/title/background/panorama_5");
+			LoadTextureFromResourcePack("Panorama0", resourcePack, "gui/title/background/panorama_0");
+			LoadTextureFromResourcePack("Panorama1", resourcePack, "gui/title/background/panorama_1");
+			LoadTextureFromResourcePack("Panorama2", resourcePack, "gui/title/background/panorama_2");
+			LoadTextureFromResourcePack("Panorama3", resourcePack, "gui/title/background/panorama_3");
+			LoadTextureFromResourcePack("Panorama4", resourcePack, "gui/title/background/panorama_4");
+			LoadTextureFromResourcePack("Panorama5", resourcePack, "gui/title/background/panorama_5");
 
 			// Other
-			LoadTextureFromResourcePack(GuiTextures.DefaultServerIcon, resourcePack, "misc/unknown_server");
+			LoadTextureFromResourcePack("DefaultServerIcon", resourcePack, "misc/unknown_server");
 		}
 
 		private void LoadWidgets(Texture2D spriteSheet)
 		{
-			LoadTextureFromSpriteSheet(GuiTextures.Inventory_HotBar, spriteSheet, WidgetHotBar);
-			LoadTextureFromSpriteSheet(GuiTextures.Inventory_HotBar_SelectedItemOverlay, spriteSheet,
+			LoadTextureFromSpriteSheet("Inventory_HotBar", spriteSheet, WidgetHotBar);
+			LoadTextureFromSpriteSheet("Inventory_HotBar_SelectedItemOverlay", spriteSheet,
 									   WidgetHotBarSelectedOverlay);
 
-			LoadTextureFromSpriteSheet(GuiTextures.ButtonDefault,  spriteSheet, WidgetButtonDefault);
-			LoadTextureFromSpriteSheet(GuiTextures.ButtonHover,    spriteSheet, WidgetButtonHover);
-			LoadTextureFromSpriteSheet(GuiTextures.ButtonFocused,  spriteSheet, WidgetButtonHover);
-			LoadTextureFromSpriteSheet(GuiTextures.ButtonDisabled, spriteSheet, WidgetButtonDisabled);
-			LoadTextureFromSpriteSheet(GuiTextures.PanelGeneric, spriteSheet, WidgetHotBarSeparated,
+			LoadTextureFromSpriteSheet("ButtonDefault",  spriteSheet, WidgetButtonDefault);
+			LoadTextureFromSpriteSheet("ButtonHover",    spriteSheet, WidgetButtonHover);
+			LoadTextureFromSpriteSheet("ButtonFocused",  spriteSheet, WidgetButtonHover);
+			LoadTextureFromSpriteSheet("ButtonDisabled", spriteSheet, WidgetButtonDisabled);
+			LoadTextureFromSpriteSheet("PanelGeneric", spriteSheet, WidgetHotBarSeparated,
 									   new Thickness(5));
 			
-			LoadTextureFromSpriteSheet(GuiTextures.GreenCheckMark, spriteSheet, WidgetGreen);
-			LoadTextureFromSpriteSheet(GuiTextures.GreyCheckMark, spriteSheet, WidgetGrey);
+			LoadTextureFromSpriteSheet("GreenCheckMark", spriteSheet, WidgetGreen);
+			LoadTextureFromSpriteSheet("GreyCheckMark", spriteSheet, WidgetGrey);
 		}
 
 		private void LoadIcons(Texture2D spriteSheet)
 		{
-			LoadTextureFromSpriteSheet(GuiTextures.Crosshair,   spriteSheet, IconCrosshair);
-			LoadTextureFromSpriteSheet(GuiTextures.ServerPing0, spriteSheet, IconServerPing0);
-			LoadTextureFromSpriteSheet(GuiTextures.ServerPing1, spriteSheet, IconServerPing1);
-			LoadTextureFromSpriteSheet(GuiTextures.ServerPing2, spriteSheet, IconServerPing2);
-			LoadTextureFromSpriteSheet(GuiTextures.ServerPing3, spriteSheet, IconServerPing3);
-			LoadTextureFromSpriteSheet(GuiTextures.ServerPing4, spriteSheet, IconServerPing4);
-			LoadTextureFromSpriteSheet(GuiTextures.ServerPing5, spriteSheet, IconServerPing5);
+			LoadTextureFromSpriteSheet("Crosshair",   spriteSheet, IconCrosshair);
+			LoadTextureFromSpriteSheet("ServerPing0", spriteSheet, IconServerPing0);
+			LoadTextureFromSpriteSheet("ServerPing1", spriteSheet, IconServerPing1);
+			LoadTextureFromSpriteSheet("ServerPing2", spriteSheet, IconServerPing2);
+			LoadTextureFromSpriteSheet("ServerPing3", spriteSheet, IconServerPing3);
+			LoadTextureFromSpriteSheet("ServerPing4", spriteSheet, IconServerPing4);
+			LoadTextureFromSpriteSheet("ServerPing5", spriteSheet, IconServerPing5);
 
-			LoadTextureFromSpriteSheet(GuiTextures.ServerPingPending1, spriteSheet, IconServerPingPending1);
-			LoadTextureFromSpriteSheet(GuiTextures.ServerPingPending2, spriteSheet, IconServerPingPending2);
-			LoadTextureFromSpriteSheet(GuiTextures.ServerPingPending3, spriteSheet, IconServerPingPending3);
-			LoadTextureFromSpriteSheet(GuiTextures.ServerPingPending4, spriteSheet, IconServerPingPending4);
-			LoadTextureFromSpriteSheet(GuiTextures.ServerPingPending5, spriteSheet, IconServerPingPending5);
+			LoadTextureFromSpriteSheet("ServerPingPending1", spriteSheet, IconServerPingPending1);
+			LoadTextureFromSpriteSheet("ServerPingPending2", spriteSheet, IconServerPingPending2);
+			LoadTextureFromSpriteSheet("ServerPingPending3", spriteSheet, IconServerPingPending3);
+			LoadTextureFromSpriteSheet("ServerPingPending4", spriteSheet, IconServerPingPending4);
+			LoadTextureFromSpriteSheet("ServerPingPending5", spriteSheet, IconServerPingPending5);
 		}
 
 		private void LoadScrollBar(Texture2D spriteSheet)
 		{
-			LoadTextureFromSpriteSheet(GuiTextures.ScrollBarBackground, spriteSheet, ScrollBarBackgroundDefault);
+			LoadTextureFromSpriteSheet("ScrollBarBackground", spriteSheet, ScrollBarBackgroundDefault);
 
-			LoadTextureFromSpriteSheet(GuiTextures.ScrollBarTrackDefault,  spriteSheet, ScrollBarTrackDefault);
-			LoadTextureFromSpriteSheet(GuiTextures.ScrollBarTrackHover,    spriteSheet, ScrollBarTrackHover);
-			LoadTextureFromSpriteSheet(GuiTextures.ScrollBarTrackFocused,  spriteSheet, ScrollBarTrackFocus);
-			LoadTextureFromSpriteSheet(GuiTextures.ScrollBarTrackDisabled, spriteSheet, ScrollBarTrackDisabled);
+			LoadTextureFromSpriteSheet("ScrollBarTrackDefault",  spriteSheet, ScrollBarTrackDefault);
+			LoadTextureFromSpriteSheet("ScrollBarTrackHover",    spriteSheet, ScrollBarTrackHover);
+			LoadTextureFromSpriteSheet("ScrollBarTrackFocused",  spriteSheet, ScrollBarTrackFocus);
+			LoadTextureFromSpriteSheet("ScrollBarTrackDisabled", spriteSheet, ScrollBarTrackDisabled);
 
-			LoadTextureFromSpriteSheet(GuiTextures.ScrollBarUpButtonDefault,  spriteSheet, ScrollBarUpButtonDefault);
-			LoadTextureFromSpriteSheet(GuiTextures.ScrollBarUpButtonHover,    spriteSheet, ScrollBarUpButtonHover);
-			LoadTextureFromSpriteSheet(GuiTextures.ScrollBarUpButtonFocused,  spriteSheet, ScrollBarUpButtonFocus);
-			LoadTextureFromSpriteSheet(GuiTextures.ScrollBarUpButtonDisabled, spriteSheet, ScrollBarUpButtonDisabled);
+			LoadTextureFromSpriteSheet("ScrollBarUpButtonDefault",  spriteSheet, ScrollBarUpButtonDefault);
+			LoadTextureFromSpriteSheet("ScrollBarUpButtonHover",    spriteSheet, ScrollBarUpButtonHover);
+			LoadTextureFromSpriteSheet("ScrollBarUpButtonFocused",  spriteSheet, ScrollBarUpButtonFocus);
+			LoadTextureFromSpriteSheet("ScrollBarUpButtonDisabled", spriteSheet, ScrollBarUpButtonDisabled);
 
-			LoadTextureFromSpriteSheet(GuiTextures.ScrollBarDownButtonDefault,  spriteSheet, ScrollBarDownButtonDefault);
-			LoadTextureFromSpriteSheet(GuiTextures.ScrollBarDownButtonHover,    spriteSheet, ScrollBarDownButtonHover);
-			LoadTextureFromSpriteSheet(GuiTextures.ScrollBarDownButtonFocused,  spriteSheet, ScrollBarDownButtonFocus);
-			LoadTextureFromSpriteSheet(GuiTextures.ScrollBarDownButtonDisabled, spriteSheet, ScrollBarDownButtonDisabled);
+			LoadTextureFromSpriteSheet("ScrollBarDownButtonDefault",  spriteSheet, ScrollBarDownButtonDefault);
+			LoadTextureFromSpriteSheet("ScrollBarDownButtonHover",    spriteSheet, ScrollBarDownButtonHover);
+			LoadTextureFromSpriteSheet("ScrollBarDownButtonFocused",  spriteSheet, ScrollBarDownButtonFocus);
+			LoadTextureFromSpriteSheet("ScrollBarDownButtonDisabled", spriteSheet, ScrollBarDownButtonDisabled);
 		}
 
 
-		private TextureSlice2D LoadTextureFromEmbeddedResource(GuiTextures guiTexture, byte[] resource)
+		private TextureSlice2D LoadTextureFromEmbeddedResource(string textureName, byte[] resource)
 		{
-			_textureCache[guiTexture] = TextureUtils.ImageToTexture2D(_graphicsDevice, resource);
-			return _textureCache[guiTexture];
+			_textureCache[textureName] = TextureUtils.ImageToTexture2D(_graphicsDevice, resource);
+			return _textureCache[textureName];
 		}
 
-		private void LoadTextureFromResourcePack(GuiTextures guiTexture, McResourcePack resourcePack, string path,
+		private void LoadTextureFromResourcePack(string textureName, McResourcePack resourcePack, string path,
 												 float       scale = 1f)
 		{
 			if (resourcePack.TryGetTexture(path, out var texture))
 			{
-				_textureCache[guiTexture] = texture;
+				_textureCache[textureName] = texture;
 			}
 		}
 
-		private void LoadTextureFromSpriteSheet(GuiTextures guiTexture, Texture2D spriteSheet, Rectangle sliceRectangle,
+		private void LoadTextureFromSpriteSheet(string textureName, Texture2D spriteSheet, Rectangle sliceRectangle,
 												Thickness   ninePatchThickness)
 		{
-			_textureCache[guiTexture] = new NinePatchTexture2D(spriteSheet.Slice(sliceRectangle), ninePatchThickness);
+			_textureCache[textureName] = new NinePatchTexture2D(spriteSheet.Slice(sliceRectangle), ninePatchThickness);
 		}
 
-		private void LoadTextureFromSpriteSheet(GuiTextures guiTexture, Texture2D spriteSheet, Rectangle sliceRectangle)
+		private void LoadTextureFromSpriteSheet(string textureName, Texture2D spriteSheet, Rectangle sliceRectangle)
 		{
-			_textureCache[guiTexture] = spriteSheet.Slice(sliceRectangle);
+			_textureCache[textureName] = spriteSheet.Slice(sliceRectangle);
 		}
 		
-		public TextureSlice2D GetTexture(GuiTextures guiTexture)
+		public TextureSlice2D GetTexture(string textureName)
 		{
-			if (_textureCache.TryGetValue(guiTexture, out var texture))
+			if (_textureCache.TryGetValue(textureName, out var texture))
 			{
 				return texture;
 			}
@@ -296,9 +296,9 @@ namespace Alex.Gui
 			return (TextureSlice2D) GpuResourceManager.GetTexture2D(this, _graphicsDevice, 1, 1);
 		}
 
-		public Texture2D GetTexture2D(GuiTextures guiTexture)
+		public Texture2D GetTexture2D(string textureName)
 		{
-			return GetTexture(guiTexture).Texture;
+			return GetTexture(textureName).Texture;
 		}
 
 		public string GetTranslation(string key)

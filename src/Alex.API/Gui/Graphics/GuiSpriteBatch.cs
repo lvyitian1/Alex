@@ -233,10 +233,7 @@ namespace Alex.API.Gui.Graphics
                 FillRectangle(rectangle, texture.Color.Value);
             }
 
-            if (texture.Texture == null && texture.TextureResource.HasValue)
-            {
                 texture.TryResolveTexture(_renderer);
-            }
 
             if (texture.Texture != null)
             {

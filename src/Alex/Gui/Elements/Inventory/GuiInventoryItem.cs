@@ -79,7 +79,7 @@ namespace Alex.Gui.Elements.Inventory
 
 		protected override void OnInit(IGuiRenderer renderer)
 		{
-			SelectedBackground = renderer.GetTexture(GuiTextures.Inventory_HotBar_SelectedItemOverlay);
+			SelectedBackground = renderer.GetTexture("Inventory_HotBar_SelectedItemOverlay");
 			_counTextElement.Font = renderer.Font;
 		}
 

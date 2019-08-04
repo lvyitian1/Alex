@@ -23,7 +23,7 @@ namespace Alex.API.Gui.Elements
 
         protected override void OnInit(IGuiRenderer renderer)
         {
-			var texture = renderer.GetTexture(GuiTextures.ProgressBar);
+			var texture = renderer.GetTexture("ProgressBar");
             var b = texture.ClipBounds;
 
             _spriteSheetSegmentWidth = (int)Math.Round(b.Width / 4f);

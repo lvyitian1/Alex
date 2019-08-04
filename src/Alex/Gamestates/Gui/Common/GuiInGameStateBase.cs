@@ -1,4 +1,5 @@
 ﻿using Alex.API.Graphics;
+using Alex.API.Gui.Graphics;
 using Microsoft.Xna.Framework;
 
 namespace Alex.GameStates.Gui.Common
@@ -8,7 +9,7 @@ namespace Alex.GameStates.Gui.Common
 
         public GuiInGameStateBase()
         {
-            Background = null;
+            Background = GuiTexture2D.Empty;
             BackgroundOverlay = new Color(Color.Black, 0.65f);
         }
         

@@ -55,9 +55,9 @@ namespace Alex.API.Gui.Elements.Controls
 
         public GuiSlider()
         {
-            Background = GuiTextures.ButtonDisabled;
-            ThumbBackground = GuiTextures.ButtonDefault;
-            ThumbHighlightBackground = GuiTextures.ButtonHover;
+            Background = "ButtonDisabled";
+            ThumbBackground = "ButtonDefault";
+            ThumbHighlightBackground = "ButtonHover";
             
             Background.RepeatMode = TextureRepeatMode.NoScaleCenterSlice;
             ThumbBackground.RepeatMode = TextureRepeatMode.NoScaleCenterSlice;

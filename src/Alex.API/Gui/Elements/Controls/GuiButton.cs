@@ -36,10 +36,10 @@ namespace Alex.API.Gui.Elements.Controls
 		
         public GuiButton(string text, Action action = null, bool isTranslationKey = false)
         {
-            Background	  = GuiTextures.ButtonDefault;
-	        DisabledBackground	  = GuiTextures.ButtonDisabled;
-            HighlightedBackground = GuiTextures.ButtonHover;
-            FocusedBackground	  = GuiTextures.ButtonFocused;
+            Background	  = "ButtonDefault";
+	        DisabledBackground	  = "ButtonDisabled";
+            HighlightedBackground = "ButtonHover";
+            FocusedBackground	  = "ButtonFocused";
 
 			Background.RepeatMode	 = TextureRepeatMode.NoScaleCenterSlice;
 	        DisabledBackground.RepeatMode	 = TextureRepeatMode.NoScaleCenterSlice;
@@ -95,10 +95,10 @@ namespace Alex.API.Gui.Elements.Controls
 			    else
 			    {
 				    _isModern = false;
-				    Background = GuiTextures.ButtonDefault;
-				    DisabledBackground = GuiTextures.ButtonDisabled;
-				    HighlightedBackground = GuiTextures.ButtonHover;
-				    FocusedBackground = GuiTextures.ButtonFocused;
+				    Background = "ButtonDefault";
+				    DisabledBackground = "ButtonDisabled";
+				    HighlightedBackground = "ButtonHover";
+				    FocusedBackground = "ButtonFocused";
 
 				    OnModernChanged(true, false);
 				}

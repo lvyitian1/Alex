@@ -14,7 +14,7 @@ namespace Alex.API.Gui.Elements
 
         protected override void OnInit(IGuiRenderer renderer)
         {
-            Background = renderer.GetTexture(GuiTextures.Crosshair);
+            Background = renderer.GetTexture("Crosshair");
         }
     }
 }

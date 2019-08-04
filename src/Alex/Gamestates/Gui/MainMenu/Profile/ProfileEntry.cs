@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using Alex.API.Gui.Elements;
 using Alex.API.Gui.Elements.Controls;
+using Alex.API.Gui.Graphics;
 using Alex.API.Services;
 using Alex.API.Utils;
 using Alex.Entities;
@@ -40,12 +41,12 @@ namespace Alex.Gamestates.Gui.MainMenu.Profile
             Margin = new Thickness(0, 8);
             Anchor = Alignment.FillY;
            // AutoSizeMode = AutoSizeMode.GrowAndShrink;
-           // BackgroundOverlay = new GuiTexture2D(GuiTextures.OptionsBackground);
+           // BackgroundOverlay = new GuiTexture2D("OptionsBackground");
 
             ModelView = new GuiEntityModelView(new PlayerMob(profile.Username, null, null, profile.Skin?.Texture ?? defaultSelection.Texture, profile.Skin?.Slim ?? defaultSelection.Slim)) /*"geometry.humanoid.customSlim"*/
             {
                 BackgroundOverlay = new Color(Color.Black, 0.15f),
-                Background = null,
+                Background = GuiTexture2D.Empty,
              //   Margin = new Thickness(15, 15, 5, 40),
 
                 Width = 92,
@@ -64,7 +65,7 @@ namespace Alex.Gamestates.Gui.MainMenu.Profile
                 Anchor = Alignment.BottomCenter,
                 Enabled = false,
                 BackgroundOverlay = new Color(Color.Black, 0.5f),
-                Background = null
+                Background = GuiTexture2D.Empty
             });
         }
         

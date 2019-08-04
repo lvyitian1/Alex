@@ -45,7 +45,7 @@ namespace Alex.GameStates.Gui.MainMenu.Options.Elements
                 
                 Anchor = Alignment.TopLeft,
 
-                Background = GuiTextures.DefaultServerIcon,
+                Background = "DefaultServerIcon",
                 AutoSizeMode = AutoSizeMode.None,
                 RepeatMode = TextureRepeatMode.NoRepeat
             });
@@ -88,7 +88,7 @@ namespace Alex.GameStates.Gui.MainMenu.Options.Elements
         private class LoadIcon : GuiImage
         {
             public bool Loaded { get; private set; }
-            public LoadIcon() : base(GuiTextures.GreyCheckMark, TextureRepeatMode.NoRepeat)
+            public LoadIcon() : base("GreyCheckMark", TextureRepeatMode.NoRepeat)
             {
                 SetFixedSize(15, 15);
             }
@@ -98,12 +98,12 @@ namespace Alex.GameStates.Gui.MainMenu.Options.Elements
                 if (isLoaded)
                 {
                     Loaded = true;
-                    Background = GuiTextures.GreenCheckMark;
+                    Background = "GreenCheckMark";
                 }
                 else
                 {
                     Loaded = false;
-                    Background = GuiTextures.GreyCheckMark;
+                    Background = "GreyCheckMark";
                 }
             }
         }

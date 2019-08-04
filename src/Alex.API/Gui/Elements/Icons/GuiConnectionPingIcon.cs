@@ -7,7 +7,7 @@ namespace Alex.API.Gui.Elements.Icons
 {
     public class GuiConnectionPingIcon : GuiImage
     {
-        private GuiTextures _offlineState = GuiTextures.ServerPing0;
+        private string _offlineState = "ServerPing0";
 
         private long[] _qualityThresholds = new long[]
         {
@@ -18,22 +18,22 @@ namespace Alex.API.Gui.Elements.Icons
             1000
         };
 
-        private GuiTextures[] _qualityStates = new[]
+        private string[] _qualityStates = new[]
         {
-            GuiTextures.ServerPing1,
-            GuiTextures.ServerPing2,
-            GuiTextures.ServerPing3,
-            GuiTextures.ServerPing4,
-            GuiTextures.ServerPing5,
+            "ServerPing1",
+            "ServerPing2",
+            "ServerPing3",
+            "ServerPing4",
+            "ServerPing5",
         };
 
-        private GuiTextures[] _connectingStates = new[]
+        private string[] _connectingStates = new[]
         {
-            GuiTextures.ServerPingPending1,
-            GuiTextures.ServerPingPending2,
-            GuiTextures.ServerPingPending3,
-            GuiTextures.ServerPingPending4,
-            GuiTextures.ServerPingPending5,
+            "ServerPingPending1",
+            "ServerPingPending2",
+            "ServerPingPending3",
+            "ServerPingPending4",
+            "ServerPingPending5",
         };
 
         private TextureSlice2D _offlineTexture;
@@ -45,7 +45,7 @@ namespace Alex.API.Gui.Elements.Icons
         private int _animationFrame;
 	    private bool _isPendingUpdate;
 	    private bool _isOutdated = false;
-        public GuiConnectionPingIcon() : base(GuiTextures.ServerPing0)
+        public GuiConnectionPingIcon() : base("ServerPing0")
         {
             SetFixedSize(10, 8);
         }

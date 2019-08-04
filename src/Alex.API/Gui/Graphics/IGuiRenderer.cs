@@ -12,8 +12,8 @@ namespace Alex.API.Gui.Graphics
 
         IFont Font { get; set; }
         
-        TextureSlice2D GetTexture(GuiTextures guiTexture);
-        Texture2D GetTexture2D(GuiTextures guiTexture);
+        TextureSlice2D GetTexture(string textureName);
+        Texture2D GetTexture2D(string textureName);
 
         string GetTranslation(string key);
 

@@ -7,14 +7,16 @@ namespace Alex.API.Gui.Graphics
 {
     public struct GuiTexture2D : ITexture2D
     {
+        public static readonly GuiTexture2D Empty = new GuiTexture2D() { Color = Microsoft.Xna.Framework.Color.Transparent};
+
         public Color?            Color           { get; set; }
-        public GuiTextures?      TextureResource { get; set; }
+        public string            TextureName { get; set; }
         public ITexture2D        Texture         { get; set; }
         public TextureRepeatMode RepeatMode      { get; set; }
         public Color?            Mask            { get; set; }
         public Vector2?          Scale           { get; set; }
 
-        public bool HasValue => Texture != null || Color.HasValue || TextureResource.HasValue;
+        public bool HasValue => Texture != null || Color.HasValue || !string.IsNullOrEmpty(TextureName);
 
         public GuiTexture2D(ITexture2D texture) : this()
         {
@@ -27,18 +29,19 @@ namespace Alex.API.Gui.Graphics
 			Scale = scale;
 		}
 
-		public GuiTexture2D(GuiTextures guiTexture, TextureRepeatMode repeatMode = TextureRepeatMode.Stretch, Vector2? scale = null) : this()
+		public GuiTexture2D(string guiTexture, TextureRepeatMode repeatMode = TextureRepeatMode.Stretch, Vector2? scale = null) : this()
         {
-            TextureResource = guiTexture;
+            TextureName = guiTexture;
             RepeatMode = repeatMode;
             Scale = scale;
         }
 
         public bool TryResolveTexture(IGuiRenderer renderer)
         {
-            if (!TextureResource.HasValue) return true;
+            if (Texture != null) return true;
+            if (string.IsNullOrEmpty(TextureName)) return false;
 
-            Texture = renderer.GetTexture(TextureResource.Value);
+            Texture = renderer.GetTexture(TextureName);
             return Texture != null;
         }
 
@@ -57,9 +60,9 @@ namespace Alex.API.Gui.Graphics
             return new GuiTexture2D { Color = color };
         }
 
-        public static implicit operator GuiTexture2D(GuiTextures textureResource)
+        public static implicit operator GuiTexture2D(string textureName)
         {
-            return new GuiTexture2D { TextureResource = textureResource };
+            return new GuiTexture2D { TextureName = textureName };
         }
 
         Texture2D ITexture2D.Texture => Texture.Texture;

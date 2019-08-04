@@ -62,7 +62,7 @@ namespace Alex.Gui.Elements.Inventory
 					Width = ItemWidth,
 					Height = ItemWidth,
 			        Margin = new Thickness((i * ItemWidth), 0, 0, 0),
-					HighlightedBackground = GuiTextures.Inventory_HotBar_SelectedItemOverlay,
+					HighlightedBackground = "Inventory_HotBar_SelectedItemOverlay",
 			        IsSelected = i == SelectedIndex,
 			        Anchor = Alignment.TopLeft,
 			        Item = hotbarItems[i]
@@ -163,7 +163,7 @@ namespace Alex.Gui.Elements.Inventory
 
 	    protected override void OnInit(IGuiRenderer renderer)
         {
-            Background = renderer.GetTexture(GuiTextures.Inventory_HotBar);
+            Background = renderer.GetTexture("Inventory_HotBar");
 	       
         }
 

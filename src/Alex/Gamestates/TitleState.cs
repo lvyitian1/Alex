@@ -125,7 +125,7 @@ namespace Alex.GameStates
 
 			AddChild(_mainMenu);
 
-			AddChild(_logo = new GuiImage(GuiTextures.AlexLogo)
+			AddChild(_logo = new GuiImage("AlexLogo")
 			{
 				Margin = new Thickness(95, 25, 0, 0),
 				Anchor = Alignment.TopCenter
