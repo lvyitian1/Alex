@@ -14,6 +14,7 @@ using Alex.API.Network;
 using Alex.API.Services;
 using Alex.API.World;
 using Alex.GameStates;
+using Alex.Gamestates.Debug;
 using Alex.GameStates.Gui.MainMenu;
 using Alex.GameStates.Playing;
 using Alex.Gui;
@@ -235,7 +236,7 @@ namespace Alex
 			Services.AddService<IStorageSystem>(storage);
 			
 			var optionsProvider = new OptionsProvider(storage);
-			optionsProvider.Load();
+			//optionsProvider.Load();
 			
 			optionsProvider.AlexOptions.VideoOptions.UseVsync.Bind((value, newValue) => { SetVSync(newValue); });
 			if (optionsProvider.AlexOptions.VideoOptions.UseVsync.Value)
@@ -362,15 +363,23 @@ namespace Alex
 			GuiRenderer.LoadResourcePack(Resources.ResourcePack);
 			AnvilWorldProvider.LoadBlockConverter();
 
-			GameStateManager.AddState<TitleState>("title");
-
-			if (LaunchSettings.ConnectOnLaunch && ProfileService.CurrentProfile != null)
+			if (LaunchSettings.ModelDebugging)
 			{
-				ConnectToServer(LaunchSettings.Server, ProfileService.CurrentProfile, LaunchSettings.ConnectToBedrock);
+				GameStateManager.SetActiveState<ModelDebugState>();
 			}
 			else
 			{
-				GameStateManager.SetActiveState<TitleState>("title");
+				GameStateManager.AddState<TitleState>("title");
+
+				if (LaunchSettings.ConnectOnLaunch && ProfileService.CurrentProfile != null)
+				{
+					ConnectToServer(LaunchSettings.Server, ProfileService.CurrentProfile,
+						LaunchSettings.ConnectToBedrock);
+				}
+				else
+				{
+					GameStateManager.SetActiveState<TitleState>("title");
+				}
 			}
 
 			GameStateManager.RemoveState("splash");

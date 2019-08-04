@@ -40,7 +40,7 @@ namespace Alex.API.Gui.Graphics
             _renderer = renderer;
             _graphicsDevice = graphicsDevice;
             SpriteBatch = spriteBatch;
-            Context = GraphicsContext.CreateContext(_graphicsDevice, BlendState.AlphaBlend, DepthStencilState.None, RasterizerState.CullNone, SamplerState.PointClamp);
+            Context = GraphicsContext.CreateContext(_graphicsDevice, BlendState.AlphaBlend, DepthStencilState.None, RasterizerState, SamplerState.PointClamp);
 
             Font = _renderer.Font;
             ScaledResolution = _renderer.ScaledResolution;
@@ -78,7 +78,9 @@ namespace Alex.API.Gui.Graphics
         {
             if (_hasBegun) return;
 			
-            SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, Context.SamplerState, Context.DepthStencilState, RasterizerState, null, ScaledResolution.TransformMatrix * _renderMatrix);
+            SpriteBatch.Begin(SpriteSortMode.Deferred, Context.BlendState, Context.SamplerState, Context.DepthStencilState, Context.RasterizerState, null, ScaledResolution.TransformMatrix * _renderMatrix);
+            // TODO: (Merge Conflict)
+            //SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, Context.SamplerState, Context.DepthStencilState, RasterizerState, null, ScaledResolution.TransformMatrix * _renderMatrix);
         
             _hasBegun = true;
 

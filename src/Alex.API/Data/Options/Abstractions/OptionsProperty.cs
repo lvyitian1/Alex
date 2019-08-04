@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
@@ -61,9 +62,15 @@ namespace Alex.API.Data.Options
 
         public void SetValue(object obj)
         {
-            if (obj is TProperty)
+            if (obj == null)
             {
-                Value = (TProperty) obj;
+                _value = default(TProperty);
+                return;
+            }
+            
+            if (obj.GetType() == typeof(TProperty))
+            {
+                _value = (TProperty) obj;
             }
         }
 
@@ -101,23 +108,6 @@ namespace Alex.API.Data.Options
 
     public class OptionsPropertyJsonConverter : JsonConverter<IOptionsProperty>
     {
-        /*public override void WriteJson(JsonWriter writer, OptionsProperty<TProperty> value, JsonSerializer serializer)
-        {
-            serializer.Serialize(writer, value.Value);
-        }
-
-        public override OptionsProperty<TProperty> ReadJson(JsonReader reader, Type objectType, OptionsProperty<TProperty> existingValue, bool hasExistingValue, JsonSerializer serializer)
-        {
-            var value = serializer.Deserialize(reader, typeof(TProperty));
-
-            if ((value is TProperty) && hasExistingValue)
-            {
-                existingValue.Value = (TProperty) value;
-            }
-
-            return new OptionsProperty<TProperty>((TProperty)value);
-        }*/
-
         public override void WriteJson(JsonWriter writer, IOptionsProperty value, JsonSerializer serializer)
         {
             serializer.Serialize(writer, value.GetValue());
@@ -127,10 +117,12 @@ namespace Alex.API.Data.Options
             JsonSerializer serializer)
         {
             var value = serializer.Deserialize(reader);
-
+            
             if (hasExistingValue)
             {
                 existingValue.SetValue(value);
+                // TODO: Maybe this is needed? (Merge Conflict)
+                //return existingValue;
             }
 
             Type valueType = null;
