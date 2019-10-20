@@ -219,7 +219,7 @@ namespace Alex.Entities
 			}
 			if (ShowItemInHand)
 			{
-				ItemRenderer?.Render(renderArgs.GraphicsDevice);
+				ItemRenderer?.Render(renderArgs);
 			}
 
 		}
@@ -236,7 +236,7 @@ namespace Alex.Entities
 			if (ShowItemInHand)
 			{
 				//ItemRenderer?.World = 
-				ItemRenderer?.Update(args.GraphicsDevice, args.Camera);
+				ItemRenderer?.Update(args, KnownPosition);
 			}
 
 			if (now.Subtract(LastUpdatedTime).TotalMilliseconds >= 50)

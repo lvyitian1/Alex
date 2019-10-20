@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using Alex.API.Entities;
 using Alex.API.Graphics;
+using Alex.API.Utils;
 using Alex.ResourcePackLib;
 using Alex.ResourcePackLib.Json;
 using Alex.ResourcePackLib.Json.Models.Items;
@@ -26,6 +28,11 @@ namespace Alex.Graphics.Models.Items
 		public Vector3 Translation { get; set; }= Vector3.Zero;
 		public Vector3 Scale { get; set; }= Vector3.Zero;
 		
+		public Vector3 Pivot    { get; private set; } = Vector3.Zero;
+		public Vector3 Origin   { get; private set; } = Vector3.Zero;
+		public bool ApplyPitch   { get; set; } = true;
+		public bool ApplyYaw     { get; set; } = true;
+		public bool ApplyHeadYaw { get; set; } = false;
 		
 		public ItemModelRenderer(ResourcePackItem model, McResourcePack resourcePack)
 		{
@@ -44,20 +51,20 @@ namespace Alex.Graphics.Models.Items
 			Render(args.GraphicsDevice);
 		}
 		
-		public void Update(GraphicsDevice device, ICamera camera)
+		public void Update(IUpdateArgs args, PlayerLocation knownPosition)
 		{
 			if (Effect == null)
 			{
-				Effect = new BasicEffect(device);
+				Effect = new BasicEffect(args.GraphicsDevice);
 				Effect.VertexColorEnabled = true;
 			}
 
-			Effect.Projection = camera.ProjectionMatrix;
-			Effect.View = camera.ViewMatrix;
+			Effect.Projection = args.Camera.ProjectionMatrix;
+			Effect.View = args.Camera.ViewMatrix;
 
-			var scale = Scale;
+			var scale = Scale * 16f;
 			//scale *= new Vector3(4, 12, 4);
-			Vector3 origin = new Vector3(0.4f, 0.8f, 0.125f);
+			Vector3 origin = new Vector3(0.4f, 0.8f, -0.125f); // *16 = {X: 6.4, Y: 12.8, Z: 2}
 		
 			/*var pieceMatrix =
 				Matrix.CreateTranslation(origin) *
@@ -82,13 +89,59 @@ namespace Alex.Graphics.Models.Items
 				               Matrix.CreateTranslation(Translation)
 			               ) * ParentMatrix;*/
 			
-			Effect.World = (
-				               Matrix.CreateTranslation(origin) *
-				               Matrix.CreateScale(scale) *
-				               Matrix.CreateRotationZ(MathUtils.ToRadians(-Rotation.Z)) *
-				               Matrix.CreateRotationY(MathUtils.ToRadians(-Rotation.Y)) *
-				               Matrix.CreateTranslation(Translation)
-			               ) * ParentMatrix;
+			Debug.WriteLine("ItemRenderer: (Origin: {0}, Scale: {1}, Rotation: {2}, Translation: {3})", origin.ToString(), scale, Rotation.ToString(), Translation.ToString());
+			
+//			var offset = new Vector3(4f, -4f, 2f );
+//			var offset = new Vector3(Translation.X, Translation.Y, Translation.Z );
+//			// Basically working
+//			Effect.World = (
+//							     Matrix.CreateScale(scale) 
+////							   * Matrix.CreateTranslation(-(origin * 16f))
+//								 * Matrix.CreateTranslation(-offset)
+//								* Matrix.CreateRotationZ(MathUtils.ToRadians(90f-Rotation.Z + knownPosition.Pitch)) 
+//								* Matrix.CreateRotationY(MathUtils.ToRadians(-Rotation.Y - (knownPosition.HeadYaw - knownPosition.Yaw))) 
+//							   //* Matrix.CreateTranslation(origin * scale) 
+////								* Matrix.CreateTranslation(-(origin * 16f) + Translation)
+//								* Matrix.CreateTranslation(offset)
+//			               ) 
+//						   * ParentMatrix
+////						   * Matrix.CreateTranslation(knownPosition)
+//				;
+
+			origin = Vector3.Zero;
+			var pivot = new Vector3(1.5f, 2f, 2f);
+			var rot = Rotation;
+			var pos = new Vector3(Translation.X, Translation.Y + 12f, Translation.Z);
+			
+			Matrix rotMatrix = Matrix.CreateTranslation(-pivot) 
+							   * Matrix.CreateFromYawPitchRoll(
+															   MathUtils.ToRadians(rot.Y), 
+															   MathUtils.ToRadians(180f - rot.X),
+															   MathUtils.ToRadians(90f+(180f+rot.Z))
+															  )  
+//* Matrix.CreateRotationY(MathUtils.ToRadians((180f - knownPosition.HeadYaw) - (180f - knownPosition.Yaw) - rot.Y))
+//* Matrix.CreateRotationZ(MathUtils.ToRadians(rot.Z))
+							   * Matrix.CreateTranslation(pivot);
+			
+			var rotMatrix2 = Matrix.CreateTranslation(-pivot)
+//							 * Matrix.CreateFromYawPitchRoll(
+//															 MathUtils.ToRadians(180f - knownPosition.HeadYaw), 
+//															 90f,
+//															 0f)
+//							 * Matrix.CreateRotationY(-MathUtils.ToRadians(180f - knownPosition.Yaw))
+							 //* Matrix.CreateFromAxisAngle(Vector3.Up, MathUtils.ToRadians(180f - knownPosition.HeadYaw))
+//							 * Matrix.CreateRotationX(MathUtils.ToRadians(180f - rot.Z))
+//							 * Matrix.CreateRotationY(MathUtils.ToRadians(rot.X))
+//							 * Matrix.CreateRotationZ(MathUtils.ToRadians(90f-rot.Y))
+//							 * Matrix.CreateRotationX(MathUtils.ToRadians(rot.Z))
+							 * Matrix.CreateTranslation(pivot);
+			
+			var rotateMatrix = Matrix.CreateScale(scale) 
+							   * rotMatrix 
+							   * Matrix.CreateTranslation(pos);
+
+			Effect.World = rotateMatrix * ParentMatrix;
+			//Effect.World = ParentMatrix;
 		}
 
 		private void DrawLine(GraphicsDevice device, Vector3 start, Vector3 end, Color color)
@@ -106,9 +159,7 @@ namespace Alex.Graphics.Models.Items
 			{
 				a.Apply();
 
-				DrawLine(device, Vector3.Zero, Vector3.Up, Color.Green);
-				DrawLine(device, Vector3.Zero, Vector3.Forward, Color.Blue);
-				DrawLine(device, Vector3.Zero, Vector3.Right, Color.Red);
+				device.DrawTriad();
 				
 				device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, Vertices, 0, Vertices.Length, Indexes, 0, Indexes.Length / 3);
 			}
@@ -147,7 +198,7 @@ namespace Alex.Graphics.Models.Items
 					    ItemModelCube built = new ItemModelCube(new Vector3(1f / texture.Width));
 					    built.BuildCube(color);
 
-					    var origin = new Vector3(toolPosX + (1f / texture.Width) * x, toolPosY - (1f / texture.Height) * y, toolPosZ);
+					    var origin = new Vector3(toolPosX + (1f / texture.Width) * x, toolPosY + 1 - (1f / texture.Height) * y, toolPosZ);
 						
 					    vertices = ModifyCubeIndexes(vertices, ref built.Front, origin);
 					    vertices = ModifyCubeIndexes(vertices, ref built.Back, origin);

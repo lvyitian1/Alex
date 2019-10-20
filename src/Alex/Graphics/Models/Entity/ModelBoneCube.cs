@@ -1,4 +1,5 @@
 ﻿using System;
+using Alex.API.Entities;
 using Alex.API.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
