@@ -8,6 +8,7 @@ using Alex.API.Network;
 using Alex.API.Utils;
 using Alex.Blocks.Minecraft;
 using Alex.GameStates.Playing;
+using Alex.Graphics.Camera;
 using Alex.Items;
 using Alex.Utils;
 using Alex.Worlds;
@@ -68,6 +69,15 @@ namespace Alex.Entities
 
 	    public override void Update(IUpdateArgs args)
 		{
+			if (Level.Camera is FirstPersonCamera)
+			{
+				IsFirstPerson = true;
+			}
+			else
+			{
+				IsFirstPerson = false;
+			}
+			
 			ChunkCoordinates oldChunkCoordinates = new ChunkCoordinates(base.KnownPosition);
 			bool sprint = IsSprinting;
 			bool sneak = IsSneaking;

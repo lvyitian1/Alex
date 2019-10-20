@@ -65,6 +65,20 @@ namespace Alex.Entities
 		public INetworkProvider Network { get; set; }
 		public Inventory Inventory { get; protected set; }
 		private ItemModelRenderer ItemRenderer { get; set; } = null;
+
+		private bool _firstPerson = false;
+		protected bool IsFirstPerson
+		{
+			get => _firstPerson;
+			set
+			{
+				if (_firstPerson == value)
+					return;
+				
+				_firstPerson = value;
+				UpdateItemRenderer(value);
+			} 
+		}
 		public Entity(int entityTypeId, World level, INetworkProvider network)
 		{
 			Network = network;
@@ -79,11 +93,10 @@ namespace Alex.Entities
 			Inventory.SlotChanged += OnInventorySlotChanged;
 		}
 
-		private void OnInventorySlotChanged(object sender, SlotChangedEventArgs e)
+		private void UpdateItemRenderer(bool firstPerson)
 		{
 			var inHand = Inventory.MainHand;
-			Log.Info($"Inventory slot changed.");
-			
+
 			if (inHand == null && ItemRenderer != null)
 			{
 				ItemRenderer = null;
@@ -112,7 +125,7 @@ namespace Alex.Entities
 					
 					if (this is Player)
 					{
-						if (itemModel.Display.TryGetValue("thirdperson_righthand", out var value))
+						if (itemModel.Display.TryGetValue(firstPerson ? "firstperson_righthand" : "thirdperson_righthand", out var value))
 						{
 							ItemRenderer.Rotation = value.Rotation;
 							ItemRenderer.Translation = value.Translation;
@@ -120,8 +133,7 @@ namespace Alex.Entities
 							
 							if (ModelRenderer.GetBone("rightItem", out EntityModelRenderer.ModelBone bone))
 							{
-								Log.Info($"First Person item model rendering ready.");
-
+								bone.DetachAll();
 								bone.Attach(ItemRenderer);
 							}
 							else
@@ -144,8 +156,7 @@ namespace Alex.Entities
 							
 							if (ModelRenderer.GetBone("rightItem", out EntityModelRenderer.ModelBone bone))
 							{
-								Log.Info($"Third Person item model rendering ready.");
-
+								bone.DetachAll();
 								bone.Attach(ItemRenderer);
 							}
 						}
@@ -156,6 +167,11 @@ namespace Alex.Entities
 					}
 				}
 			}
+		}
+		
+		private void OnInventorySlotChanged(object sender, SlotChangedEventArgs e)
+		{
+			this.UpdateItemRenderer(_firstPerson);
 		}
 
 		public bool IsSneaking { get; set; }

@@ -62,6 +62,31 @@ namespace Alex.Graphics.Models.Entity
 					AlphaTestEffect effect = part.Effect;
 					if (effect == null) continue;
 					
+					effect.World = RotationMatrix;
+					effect.View = args.Camera.ViewMatrix;
+					effect.Projection = args.Camera.ProjectionMatrix;
+
+					foreach (var pass in effect.CurrentTechnique.Passes)
+					{
+						pass.Apply();
+					}
+					
+					args.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, idx, part.Indexes.Length / 3);
+					idx += part.Indexes.Length;
+				}
+
+				foreach (var attach in Attachables.ToArray())
+				{
+					attach.Render(args);
+				}
+			}
+
+			public void Update(IUpdateArgs args, Matrix characterMatrix, Vector3 diffuseColor, PlayerLocation position)
+			{
+				
+				CharacterMatrix = characterMatrix;
+				foreach (var part in Parts)
+				{
 					var headYaw = part.ApplyHeadYaw ? MathUtils.ToRadians(-(position.HeadYaw - position.Yaw)) : 0f;
 					var pitch = part.ApplyPitch ? MathUtils.ToRadians(position.Pitch) : 0f;
 
@@ -83,43 +108,19 @@ namespace Alex.Graphics.Models.Entity
 						                   MathUtils.ToRadians(rot.Y), 
 						                   MathUtils.ToRadians(rot.X), 
 						                   MathUtils.ToRadians(rot.Z)
-						                   )  
+					                   )  
 					                   * Matrix.CreateTranslation(part.Pivot);
 
 
 					var rotMatrix2 = Matrix.CreateTranslation(-part.Pivot) *
-						Matrix.CreateFromYawPitchRoll(headYaw, pitch, 0f) *
+					                 Matrix.CreateFromYawPitchRoll(headYaw, pitch, 0f) *
 					                 Matrix.CreateTranslation(part.Pivot);
 					
 					var rotateMatrix = Matrix.CreateTranslation(part.Origin) * (rotMatrix2 *
-					                  rotMatrix);
+					                                                            rotMatrix);
 					
 					RotationMatrix = rotateMatrix * characterMatrix;
-						
-					effect.World = rotateMatrix * characterMatrix;
-					effect.View = args.Camera.ViewMatrix;
-					effect.Projection = args.Camera.ProjectionMatrix;
 
-					foreach (var pass in effect.CurrentTechnique.Passes)
-					{
-						pass.Apply();
-					}
-					
-					args.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, idx, part.Indexes.Length / 3);
-					idx += part.Indexes.Length;
-				}
-
-				foreach (var attach in Attachables.ToArray())
-				{
-					attach.Render(args);
-				}
-			}
-
-			public void Update(IUpdateArgs args, Matrix characterMatrix, Vector3 diffuseColor)
-			{
-				CharacterMatrix = characterMatrix;
-				foreach (var part in Parts)
-				{
 					if (part.Effect != null)
 					{
 						part.Effect.DiffuseColor = diffuseColor;
@@ -171,6 +172,11 @@ namespace Alex.Graphics.Models.Entity
 			{
 				if (Attachables.Contains(attachable))
 					Attachables.Remove(attachable);
+			}
+
+			public void DetachAll()
+			{
+				Attachables.Clear();
 			}
 			
 			public void Dispose()

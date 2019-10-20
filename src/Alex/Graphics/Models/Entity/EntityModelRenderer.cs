@@ -180,13 +180,14 @@ namespace Alex.Graphics.Models.Entity
 		{
 			if (Bones == null) return;
 
-			CharacterMatrix = Matrix.CreateScale(1 / 16f) *
-			                         Matrix.CreateRotationY(MathUtils.ToRadians((180f - position.Yaw))) *
+			CharacterMatrix = 
+				Matrix.CreateScale(1 / 16f) *
+				Matrix.CreateRotationY(MathUtils.ToRadians((180f - position.Yaw))) *
 			                         Matrix.CreateTranslation(position);
 
 			foreach (var bone in Bones)
 			{
-				bone.Value.Update(args, CharacterMatrix, DiffuseColor);
+				bone.Value.Update(args, CharacterMatrix, DiffuseColor, position);
 			}
 
 			foreach (var bone in Bones.Where(x => !string.IsNullOrWhiteSpace(x.Value.Parent)))

@@ -43,7 +43,7 @@ namespace Alex.Graphics.Models.Items
 		{
 			Render(args.GraphicsDevice);
 		}
-
+		
 		public void Update(GraphicsDevice device, ICamera camera)
 		{
 			if (Effect == null)
@@ -55,25 +55,40 @@ namespace Alex.Graphics.Models.Items
 			Effect.Projection = camera.ProjectionMatrix;
 			Effect.View = camera.ViewMatrix;
 
-			var scale = Scale * 16f;
-
-			var a = 1f / 16f;
-			var pivot = new Vector3(0.5f, 0.5f, 0.5f) * a;
-			
+			var scale = Scale;
+			//scale *= new Vector3(4, 12, 4);
+			Vector3 origin = new Vector3(0.4f, 0.8f, 0.125f);
+		
 			/*var pieceMatrix =
-				Matrix.CreateTranslation(-pivot) *
-				Matrix.CreateScale(scale) *
-						Matrix.CreateFromYawPitchRoll(MathUtils.ToRadians(180f - Rotation.Y), MathUtils.ToRadians(180f - Rotation.X), MathUtils.ToRadians(-Rotation.Z)) * 
-				Matrix.CreateTranslation(new Vector3(Translation.X, Translation.Y, (Translation.Z)));*/
+				Matrix.CreateTranslation(origin) *
+				Matrix.CreateScale(scale * 16f) *
+				//Matrix.CreateTranslation(4f, 0f, 1f) *0f
+
+				Matrix.CreateTranslation(Translation.X, Translation.Y, Translation.Z) *
+				Matrix.CreateRotationZ(MathUtils.ToRadians(-Rotation.Z)) *
+				Matrix.CreateRotationY(MathUtils.ToRadians(-Rotation.Y));
+				//Matrix.CreateTranslation(Translation.X, Translation.Y, Translation.Z);
+				//Matrix.CreateTranslation(origin);*/
+			//var pieceMatrix = Matrix.CreateTranslation(origin) *
+			                //  Matrix.CreateRotationZ(MathUtils.ToRadians(-Rotation.Z)) *
+			               //   Matrix.CreateRotationY(MathUtils.ToRadians(-Rotation.Y)) * Matrix.CreateScale(scale * 16f);
+			//	Effect.World = pieceMatrix * ParentMatrix;
+			/*Effect.World = (
+				               Matrix.CreateTranslation(-origin) *
+				               Matrix.CreateScale(scale) *
+				               Matrix.CreateRotationZ(MathUtils.ToRadians(-Rotation.Z)) *
+				               Matrix.CreateRotationY(MathUtils.ToRadians(-Rotation.Y)) *
+				               Matrix.CreateTranslation(origin) *
+				               Matrix.CreateTranslation(Translation)
+			               ) * ParentMatrix;*/
 			
-			var pieceMatrix =
-				/*Matrix.CreateTranslation(-pivot) */
-				Matrix.CreateScale(scale) *
-				/*Matrix.CreateFromYawPitchRoll(MathUtils.ToRadians(180f - Rotation.Y), MathUtils.ToRadians(180f - Rotation.X), MathUtils.ToRadians(-Rotation.Z)) * */
-				Matrix.CreateFromYawPitchRoll(MathUtils.ToRadians(- Rotation.Y),0f, MathUtils.ToRadians(-Rotation.Z)) *
-				Matrix.CreateTranslation(new Vector3(Translation.X, Translation.Y + 8f, (Translation.Z - 8f)));
-			
-			Effect.World = pieceMatrix * ParentMatrix;
+			Effect.World = (
+				               Matrix.CreateTranslation(origin) *
+				               Matrix.CreateScale(scale) *
+				               Matrix.CreateRotationZ(MathUtils.ToRadians(-Rotation.Z)) *
+				               Matrix.CreateRotationY(MathUtils.ToRadians(-Rotation.Y)) *
+				               Matrix.CreateTranslation(Translation)
+			               ) * ParentMatrix;
 		}
 
 		private void DrawLine(GraphicsDevice device, Vector3 start, Vector3 end, Color color)
