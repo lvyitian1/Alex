@@ -4,7 +4,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:rui="clr-namespace=RocketUI;assembly=RocketUI"
+    xmlns:models="clr-namespace:Alex.GuiDebugger.Models"
+    xmlns:rocketUi="clr-namespace:RocketUI;assembly=RocketUI"
+    xmlns:system="clr-namespace:System;assembly=System.Runtime"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
@@ -13,7 +15,7 @@
         Focusable="True"
         RowDefinitions="Auto,*">
 
-        <Button Grid.Row="0" Command="{Binding RefreshPropertiesCommand}">Refresh Properties</Button>
+        <Button Grid.Row="0" Command="{Binding RefreshProperties}">Refresh Properties</Button>
 
         <DataGrid
             Name="PropertiesDataGrid"
@@ -34,7 +36,6 @@
 
         <TreeView
             Grid.Row="1"
-            Header="Properties"
             Items="{Binding Properties}">
             <TreeView.DataTemplates>
                 <TreeDataTemplate DataType="{x:Type models:ElementTreeItemProperty}">
@@ -42,10 +43,10 @@
                         <TextBlock Grid.Column="0" Text="{Binding Name}" />
                         <ContentControl Grid.Column="1" Content="{Binding Value}">
                             <ContentControl.DataTemplates>
-                                <DataTemplate DataType="string">
+                                <DataTemplate DataType="{x:Type system:String}">
                                     <TextBox Text="{Binding Value}" />
                                 </DataTemplate>
-                                <DataTemplate DataType="{x:Type rui:AutoSizeMode}">
+                                <DataTemplate DataType="{x:Type rocketUi:AutoSizeMode}">
                                     <TextBox Text="{Binding Value}" />
                                 </DataTemplate>
                             </ContentControl.DataTemplates>

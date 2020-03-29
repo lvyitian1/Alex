@@ -184,7 +184,6 @@ namespace Alex.API.Gui
 					screen.Draw(GuiSpriteBatch, gameTime);
 
                     DrawScreen?.Invoke(this, new GuiDrawScreenEventArgs(screen, gameTime));
-                  //  DebugHelper.DrawScreen(screen);
                 });
             }
             finally

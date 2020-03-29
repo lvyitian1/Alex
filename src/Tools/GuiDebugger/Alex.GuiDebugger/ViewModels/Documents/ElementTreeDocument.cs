@@ -8,13 +8,13 @@ using ReactiveUI;
 
 namespace Alex.GuiDebugger.ViewModels.Documents
 {
-    public class ElementTreeDocument : DocumentTab
+    public class ElementTreeDocument : Document
     {
         public ElementTreeItem ElementTreeItem { get; }
 
         public ObservableCollection<ElementTreeItemProperty> Properties { get; }
 
-        public ReactiveCommand RefreshPropertiesCommand { get; }
+//        public ReactiveCommand RefreshPropertiesCommand { get; }
 
         public ElementTreeDocument(ElementTreeItem elementTreeItem)
         {
@@ -23,10 +23,10 @@ namespace Alex.GuiDebugger.ViewModels.Documents
 
             Title = ElementTreeItem.ElementType;
 
-            RefreshPropertiesCommand = ReactiveCommand.CreateFromTask(RefreshProperties);
+  //          RefreshPropertiesCommand = ReactiveCommand.CreateFromTask(RefreshProperties);
         }
 
-        private async Task RefreshProperties()
+        public async Task RefreshProperties()
         {
             var newItems = await AlexGuiDebuggerInteraction.Instance.GetElementTreeItemProperties(ElementTreeItem.Id);
             Properties.Clear();

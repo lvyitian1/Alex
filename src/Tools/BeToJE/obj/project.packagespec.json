@@ -1,21 +1,18 @@
 ﻿{
   "version": "1.0.0",
   "restore": {
-    "projectUniqueName": "/home/kenny/github/Alex/src/Tools/BeToJE/BeToJE.csproj",
+    "projectUniqueName": "S:\\Development\\Projects\\Alex\\src\\Tools\\BeToJE\\BeToJE.csproj",
     "projectName": "BeToJE",
-    "projectPath": "/home/kenny/github/Alex/src/Tools/BeToJE/BeToJE.csproj",
-    "outputPath": "/home/kenny/github/Alex/src/Tools/BeToJE/obj/",
+    "projectPath": "S:\\Development\\Projects\\Alex\\src\\Tools\\BeToJE\\BeToJE.csproj",
+    "outputPath": "S:\\Development\\Projects\\Alex\\src\\Tools\\BeToJE\\obj\\",
     "projectStyle": "PackageReference",
-    "fallbackFolders": [
-      "/usr/share/dotnet/sdk/NuGetFallbackFolder"
-    ],
     "originalTargetFrameworks": [
       "netcoreapp3.0"
     ],
     "sources": {
+      "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
       "https://api.nuget.org/v3/index.json": {},
-      "https://dotnet.myget.org/F/dotnet-core/api/v3/index.json": {},
-      "https://nuget.herobalancer.app/v3/index.json": {}
+      "https://dotnet.myget.org/F/dotnet-core/api/v3/index.json": {}
     },
     "frameworks": {
       "netcoreapp3.0": {
@@ -51,7 +48,7 @@
           "privateAssets": "all"
         }
       },
-      "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/3.0.100/RuntimeIdentifierGraph.json"
+      "runtimeIdentifierGraphPath": "C:\\Program Files (x86)\\dotnet\\sdk\\3.1.200\\RuntimeIdentifierGraph.json"
     }
   }
 }

@@ -52,7 +52,7 @@ namespace Alex.GameStates.Playing
 			
 			WorldProvider.TitleComponent = title;
 
-			_playingHud = new PlayingHud(Alex, World.Player, title);
+			_playingHud = new PlayingHud(Alex, World, title);
 			_debugInfo = new GuiDebugInfo();
             InitDebugInfo();
 		}
@@ -108,6 +108,13 @@ namespace Alex.GameStates.Playing
 			{
 				var pos = World.Player.Velocity;
 				return $"Velocity: (X={pos.X:F2}, Y={pos.Y:F2}, Z={pos.Z:F2}) / SpeedFactor: {World.Player.Controller.LastSpeedFactor:F2}";
+			});
+			_debugInfo.AddDebugLeft(() =>
+			{
+				var pos = World.Camera.Position;
+				var rot = World.Camera.Rotation;
+				return
+											$"Camera: {World.Camera.GetType().Name}, Position: {pos.X:F2}, {pos.Y:F2}, {pos.Z:F2} / Rotation: {rot.X:F2}, {rot.Y:F2}, {rot.Z:F2}";
 			});
 			_debugInfo.AddDebugLeft(() => $"Vertices: {World.Vertices:N0} ({GetBytesReadable((long)(World.Vertices * VertexPositionNormalTextureColor.VertexDeclaration.VertexStride))})");
 			_debugInfo.AddDebugLeft(() => $"IndexBuffer Elements: {World.IndexBufferSize:N0} ({GetBytesReadable(World.IndexBufferSize * 4)})");
@@ -352,6 +359,15 @@ namespace Alex.GameStates.Playing
 					if (World.Camera is FirstPersonCamera)
 					{
 						World.Camera = new ThirdPersonCamera(Options.VideoOptions.RenderDistance, World.Camera.Position, World.Camera.Rotation)
+						{
+							FOV = World.Camera.FOV
+						};
+						
+						World.Camera.UpdateAspectRatio(Graphics.Viewport.AspectRatio);
+					}
+					else if (World.Camera is ThirdPersonCamera)
+					{
+						World.Camera = new TopDownCamera(Options.VideoOptions.RenderDistance, World.Camera.Position, World.Camera.Rotation)
 						{
 							FOV = World.Camera.FOV
 						};

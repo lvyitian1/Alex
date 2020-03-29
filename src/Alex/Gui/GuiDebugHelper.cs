@@ -126,15 +126,15 @@ namespace Alex.Gui
 			    {
 				    DrawDebug(HighlightedElement);
 			    }
-                //if (BoundingBoxesEnabled)
-                //{
-                //	screen.ForEachChild(c => DrawElementRecursive(c));
-                //}
+                if (BoundingBoxesEnabled)
+                {
+                	screen.ForEachChild(c => DrawElementRecursive(c));
+                }
 
-                //if (BoundingBoxesHoverEnabled)
-                //{
-                //	DrawDebug(TopMostHighlighted);
-                //}
+                if (BoundingBoxesHoverEnabled)
+                {
+                	DrawDebug(TopMostHighlighted);
+                }
 
                 //// draw info at cursor
                 //if (HoverInfoEnabled)

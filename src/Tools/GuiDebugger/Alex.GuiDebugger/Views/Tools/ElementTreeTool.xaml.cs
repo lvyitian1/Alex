@@ -40,19 +40,19 @@ namespace Alex.GuiDebugger.Views.Tools
                 if (!(Application.Current is App app))
                     return;
 
-                if (!(app.MainWindow.DataContext is MainWindowViewModel mainWindowViewModel))
+                if (!(app.DataContext is MainWindowViewModel mainWindowViewModel))
                     return;
 
-                var documentsPane = mainWindowViewModel.Factory.ViewLocator["DocumentsPane"]() as DocumentDock;
+                var documentsPane = mainWindowViewModel.Factory.DockableLocator["DocumentsPane"]() as DocumentDock;
 
                 var selectedItem = ((sender as TreeView).SelectedItem as ElementTreeItem);
                 if (selectedItem == null) return;
 
                 var existingView =
-                    documentsPane.Views?.FirstOrDefault(x => x.Id == $"ElementTreeItem:{selectedItem.Id}");
+                    documentsPane.VisibleDockables?.FirstOrDefault(x => x.Id == $"ElementTreeItem:{selectedItem.Id}");
                 if (existingView != null)
                 {
-                    mainWindowViewModel.Factory.SetFocusedView(documentsPane, existingView);
+                    mainWindowViewModel.Factory.SetFocusedDockable(documentsPane, existingView);
                 }
                 else
                 {
@@ -61,7 +61,7 @@ namespace Alex.GuiDebugger.Views.Tools
                         Id = $"ElementTreeItem:{selectedItem.Id}"
                     };
 
-                    mainWindowViewModel.Factory.AddView(documentsPane, existingView);
+                    mainWindowViewModel.Factory.AddDockable(documentsPane, existingView);
                 }
 
             };

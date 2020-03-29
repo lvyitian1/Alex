@@ -6,8 +6,10 @@ using Alex.API.Input.Listeners;
 using Alex.Entities;
 using Alex.GameStates.Gui.InGame;
 using Alex.GameStates.Playing;
+using Alex.Gui;
 using Alex.Gui.Elements;
 using Alex.Gui.Elements.Inventory;
+using Alex.Worlds;
 using Microsoft.Xna.Framework;
 using RocketUI;
 
@@ -21,26 +23,32 @@ namespace Alex.GameStates.Hud
 	    public readonly TitleComponent Title;
         private PlayerInputManager InputManager => _playerController.InputManager;
 
+		private GuiMiniMap _miniMap;
 		private Alex Alex { get; }
 		private Player Player { get; }
-        public PlayingHud(Alex game, Player player, TitleComponent titleComponent) : base()
+        public PlayingHud(Alex game, World world, TitleComponent titleComponent) : base()
         {
 	        Title = titleComponent;
 
             Alex = game;
-	        Player = player;
+	        Player = world.Player;
 
-            _playerController = player.Controller;
+            _playerController = Player.Controller;
 			InputManager.AddListener(new MouseInputListener(InputManager.PlayerIndex));
 
-	        _hotbar = new GuiItemHotbar(player.Inventory);
+	        _hotbar = new GuiItemHotbar(Player.Inventory);
 	        _hotbar.Anchor = Alignment.BottomCenter;
 	        _hotbar.Padding = Thickness.Zero;
 
 			Chat = new ChatComponent();
 	        Chat.Enabled = false;
 	        Chat.Anchor = Alignment.BottomLeft;
-        }
+			
+			_miniMap = new GuiMiniMap(world.ChunkManager);
+			_miniMap.Anchor = Alignment.BottomRight;
+			_miniMap.Padding = Thickness.Zero;
+			_miniMap.Margin = new Thickness(10);
+		}
 
         protected override void OnInit(IGuiRenderer renderer)
         {
@@ -48,6 +56,7 @@ namespace Alex.GameStates.Hud
             AddChild(new GuiCrosshair());
 			AddChild(Chat);
 			AddChild(Title);
+			//AddChild(_miniMap);
         }
 
         protected override void OnUpdate(GameTime gameTime)

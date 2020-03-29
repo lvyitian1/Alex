@@ -226,7 +226,7 @@ namespace Alex
 					if (enabled)
 					{
 						WindowSize = Window.ClientBounds.Size;
-					}
+					} 
 					else
 					{
 						DeviceManager.PreferredBackBufferWidth = WindowSize.X;

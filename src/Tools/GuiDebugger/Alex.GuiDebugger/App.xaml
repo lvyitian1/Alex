@@ -23,25 +23,29 @@
         </DataTemplate>
         <DataTemplate DataType="Views:MainView">
             <Grid>
-                <ContentControl Content="{Binding CurrentView}" />
+                <ContentControl Content="{Binding ActiveDockable}" />
             </Grid>
         </DataTemplate>
+        <local:ViewLocator />
     </Application.DataTemplates>
 
     <Application.Resources>
-        <SolidColorBrush x:Key="ApplicationAccentBrushLow">#33FF503F</SolidColorBrush>
-        <SolidColorBrush x:Key="ApplicationAccentBrushMed">#CCFF503F</SolidColorBrush>
-        <SolidColorBrush x:Key="ApplicationAccentBrushHigh">#66FF503F</SolidColorBrush>
-        <SolidColorBrush x:Key="ApplicationAccentForegroundBrush">#FFDEDEDE</SolidColorBrush>
+        <SolidColorBrush x:Key="ApplicationAccentBrushLow" Color="#33FF503F" />
+        <SolidColorBrush x:Key="ApplicationAccentBrushMed" Color="#CCFF503F" />
+        <SolidColorBrush x:Key="ApplicationAccentBrushHigh" Color="#66FF503F" />
+        <SolidColorBrush x:Key="ApplicationAccentForegroundBrush" Color="#FFDEDEDE" />
     </Application.Resources>
 
     <Application.Styles>
         <StyleInclude Source="avares://Avalonia.Themes.Default/DefaultTheme.xaml" />
+        <StyleInclude Source="avares://Avalonia.Themes.Default/Accents/BaseDark.xaml"/>
         <StyleInclude Source="avares://Alex.GuiDebugger/Alex.BaseDark.xaml" />
-        <StyleInclude Source="avares://Dock.Avalonia/Controls/DockPanelSplitter.xaml" />
-        <StyleInclude Source="avares://Dock.Avalonia/Controls/ProportionalStackPanelSplitter.xaml" />
-        <StyleInclude Source="avares://Dock.Avalonia/Controls/DockTarget.xaml" />
-        <StyleInclude Source="avares://Dock.Avalonia/Controls/DockToolChrome.xaml" />
-        <StyleInclude Source="avares://Dock.Avalonia/Controls/MetroWindow.xaml" />
+        <StyleInclude Source="avares://Dock.Avalonia.Themes.Default/DefaultTheme.xaml" />
+        <StyleInclude Source="avares://Dock.Avalonia.Themes.Metro/DefaultTheme.xaml" />
+        <!-- <StyleInclude Source="avares://Dock.Avalonia/Controls/DockPanelSplitter.xaml" /> -->
+        <!-- <StyleInclude Source="avares://Dock.Avalonia/Controls/ProportionalStackPanelSplitter.xaml" /> -->
+        <!-- <StyleInclude Source="avares://Dock.Avalonia/Controls/DockTarget.xaml" /> -->
+        <!-- <StyleInclude Source="avares://Dock.Avalonia/Controls/DockToolChrome.xaml" /> -->
+        <!-- <StyleInclude Source="avares://Dock.Avalonia/Controls/MetroWindow.xaml" /> -->
     </Application.Styles>
 </Application>

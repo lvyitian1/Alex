@@ -7,21 +7,21 @@ using ReactiveUI;
 
 namespace Alex.GuiDebugger.ViewModels.Tools
 {
-    public class ElementTreeTool : ToolTab
+    public class ElementTreeTool : Tool
     {
         public ObservableCollection<ElementTreeItem> ElementTreeItems { get; }
 
-        public ReactiveCommand RefreshCommand { get; }
+//        public ReactiveCommand RefreshCommand { get; }
 
         public ElementTreeTool()
         {
             ElementTreeItems = new ObservableCollection<ElementTreeItem>();
-            RefreshCommand = ReactiveCommand.Create(Refresh);
-            //Refresh();
+            //RefreshCommand = ReactiveCommand.Create(Refresh);
+            //Refresh();x
         }
 
 
-        private void Refresh()
+        public void Refresh()
         {
             var newItems = AlexGuiDebuggerInteraction.Instance.GetElementTreeItems().Result;
             ElementTreeItems.Clear();

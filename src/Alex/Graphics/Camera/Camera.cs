@@ -1,4 +1,5 @@
-﻿using Alex.API.Entities;
+﻿using System.Diagnostics;
+using Alex.API.Entities;
 using Alex.API.Graphics;
 using Alex.API.Utils;
 using Microsoft.Xna.Framework;
@@ -44,11 +45,11 @@ namespace Alex.Graphics.Camera
         /// 
         /// </summary>
         public Vector3 Target { get; protected set; }
-        private Vector3 _position;
+        protected Vector3 _position;
         /// <summary>
         /// Our current position.
         /// </summary>
-        public Vector3 Position
+        public virtual Vector3 Position
         {
             get { return _position; }
             set
@@ -58,11 +59,11 @@ namespace Alex.Graphics.Camera
             }
         }
 
-        private Vector3 _rotation;
+        protected Vector3 _rotation;
         /// <summary>
         /// Our current rotation
         /// </summary>
-        public Vector3 Rotation
+        public virtual Vector3 Rotation
         {
             get { return _rotation; }
             set
@@ -95,6 +96,12 @@ namespace Alex.Graphics.Camera
 	    }
 
 		private float _aspectRatio = 0;
+
+		public float AspectRatio
+		{
+			[DebuggerStepThrough] get => _aspectRatio;
+		}
+
 		public virtual void UpdateProjectionMatrix()
 		{
 			ProjectionMatrix = Matrix.CreatePerspectiveFieldOfView(

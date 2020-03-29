@@ -5,6 +5,7 @@ using System;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Alex.GuiDebugger.ViewModels;
+using Dock.Model;
 
 namespace Alex.GuiDebugger
 {
@@ -31,7 +32,7 @@ namespace Alex.GuiDebugger
 
         public bool Match(object data)
         {
-            return data is ViewModelBase;
+            return data is ViewModelBase || data is IDockable;
         }
     }
 }

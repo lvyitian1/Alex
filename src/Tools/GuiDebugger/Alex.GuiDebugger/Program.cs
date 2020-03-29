@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Logging.Serilog;
 using Alex.GuiDebugger.ViewModels;
 using Alex.GuiDebugger.Views;
+using Avalonia.ReactiveUI;
 using Dock.Model;
 using Dock.Serializer;
 
@@ -28,29 +29,7 @@ namespace Alex.GuiDebugger
         {
             try
             {
-                var   serializer = new DockJsonSerializer(typeof(ObservableCollection<>));
-                var   vm         = new MainWindowViewModel();
-                var   factory    = new DefaultDockFactory(new DockData());
-                IDock layout     = null;
-
-                //string path = serializer.GetBasePath("Layout.json");
-                //if (serializer.Exists(path))
-                //{
-                //    layout = serializer.Load<RootDock>(path);
-                //}
-
-                BuildAvaloniaApp().Start<MainWindow>(() =>
-                {
-                    vm.Factory = factory;
-                    vm.Layout  = layout ?? vm.Factory.CreateLayout();
-                    vm.Factory.InitLayout(vm.Layout);
-                    return vm;
-                });
-
-                if (vm.Layout is IDock dock)
-                {
-                    dock.Close();
-                }
+                BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
 
                 //serializer.Save(path, vm.Layout);
             }
@@ -64,7 +43,7 @@ namespace Alex.GuiDebugger
         public static AppBuilder BuildAvaloniaApp()
             => AppBuilder.Configure<App>()
                 .UseReactiveUI()
-                .UseDataGrid()
+                //.UseDataGrid()
                 .UsePlatformDetect()
                 .LogToDebug();
     }
