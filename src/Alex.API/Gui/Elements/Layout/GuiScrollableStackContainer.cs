@@ -217,5 +217,35 @@ namespace Alex.API.Gui.Elements.Layout
 
 			return baseVal;
 		}
+
+		public bool CanScroll(Orientation orientation)
+		{
+			switch (orientation)
+			{
+				case Orientation.Vertical:
+					return _hasVerticalScroll && VerticalScrollBar?.MaxScrollOffset > 0;
+				case Orientation.Horizontal:
+					return _hasHorizontalScroll && HorizontalScrollBar?.MaxScrollOffset > 0;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(orientation), orientation, null);
+			}
+		}
+
+		public void InvokeScroll(Orientation orientation, int delta)
+		{
+			switch (orientation)
+			{
+				case Orientation.Vertical:
+					if(VerticalScrollBar != null)
+						VerticalScrollBar.ScrollOffsetValue += delta;
+					break;
+				case Orientation.Horizontal:
+					if(HorizontalScrollBar != null)
+						HorizontalScrollBar.ScrollOffsetValue += delta;
+					break;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(orientation), orientation, null);
+			}
+		}
 	}
 }

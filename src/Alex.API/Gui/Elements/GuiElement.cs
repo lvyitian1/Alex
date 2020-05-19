@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Alex.API.Gui.Graphics;
+using Alex.GuiDebugger.Common;
 using Microsoft.Xna.Framework;
 using RocketUI;
 
@@ -14,9 +15,12 @@ namespace Alex.API.Gui.Elements
 
 	public partial class GuiElement : IGuiElement
 	{
-		[DebuggerVisible]
+		[DebuggerVisible(GuiDebuggerCategories.Common)]
 		public Guid Id { get; } = Guid.NewGuid();
 
+		[DebuggerVisible(GuiDebuggerCategories.Common)]
+		public string Name { get; } = string.Empty;
+		
 		private IGuiScreen       _screen;
 		private IGuiElement      _parentElement;
 		private IGuiFocusContext _focusContext;
@@ -80,6 +84,7 @@ namespace Alex.API.Gui.Elements
 		[DebuggerVisible(Visible = false)]
 		public bool HasChildren => Children.Any();
 
+		
 		public int ChildCount => Children.Count;
 
 		[DebuggerVisible(Visible = false)]
@@ -88,16 +93,16 @@ namespace Alex.API.Gui.Elements
 
 		#region Drawing
 
-		[DebuggerVisible]
+		[DebuggerVisible(Category = GuiDebuggerCategories.Drawing)]
 		public virtual Vector2 RenderPosition { get; set; }
 
-		[DebuggerVisible]
+		[DebuggerVisible(Category = GuiDebuggerCategories.Drawing)]
 		public virtual Size RenderSize { get; set; }
 
-		[DebuggerVisible]
+		[DebuggerVisible(Category = GuiDebuggerCategories.Drawing)]
 		public virtual Rectangle RenderBounds { get; set; }
 
-		[DebuggerVisible]
+		[DebuggerVisible(Category = GuiDebuggerCategories.Drawing)]
 		public bool IsVisible { get; set; } = true;
 
 		public Matrix LayoutTransform { get; set; } = Matrix.Identity;

@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Reactive;
 using System.Threading.Tasks;
 using Alex.GuiDebugger.Models;
 using Alex.GuiDebugger.Services;
@@ -8,13 +9,13 @@ using ReactiveUI;
 
 namespace Alex.GuiDebugger.ViewModels.Documents
 {
-    public class ElementTreeDocument : DocumentTab
+    public class ElementTreeDocument : Document
     {
         public ElementTreeItem ElementTreeItem { get; }
 
         public ObservableCollection<ElementTreeItemProperty> Properties { get; }
 
-        public ReactiveCommand RefreshPropertiesCommand { get; }
+        public ReactiveCommand<Unit, Unit> RefreshPropertiesCommand { get; }
 
         public ElementTreeDocument(ElementTreeItem elementTreeItem)
         {

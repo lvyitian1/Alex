@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Alex.API.Gui.Elements.Layout;
 using Alex.API.Gui.Layout;
+using Alex.GuiDebugger.Common;
 using Microsoft.Xna.Framework;
 using RocketUI;
 
@@ -26,7 +27,7 @@ namespace Alex.API.Gui.Elements
         private AutoSizeMode _autoSizeMode = AutoSizeMode.GrowOnly;
 
         [Obsolete("Please use the Margin.Left property instead!")]
-        [DebuggerVisible] public int X
+        [DebuggerVisible(Visible = false)] public int X
         {
             set
             {
@@ -37,7 +38,7 @@ namespace Alex.API.Gui.Elements
         }
 
         [Obsolete("Please use the Margin.Top property instead!")]
-        [DebuggerVisible] public int Y
+        [DebuggerVisible(Visible = false)] public int Y
         {
             set
             {
@@ -47,7 +48,8 @@ namespace Alex.API.Gui.Elements
             }
         }
 
-        [DebuggerVisible] public int Width
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)] 
+        public int Width
         {
             get => _width;
             set
@@ -57,7 +59,8 @@ namespace Alex.API.Gui.Elements
             }
         }
 
-        [DebuggerVisible] public int Height
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)] 
+        public int Height
         {
             get => _height;
             set
@@ -67,7 +70,9 @@ namespace Alex.API.Gui.Elements
             }
         }
 
-        [DebuggerVisible] public int MinWidth
+        
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)] 
+        public int MinWidth
         {
             get => _minWidth;
             set
@@ -77,7 +82,9 @@ namespace Alex.API.Gui.Elements
             }
         }
 
-        [DebuggerVisible] public int MaxWidth
+        
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)] 
+        public int MaxWidth
         {
             get => _maxWidth;
             set
@@ -87,7 +94,8 @@ namespace Alex.API.Gui.Elements
             }
         }
 
-        [DebuggerVisible] public int MinHeight
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)]
+        public int MinHeight
         {
             get => _minHeight;
             set
@@ -97,7 +105,8 @@ namespace Alex.API.Gui.Elements
             }
         }
 
-        [DebuggerVisible] public int MaxHeight
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)]
+        public int MaxHeight
         {
             get => _maxHeight;
             set
@@ -107,7 +116,8 @@ namespace Alex.API.Gui.Elements
             }
         }
 
-        [DebuggerVisible] public Thickness Padding
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)]
+        public Thickness Padding
         {
             get => _padding;
             set
@@ -117,7 +127,8 @@ namespace Alex.API.Gui.Elements
             }
         }
 
-        [DebuggerVisible] public Thickness Margin
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)]
+        public Thickness Margin
         {
             get => _margin;
             set
@@ -127,7 +138,8 @@ namespace Alex.API.Gui.Elements
             }
         }
 
-        [DebuggerVisible] public virtual AutoSizeMode AutoSizeMode
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)]
+        public virtual AutoSizeMode AutoSizeMode
         {
             get => _autoSizeMode;
             set
@@ -137,7 +149,8 @@ namespace Alex.API.Gui.Elements
             }
         }
 
-        [DebuggerVisible] public Alignment Anchor
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)]
+        public Alignment Anchor
         {
             get => _anchor;
             set
@@ -151,30 +164,47 @@ namespace Alex.API.Gui.Elements
 
         #region Layout Calculation State Properties
         
-        [DebuggerVisible] public bool IsSizeDirty { get; protected set; } = true;
-        [DebuggerVisible] public bool IsLayoutDirty    { get; protected set; } = true;
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout__State)]
+        public bool IsSizeDirty { get; protected set; } = true;
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout__State)]
+        public bool IsLayoutDirty    { get; protected set; } = true;
         
-        [DebuggerVisible] public bool IsMeasureComplete { get; protected set; } = false;
-        [DebuggerVisible] public bool IsArrangeComplete { get; protected set; } = false;
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout__State)]
+        public bool IsMeasureComplete { get; protected set; } = false;
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout__State)]
+        public bool IsArrangeComplete { get; protected set; } = false;
 
-        [DebuggerVisible] public int  LayoutOffsetX    { get; private set; }   = 0;
-        [DebuggerVisible] public int  LayoutOffsetY    { get; private set; }   = 0;
-        [DebuggerVisible] public int  LayoutWidth      { get; private set; }   = 0;
-        [DebuggerVisible] public int  LayoutHeight     { get; private set; }   = 0;
-        [DebuggerVisible] public Size PreferredSize    { get; private set; }
-        [DebuggerVisible] public Size PreferredMinSize { get; private set; }
-        [DebuggerVisible] public Size PreferredMaxSize { get; private set; }
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout__State)]
+        public int  LayoutOffsetX    { get; private set; }   = 0;
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout__State)]
+        public int  LayoutOffsetY    { get; private set; }   = 0;
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout__State)]
+        public int  LayoutWidth      { get; private set; }   = 0;
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout__State)]
+        public int  LayoutHeight     { get; private set; }   = 0;
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout__State)]
+        public Size PreferredSize    { get; private set; }
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout__State)]
+        public Size PreferredMinSize { get; private set; }
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout__State)]
+        public Size PreferredMaxSize { get; private set; }
 
         #endregion
 
         #region Calculated Properties
 
-        [DebuggerVisible] public Rectangle Bounds      { get; private set; }
-        [DebuggerVisible] public Rectangle InnerBounds { get; private set; }
-        [DebuggerVisible] public Rectangle OuterBounds { get; private set; }
-        [DebuggerVisible] public Point     Position    { get; private set; }
-        [DebuggerVisible] public Size      Size        { get; private set; }
-        [DebuggerVisible] public Size      ContentSize { get; private set; }
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)]
+        public Rectangle Bounds      { get; private set; }
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)]
+        public Rectangle InnerBounds { get; private set; }
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)]
+        public Rectangle OuterBounds { get; private set; }
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)]
+        public Point     Position    { get; private set; }
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)]
+        public Size      Size        { get; private set; }
+        [DebuggerVisible(Category = GuiDebuggerCategories.Layout)]
+        public Size      ContentSize { get; private set; }
 
 		#endregion
 

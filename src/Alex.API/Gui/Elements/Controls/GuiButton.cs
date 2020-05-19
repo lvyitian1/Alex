@@ -10,12 +10,12 @@ namespace Alex.API.Gui.Elements.Controls
     public class GuiButton : GuiControl, IGuiButton
 	{
 
-        public string Text
+		[DebuggerVisible] public string Text
         {
             get => TextElement.Text;
 	        set => TextElement.Text = value;
         }
-	    public string TranslationKey
+        [DebuggerVisible] public string TranslationKey
 	    {
 		    get => TextElement.TranslationKey;
 		    set => TextElement.TranslationKey = value;
@@ -23,9 +23,11 @@ namespace Alex.API.Gui.Elements.Controls
 
         protected GuiTextElement TextElement { get; }
         protected Action Action { get; }
+        [DebuggerVisible] public bool InvokeOnPress { get; set; } = true;
 
-		public TextColor DisabledTextColor = TextColor.DarkGray;
-		public TextColor EnabledTextColor = TextColor.White;
+        [DebuggerVisible] public TextColor DisabledTextColor = TextColor.DarkGray;
+		[DebuggerVisible] public TextColor EnabledTextColor = TextColor.White;
+		
 		public GuiButton(Action action = null) : this(string.Empty, action)
 	    {
 			
@@ -142,8 +144,18 @@ namespace Alex.API.Gui.Elements.Controls
 
 		protected override void OnCursorPressed(Point cursorPosition)
 		{
-			//Focus();
-			Action?.Invoke();
+			if(InvokeOnPress)
+				Action?.Invoke();
+		}
+
+		protected override void OnCursorDown(Point cursorPosition)
+		{
+			base.OnCursorDown(cursorPosition);
+
+			if (!InvokeOnPress)
+			{
+				Action?.Invoke();
+			}
 		}
 
 		protected override void OnDraw(GuiSpriteBatch graphics, GameTime gameTime)

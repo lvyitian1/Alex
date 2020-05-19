@@ -2,7 +2,7 @@
 
 namespace Alex.GuiDebugger.ViewModels.Tools
 {
-	public class EditorTool : ToolTab
+	public class EditorTool : Tool
 	{
 	}
 }

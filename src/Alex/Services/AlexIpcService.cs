@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Threading;
+using Alex.API.Services;
 using Alex.GuiDebugger.Common;
 using Alex.GuiDebugger.Common.Services;
 using JKang.IpcServiceFramework;
@@ -7,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Alex.Services
 {
-	public class AlexIpcService
+	public class AlexIpcService : IBackgroundService
 	{
 
 		private IServiceCollection ServiceCollection;

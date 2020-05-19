@@ -52,6 +52,10 @@
 		Left,
 		Right,
 		Up,
-		Down
+		Down,
+		
+		GuiScrollUp,
+		GuiScrollDown,
+		GuiScrollAlternateOrientationModifier,
     }
 }

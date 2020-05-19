@@ -11,8 +11,8 @@
     Title="Alex GUI Debugger"
     d:DesignHeight="450"
     d:DesignWidth="800"
-    id:DragBehavior.IsEnabled="True"
-    id:DropBehavior.IsEnabled="True"
+    id:DockProperties.IsDragEnabled="True"
+    id:DockProperties.IsDropEnabled="True"
     BorderBrush="{DynamicResource ThemeBorderLowBrush}"
     BorderThickness="1"
     Foreground="{DynamicResource ThemeForegroundBrush}"
@@ -23,17 +23,17 @@
     WindowStartupLocation="CenterScreen"
     WindowState="Normal"
     mc:Ignorable="d">
-    <idc:MetroWindow.Resources>
+    <!--<idc:MetroWindow.Resources>
         <id:DockDropHandler x:Key="DockDropHandler0" Id="0" />
-    </idc:MetroWindow.Resources>
+    </idc:MetroWindow.Resources>-->
 
     <Grid Background="Transparent" RowDefinitions="Auto,Auto,*,25">
-        <i:Interaction.Behaviors>
+        <!--<i:Interaction.Behaviors>
             <id:DropBehavior Context="{Binding Layout}" Handler="{StaticResource DockDropHandler0}" />
-        </i:Interaction.Behaviors>
+        </i:Interaction.Behaviors>-->
         <Menu Grid.Row="0">
             <MenuItem Header="_File">
-                <MenuItem x:Name="FileNew" Header="_New" />
+                <MenuItem x:Name="FileNew" Header="_New" Command="{Binding FileNew}" />
                 <Separator />
                 <MenuItem x:Name="FileOpen" Header="_Open..." />
                 <Separator />
@@ -61,7 +61,7 @@
                     <MenuItem.Icon>
                         <CheckBox
                             BorderThickness="0"
-                            IsChecked="{Binding $self.(id:DragBehavior.IsEnabled)}"
+                            IsChecked="{Binding $self.(id:DockProperties.IsDragEnabled)}"
                             IsHitTestVisible="False" />
                     </MenuItem.Icon>
                 </MenuItem>
@@ -70,7 +70,7 @@
                     <MenuItem.Icon>
                         <CheckBox
                             BorderThickness="0"
-                            IsChecked="{Binding $self.(id:DropBehavior.IsEnabled)}"
+                            IsChecked="{Binding $self.(id:DockProperties.IsDropEnabled)}"
                             IsHitTestVisible="False" />
                     </MenuItem.Icon>
                 </MenuItem>

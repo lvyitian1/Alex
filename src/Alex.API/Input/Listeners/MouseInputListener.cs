@@ -1,17 +1,16 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
 namespace Alex.API.Input.Listeners
 {
     public class MouseInputListener : InputListenerBase<MouseState, MouseButton>, ICursorInputListener
     {
+        public static EventHandler<MouseInputListener> InstanceCreated;
+        
         public MouseInputListener(PlayerIndex playerIndex) : base(playerIndex)
         {
-            RegisterMap(InputCommand.LeftClick, MouseButton.Left);
-            RegisterMap(InputCommand.RightClick, MouseButton.Right);
-            RegisterMap(InputCommand.MiddleClick, MouseButton.Middle);
-            RegisterMap(InputCommand.HotBarSelectPrevious, MouseButton.ScrollDown);
-            RegisterMap(InputCommand.HotBarSelectNext, MouseButton.ScrollUp);
+            InstanceCreated?.Invoke(this, this);
         }
         
         private int _lastScroll;

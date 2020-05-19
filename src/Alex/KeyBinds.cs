@@ -24,6 +24,20 @@ namespace Alex
 	    public static Keys ReBuildChunks = Keys.F9;
 
 	    public static Keys ToggleWireframe = Keys.F10;
+
+	    public static readonly IReadOnlyDictionary<InputCommand, MouseButton> DefaultMouseBindings =
+		    new Dictionary<InputCommand, MouseButton>()
+		    {
+			    {InputCommand.LeftClick, MouseButton.Left},
+			    {InputCommand.RightClick, MouseButton.Right},
+			    {InputCommand.MiddleClick, MouseButton.Middle},
+			    
+			    {InputCommand.GuiScrollUp, MouseButton.ScrollUp},
+			    {InputCommand.GuiScrollDown, MouseButton.ScrollDown},
+			    
+			    {InputCommand.HotBarSelectPrevious, MouseButton.ScrollDown},
+			    {InputCommand.HotBarSelectNext, MouseButton.ScrollUp},
+		    };
 	    
 	    public static readonly IReadOnlyDictionary<InputCommand, Keys> DefaultBindings = new Dictionary<InputCommand, Keys>()
 	    {
@@ -65,7 +79,11 @@ namespace Alex
 		    {InputCommand.Right, Keys.Right},
 		    {InputCommand.Left, Keys.Left},
 		    {InputCommand.Up, Keys.Up},
-		    {InputCommand.Down, Keys.Down}
+		    {InputCommand.Down, Keys.Down},
+
+		    {InputCommand.GuiScrollUp, Keys.PageUp},
+		    {InputCommand.GuiScrollDown, Keys.PageDown},
+		    {InputCommand.GuiScrollAlternateOrientationModifier, Keys.LeftAlt},
 	    };
 	}
 }

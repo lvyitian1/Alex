@@ -680,7 +680,7 @@ namespace Alex.Worlds
 			return Biomes.FirstOrDefault(biome => biome.Id == biomeId) ?? new Biome { Id = biomeId };
 		}
 
-		public int BiomeSwampRiverColor(int color)
+		public int BiomeSwampRiverColor(int color) 
 		{
 			int r = (int)((color >> 16) & 0xff);
 			int g = (int)((color >> 8) & 0xff);

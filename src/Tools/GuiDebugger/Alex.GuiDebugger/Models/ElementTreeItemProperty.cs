@@ -8,7 +8,7 @@ namespace Alex.GuiDebugger.Models
 
         public string Name { get; }
         
-        public Type Type { get; }
+        public string Type { get; }
         
         public object Value { get; set; }
 
@@ -17,7 +17,7 @@ namespace Alex.GuiDebugger.Models
 
         }
 
-        public ElementTreeItemProperty(Guid elementId, string name, Type type, object value) : this()
+        public ElementTreeItemProperty(Guid elementId, string name, string type, object value) : this()
         {
             ElementId = elementId;
             Name = name;

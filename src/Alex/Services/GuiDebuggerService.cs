@@ -10,76 +10,99 @@ using RocketUI;
 
 namespace Alex.Services
 {
-	public class GuiDebuggerService : IGuiDebuggerService
-	{
-		private static readonly ILogger Log = LogManager.GetCurrentClassLogger();
+    public class GuiDebuggerService : IGuiDebuggerService
+    {
+        private static readonly ILogger Log = LogManager.GetCurrentClassLogger();
 
 
-		protected GuiManager GuiManager => Alex.Instance.GuiManager;
+        protected GuiManager GuiManager => Alex.Instance.GuiManager;
 
         public Guid? TryGetElementUnderCursor()
         {
             return Alex.Instance.GuiDebugHelper.TopMostHighlighted?.Id;
         }
 
-		public void HighlightGuiElement(Guid id)
-		{
-			Log.Info($"IGuiDebuggerService.HighlightGuiElement(id: {id.ToString()})");
-			var element = FindGuiElementById(id);
-			Alex.Instance.GuiDebugHelper.HighlightedElement = element;
-		}
+        public void HighlightGuiElement(Guid id)
+        {
+            Log.Info($"IGuiDebuggerService.HighlightGuiElement(id: {id.ToString()})");
+            var element = FindGuiElementById(id);
+            Alex.Instance.GuiDebugHelper.HighlightedElement = element;
+        }
 
-		public void DisableHighlight()
-		{
-			Log.Info("IGuiDebuggerService.DisableHighlight()");
-			Alex.Instance.GuiDebugHelper.HighlightedElement = null;
-		}
+        public void DisableHighlight()
+        {
+            Log.Info("IGuiDebuggerService.DisableHighlight()");
+            Alex.Instance.GuiDebugHelper.HighlightedElement = null;
+        }
 
-		public GuiElementInfo[] GetAllGuiElementInfos()
-		{
-			Log.Info("IGuiDebuggerService.GetAllGuiElementInfos()");
-			var screens = GuiManager.Screens.ToArray();
-			var res = new List<GuiElementInfo>();
-			
-			foreach (var screen in screens)
-			{
-				res.Add(BuildGuiElementInfo(screen));
-			}
+        public GuiElementInfo[] GetAllGuiElementInfos()
+        {
+            Log.Info("IGuiDebuggerService.GetAllGuiElementInfos()");
+            var screens = GuiManager.Screens.ToArray();
+            var res = new List<GuiElementInfo>();
 
-			return res.ToArray();
-		}
+            foreach (var screen in screens)
+            {
+                res.Add(BuildGuiElementInfo(screen));
+            }
 
-		public GuiElementPropertyInfo[] GetElementPropertyInfos(Guid id)
-		{
-			Log.Info($"IGuiDebuggerService.GetElementPropertyInfos(id: {id.ToString()})");
-			var element = FindGuiElementById(id);
-			if(element == null) return new GuiElementPropertyInfo[0];
+            return res.ToArray();
+        }
 
-			var infos = BuildGuiElementPropertyInfos(element);
-			return infos;
-		}
+        public GuiElementPropertyInfo[] GetElementPropertyInfos(Guid id)
+        {
+            Log.Info($"IGuiDebuggerService.GetElementPropertyInfos(id: {id.ToString()})");
+            var element = FindGuiElementById(id);
+            if (element == null) return new GuiElementPropertyInfo[0];
 
-		public bool SetElementPropertyValue(Guid id, string propertyName, string propertyValue)
-		{
-			Log.Info($"IGuiDebuggerService.SetElementPropertyValue(id: {id.ToString()}, propertyName: {propertyName}, propertyValue: {propertyValue})");
-			var element = FindGuiElementById(id);
-			if (element == null) return false;
+            var infos = BuildGuiElementPropertyInfos(element);
+            return infos;
+        }
 
-			var property = element.GetType().GetProperty(propertyName);
-			if (property == null) return false;
+        public bool SetElementPropertyValue(Guid id, string propertyName, string propertyValue)
+        {
+            Log.Info(
+                $"IGuiDebuggerService.SetElementPropertyValue(id: {id.ToString()}, propertyName: {propertyName}, propertyValue: {propertyValue})");
 
-			try
-			{
-				var propType = property.PropertyType;
-				var value    = ConvertPropertyType(propType, propertyValue);
-				property.SetValue(element, value);
-				return true;
-			}
-			catch
-			{
-				return false;
-			}
-		}
+            try
+            {
+                var element = FindGuiElementById(id);
+                if (element == null) return false;
+
+                var type = element.GetType();
+                var members = type.GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                var member = members.FirstOrDefault(m =>
+                    (m.MemberType & (MemberTypes.Field | MemberTypes.Property)) != 0 && string.Equals(m.Name,
+                        propertyName, StringComparison.InvariantCultureIgnoreCase));
+                if (member == null) return false;
+
+                if (member.MemberType == MemberTypes.Field)
+                {
+                    var fieldInfo = member as FieldInfo;
+
+                    var value = ConvertPropertyType(fieldInfo.FieldType, propertyValue);
+                    fieldInfo.SetValue(element, value);
+                    return true;
+                }
+                else if (member.MemberType == MemberTypes.Property)
+                {
+                    var propertyInfo = member as PropertyInfo;
+                    var value = ConvertPropertyType(propertyInfo.PropertyType, propertyValue);
+                    propertyInfo.SetValue(element, value);
+                    return true;
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "IGuiDebuggerService.SetElementPropertyValue failed");
+            }
+
+            return false;
+        }
 
         public void EnableUIDebugging()
         {
@@ -92,117 +115,117 @@ namespace Alex.Services
         }
 
         private IGuiElement FindGuiElementById(Guid id)
-		{
-			foreach (var screen in GuiManager.Screens.ToArray())
-			{
-				if (screen.TryFindDeepestChild(e => e.Id.Equals(id), out IGuiElement foundElement))
-				{
+        {
+            foreach (var screen in GuiManager.Screens.ToArray())
+            {
+                if (screen.TryFindDeepestChild(e => e.Id.Equals(id), out IGuiElement foundElement))
+                {
                     return foundElement;
-				}
-			}
+                }
+            }
 
-			return null;
-		}
+            return null;
+        }
 
-		private object ConvertPropertyType(Type targetType, string value)
-		{
-			if (targetType.IsEnum)
-			{
-				return Enum.Parse(targetType, value, true);
-			}
+        private object ConvertPropertyType(Type targetType, string value)
+        {
+            if (targetType.IsEnum)
+            {
+                return Enum.Parse(targetType, value, true);
+            }
 
-			if (targetType == typeof(Size))
-			{
-				return Size.Parse(value);
-			}
+            if (targetType == typeof(Size))
+            {
+                return Size.Parse(value);
+            }
 
-			if (targetType == typeof(Thickness))
-			{
-				return Thickness.Parse(value);
-			}
+            if (targetType == typeof(Thickness))
+            {
+                return Thickness.Parse(value);
+            }
 
-			if (targetType == typeof(int))
-			{
-				return int.Parse(value);
-			}
-			
-			if (targetType == typeof(double))
-			{
-				return double.Parse(value);
-			}
-			
-			if (targetType == typeof(float))
-			{
-				return float.Parse(value);
-			}
-			
-			if (targetType == typeof(bool))
-			{
-				return bool.Parse(value);
-			}
+            if (targetType == typeof(int))
+            {
+                return int.Parse(value);
+            }
 
-			return Convert.ChangeType(value, targetType);
-		}
+            if (targetType == typeof(double))
+            {
+                return double.Parse(value);
+            }
 
-		private GuiElementInfo BuildGuiElementInfo(IGuiElement guiElement)
-		{
-			var info = new GuiElementInfo(guiElement.Id, guiElement.GetType().Name);
+            if (targetType == typeof(float))
+            {
+                return float.Parse(value);
+            }
 
-			info.ChildElements = guiElement.ChildElements.ToArray().Select(BuildGuiElementInfo).ToArray();
-			return info;
-		}
+            if (targetType == typeof(bool))
+            {
+                return bool.Parse(value);
+            }
 
-		private GuiElementPropertyInfo[] BuildGuiElementPropertyInfos(IGuiElement guiElement)
-		{
-			var properties = guiElement.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            return Convert.ChangeType(value, targetType);
+        }
 
-			var infos = new List<GuiElementPropertyInfo>();
-			foreach (var prop in properties)
-			{
-				var attr = prop.GetCustomAttribute<DebuggerVisibleAttribute>(true);
-				if (attr == null) continue;
-				if (!attr.Visible) continue;
+        private GuiElementInfo BuildGuiElementInfo(IGuiElement guiElement)
+        {
+            var info = new GuiElementInfo(guiElement.Id, guiElement.GetType().Name, guiElement.Name);
 
-				if(typeof(IGuiElement).IsAssignableFrom(prop.PropertyType)) continue;
+            info.ChildElements = guiElement.ChildElements.ToArray().Select(BuildGuiElementInfo).ToArray();
+            return info;
+        }
 
-				object val = null;
-				try
-				{
-					val = prop.GetValue(guiElement);
-					
-				}
-				catch(Exception ex)
-				{
-					val = "Exception - " + ex.Message;
-				}
+        private GuiElementPropertyInfo[] BuildGuiElementPropertyInfos(IGuiElement guiElement)
+        {
+            var properties = guiElement.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
-				//infos.Add(new GuiElementPropertyInfo()
-				//{
-				//	Name        = prop.Name,
-				//	Type        = prop.PropertyType,
-				//	Value       = val,
-				//	StringValue = val?.ToString()
-				//});
+            var infos = new List<GuiElementPropertyInfo>();
+            foreach (var prop in properties)
+            {
+                var attr = prop.GetCustomAttribute<DebuggerVisibleAttribute>(true);
+                if (attr == null) continue;
+                if (!attr.Visible) continue;
 
-				var propType = prop.PropertyType;
+                if (typeof(IGuiElement).IsAssignableFrom(prop.PropertyType)) continue;
+
+                object val = null;
+                try
+                {
+                    val = prop.GetValue(guiElement);
+                }
+                catch (Exception ex)
+                {
+                    val = "Exception - " + ex.Message;
+                }
+
+                //infos.Add(new GuiElementPropertyInfo()
+                //{
+                //	Name        = prop.Name,
+                //	Type        = prop.PropertyType,
+                //	Value       = val,
+                //	StringValue = val?.ToString()
+                //});
+
+                var propType = prop.PropertyType;
 
 
-				if (propType.Assembly != typeof(IGuiDebuggerService).Assembly)
-				{
-					propType = typeof(string);
-					val = val?.ToString();
-				}
+                // if (propType.Assembly != typeof(IGuiDebuggerService).Assembly)
+                // {
+                //     propType = typeof(string);
+                //     val = val?.ToString();
+                // }
 
-				infos.Add(new GuiElementPropertyInfo()
-				{
-					Name        = prop.Name,
-					Type        = propType,
-					Value       = val,
-					StringValue = val?.ToString()
-				});
-			}
+                infos.Add(new GuiElementPropertyInfo()
+                {
+                    Name = prop.Name,
+                    Type = propType?.FullName,
+                    Category = attr.Category,
+                    Value = val,
+                    StringValue = val?.ToString()
+                });
+            }
 
-			return infos.ToArray();
-		}
-	}
+            return infos.ToArray();
+        }
+    }
 }

@@ -5,6 +5,7 @@ using Alex.API.Input.Listeners;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using RocketUI;
 
 namespace Alex.API.Gui
 {
@@ -73,6 +74,7 @@ namespace Alex.API.Gui
         {
             UpdateHighlightedElement();
             UpdateInput();
+            UpdateScrollables();
         }
 
         public void OnTextInput(object sender, TextInputEventArgs args)
@@ -173,6 +175,28 @@ namespace Alex.API.Gui
             _cursorDown = isDown;
         }
 
+        private void UpdateScrollables()
+        {
+            var isScrollUp = CursorInputListener.IsDown(InputCommand.GuiScrollUp);
+            var isScrollDown = CursorInputListener.IsDown(InputCommand.GuiScrollDown);
+            var isScrollAlternate = CursorInputListener.IsDown(InputCommand.GuiScrollAlternateOrientationModifier);
+            
+            if ((isScrollUp && !isScrollDown) || (isScrollDown && !isScrollUp))
+            {
+                var orientation = isScrollAlternate ? Orientation.Vertical : Orientation.Horizontal;
+                var delta = 0;
+                if (orientation == Orientation.Vertical)
+                    delta = isScrollUp ? -1 : 1;
+                else if (orientation == Orientation.Horizontal)
+                    delta = isScrollUp ? 1 : -1;
+                
+                if (TryGetElementAt(CursorPosition,
+                    e => e is IScrollable scrollable && scrollable.CanScroll(orientation), out var element))
+                {
+                    ((IScrollable) element).InvokeScroll(orientation, delta);
+                }
+            }
+        }
         private bool TryFindNextControl(Vector2 scanVector, out IGuiElement nextControl)
         {
             Vector2 scan = CursorPosition + scanVector;

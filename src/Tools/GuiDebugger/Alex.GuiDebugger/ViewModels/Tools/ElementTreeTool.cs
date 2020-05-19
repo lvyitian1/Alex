@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Reactive;
 using Alex.GuiDebugger.Models;
 using Alex.GuiDebugger.Services;
 using Dock.Model.Controls;
@@ -7,11 +8,11 @@ using ReactiveUI;
 
 namespace Alex.GuiDebugger.ViewModels.Tools
 {
-    public class ElementTreeTool : ToolTab
+    public class ElementTreeTool : Tool
     {
         public ObservableCollection<ElementTreeItem> ElementTreeItems { get; }
 
-        public ReactiveCommand RefreshCommand { get; }
+        public ReactiveCommand<Unit, Unit> RefreshCommand { get; }
 
         public ElementTreeTool()
         {

@@ -4,7 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:rui="clr-namespace=RocketUI;assembly=RocketUI"
+    xmlns:rui="clr-namespace:RocketUI;assembly=RocketUI"
+    xmlns:models="clr-namespace:Alex.GuiDebugger.Models;assembly=Alex.GuiDebugger"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
@@ -34,7 +35,6 @@
 
         <TreeView
             Grid.Row="1"
-            Header="Properties"
             Items="{Binding Properties}">
             <TreeView.DataTemplates>
                 <TreeDataTemplate DataType="{x:Type models:ElementTreeItemProperty}">
@@ -42,9 +42,9 @@
                         <TextBlock Grid.Column="0" Text="{Binding Name}" />
                         <ContentControl Grid.Column="1" Content="{Binding Value}">
                             <ContentControl.DataTemplates>
-                                <DataTemplate DataType="string">
+                                <!--<DataTemplate DataType="{x:Type sys:String}">
                                     <TextBox Text="{Binding Value}" />
-                                </DataTemplate>
+                                </DataTemplate>-->
                                 <DataTemplate DataType="{x:Type rui:AutoSizeMode}">
                                     <TextBox Text="{Binding Value}" />
                                 </DataTemplate>

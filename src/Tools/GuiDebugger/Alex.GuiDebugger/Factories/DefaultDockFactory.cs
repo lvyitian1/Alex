@@ -4,13 +4,12 @@ using Alex.GuiDebugger.Models;
 using Alex.GuiDebugger.ViewModels;
 using Alex.GuiDebugger.ViewModels.Tools;
 using Dock.Avalonia.Controls;
-using Dock.Avalonia.Editor;
 using Dock.Model;
 using Dock.Model.Controls;
 
 namespace Alex.GuiDebugger.Factories
 {
-	public class DefaultDockFactory : DockFactory
+	public class DefaultDockFactory : Factory
 	{
 		private object _context;
 
@@ -38,17 +37,17 @@ namespace Alex.GuiDebugger.Factories
 				Id          = "LeftPaneTop",
 				Title       = "LeftPaneTop",
 				Proportion  = double.NaN,
-				CurrentView = elementTreeTool,
-				Views       = CreateList<IView>(elementTreeTool)
+				ActiveDockable = elementTreeTool,
+				VisibleDockables       = CreateList<IDockable>(elementTreeTool)
 			};
-			var leftPane = new LayoutDock()
+			var leftPane = new ProportionalDock()
 			{
 				Id          = "LeftPane",
 				Title       = "LeftPane",
 				Proportion  = double.NaN,
 				Orientation = Orientation.Vertical,
-				CurrentView = null,
-				Views       = CreateList<IView>(leftPaneTop)
+				ActiveDockable = null,
+				VisibleDockables       = CreateList<IDockable>(leftPaneTop)
 			};
 			var leftSplitter = new SplitterDock()
 			{
@@ -60,27 +59,27 @@ namespace Alex.GuiDebugger.Factories
 				Id         = "DocumentsPane",
 				Title      = "DocumentsPane",
 				Proportion = double.NaN,
-				CurrentView = null,
-				Views = CreateList<IView>()
-				//CurrentView = elementTreeDocument,
-				//Views = CreateList<IView>(elementTreeDocument)
+				ActiveDockable = null,
+				VisibleDockables = CreateList<IDockable>()
+				//ActiveDockable = elementTreeDocument,
+				//VisibleDockables = CreateList<IDockable>(elementTreeDocument)
 			};
-			var mainLayout = new LayoutDock
+			var mainLayout = new ProportionalDock
 			{
 				Id          = "MainLayout",
 				Title       = "MainLayout",
 				Proportion  = double.NaN,
 				Orientation = Orientation.Horizontal,
-				CurrentView = null,
-				Views       = CreateList<IView>(leftPane, leftSplitter, documentsPane)
+				ActiveDockable = null,
+				VisibleDockables       = CreateList<IDockable>(leftPane, leftSplitter, documentsPane)
 			};
 
 			var mainView = new MainView
 			{
 				Id          = "Main",
 				Title       = "Main",
-				CurrentView = mainLayout,
-				Views       = CreateList<IView>(mainLayout)
+				ActiveDockable = mainLayout,
+				VisibleDockables       = CreateList<IDockable>(mainLayout)
 			};
 
 
@@ -88,40 +87,40 @@ namespace Alex.GuiDebugger.Factories
 
 			root.Id             = "Root";
 			root.Title          = "Root";
-			root.CurrentView    = mainView;
-			root.DefaultView    = mainView;
-			root.Views          = CreateList<IView>(mainView);
+			root.ActiveDockable    = mainView;
+			root.DefaultDockable    = mainView;
+			root.VisibleDockables          = CreateList<IDockable>(mainView);
 			root.Left           = CreatePinDock();
 			root.Left.Alignment = Alignment.Left;
 
-			AddAllViews(root, mainView, mainLayout, documentsPane, leftSplitter, leftPane, leftPaneTop, elementTreeTool);
+			AddAllVisibleDockables(root, mainView, mainLayout, documentsPane, leftSplitter, leftPane, leftPaneTop, elementTreeTool);
 
 			return root;
 		}
 
-		private void AddAllViews(params IView[] views)
+		private void AddAllVisibleDockables(params IDockable[] visibleDockables)
 		{
-			if(ViewLocator == null) ViewLocator = new Dictionary<string, Func<IView>>();
+			if(DockableLocator == null) DockableLocator = new Dictionary<string, Func<IDockable>>();
 
-			foreach (var view in views)
+			foreach (var view in visibleDockables)
 			{
-				ViewLocator[view.Id] = () => view;
+				DockableLocator[view.Id] = () => view;
 			}
 		}
 
-		public override void InitLayout(IView layout)
+		public override void InitLayout(IDockable layout)
 		{
 			this.ContextLocator = new Dictionary<string, Func<object>>
 			{
 				[nameof(IRootDock)]     = () => _context,
 				[nameof(IPinDock)]      = () => _context,
-				[nameof(ILayoutDock)]   = () => _context,
+				[nameof(IDockable)]   = () => _context,
 				[nameof(IDocumentDock)] = () => _context,
 				[nameof(IToolDock)]     = () => _context,
 				[nameof(ISplitterDock)] = () => _context,
 				[nameof(IDockWindow)]   = () => _context,
-				[nameof(IDocumentTab)]  = () => _context,
-				[nameof(IToolTab)]      = () => _context,
+				[nameof(IDocument)]  = () => _context,
+				[nameof(ITool)]      = () => _context,
 				["ElementTreeDocument"] = () => new ElementTreeDocumentModel(),
 				["ElementTreeTool"]     = () => new ElementTreeToolModel(),
 				["LeftPane"]            = () => _context,
@@ -132,15 +131,20 @@ namespace Alex.GuiDebugger.Factories
 				["LeftSplitter"]        = () => _context,
 				["MainLayout"]          = () => _context,
 				["Main"]                = () => layout,
-				["Editor"] = () => new LayoutEditor()
-				{
-					Layout = layout
-				}
+				// ["Editor"] = () => new LayoutEditor()
+				// {
+				// 	Layout = layout
+				// }
 			};
 
-			this.HostLocator = new Dictionary<string, Func<IDockHost>>
+			this.HostWindowLocator = new Dictionary<string, Func<IHostWindow>>
 			{
 				[nameof(IDockWindow)] = () => new HostWindow()
+			};
+			
+			this.DockableLocator = new Dictionary<string, Func<IDockable>>()
+			{
+				
 			};
 
 			base.InitLayout(layout);

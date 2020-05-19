@@ -7,6 +7,7 @@ namespace Alex.GuiDebugger.Common
 		public Guid Id { get; set; }
 		
 		public string ElementType { get; set; }
+		public string ElementName { get; set; }
 		
 		public GuiElementInfo[] ChildElements { get; set; }
 
@@ -15,10 +16,11 @@ namespace Alex.GuiDebugger.Common
 
 		}
 
-		public GuiElementInfo(Guid id, string elementType) : this()
+		public GuiElementInfo(Guid id, string elementType, string elementName) : this()
 		{
 			Id = id;
 			ElementType = elementType;
+			ElementName = elementName;
 		}
 	}
 }

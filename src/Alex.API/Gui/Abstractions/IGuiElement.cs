@@ -10,6 +10,7 @@ namespace Alex.API.Gui
     public interface IGuiElement
     {
         [DebuggerVisible] Guid Id { get; }
+        [DebuggerVisible] string Name { get; }
 
         IGuiScreen Screen { get; }
         IGuiElement ParentElement { get; set; }
@@ -18,8 +19,8 @@ namespace Alex.API.Gui
         IGuiElement[] ChildElements { get; }
 
         [DebuggerVisible] bool HasChildren { get; }
-        int X { set; }
-        int Y { set; }
+        [DebuggerVisible] int X { set; }
+        [DebuggerVisible] int Y { set; }
         
         
         [DebuggerVisible] Vector2 RenderPosition { get; }

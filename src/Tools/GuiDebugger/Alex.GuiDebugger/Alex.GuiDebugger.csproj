@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <LangVersion>7.1</LangVersion>
+    <LangVersion>latest</LangVersion>
     <MonoGamePlatform>DesktopGL</MonoGamePlatform>
   </PropertyGroup>
   <ItemGroup>
@@ -30,25 +30,26 @@
     <AvaloniaResource Include="Assets\*" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MonoGame.Framework.DesktopGL.Core" Version="3.7.0.7" />
-    <PackageReference Include="Avalonia" Version="0.8.1" />
-    <PackageReference Include="Avalonia.Controls.DataGrid" Version="0.8.1" />
-    <PackageReference Include="Avalonia.Desktop" Version="0.8.1" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="0.8.1" />
-    <PackageReference Include="Avalonia.Xaml.Behaviors" Version="0.8.0" />
-    <PackageReference Include="Avalonia.Xaml.Interactions" Version="0.8.0" />
-    <PackageReference Include="Avalonia.Xaml.Interactions.Custom" Version="0.8.0" />
-    <PackageReference Include="Avalonia.Xaml.Interactivity" Version="0.8.0" />
-    <PackageReference Include="Dock.Avalonia" Version="0.8.0" />
-    <PackageReference Include="Dock.Avalonia.Editor" Version="0.8.0" />
-    <PackageReference Include="Dock.CodeGen" Version="0.8.0" />
-    <PackageReference Include="Dock.Model" Version="0.8.0" />
-    <PackageReference Include="Dock.Model.ReactiveUI" Version="0.8.0" />
-    <PackageReference Include="Dock.Serializer" Version="0.8.0" />
-    <PackageReference Include="JKang.IpcServiceFramework.Client" Version="2.2.2" />
+    <PackageReference Include="Dock.Avalonia.Themes.Default" Version="0.9.9" />
+    <PackageReference Include="Dock.Avalonia.Themes.Metro" Version="0.9.9" />
+    <PackageReference Include="MonoGame.Framework.DesktopGL.Core" Version="3.8.0.13" />
+    <PackageReference Include="Avalonia" Version="0.9.9" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="0.9.9" />
+    <PackageReference Include="Avalonia.Desktop" Version="0.9.9" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="0.9.9" />
+    <PackageReference Include="Avalonia.Xaml.Behaviors" Version="0.9.9" />
+    <PackageReference Include="Avalonia.Xaml.Interactions" Version="0.9.9" />
+    <PackageReference Include="Avalonia.Xaml.Interactions.Custom" Version="0.9.9" />
+    <PackageReference Include="Avalonia.Xaml.Interactivity" Version="0.9.9" />
+    <PackageReference Include="Dock.Avalonia" Version="0.9.9" />
+    <PackageReference Include="Dock.Model" Version="0.9.9" />
+    <PackageReference Include="Dock.Model.ReactiveUI" Version="0.9.9" />
+    <PackageReference Include="Dock.Serializer" Version="0.9.9" />
+    <PackageReference Include="JKang.IpcServiceFramework.Client" Version="2.3.1" />
   </ItemGroup>
   <ItemGroup>
     <!--<ProjectReference Include="..\..\..\Alex.API\Alex.API.csproj" />-->
     <ProjectReference Include="..\..\..\Alex.GuiDebugger.Common\Alex.GuiDebugger.Common.csproj" />
+    <ProjectReference Include="..\..\..\RocketUI\RocketUI.csproj" />
   </ItemGroup>
 </Project>

@@ -176,7 +176,23 @@ namespace Alex
            PacketFactory.CustomPacketFactory = new AlexPacketFactory();
            
            KeyboardInputListener.InstanceCreated += KeyboardInputCreated;
+           MouseInputListener.InstanceCreated += MouseInputCreated;
 		}
+
+        private void MouseInputCreated(object? sender, MouseInputListener e)
+        {
+	        var bindings = KeyBinds.DefaultMouseBindings;
+
+	        if (Storage.TryReadJson($"controls_mouse", out Dictionary<InputCommand, MouseButton> loadedMouseBindings))
+	        {
+		        bindings = loadedMouseBindings;
+	        }
+
+	        foreach (var binding in bindings)
+	        {
+		        e.RegisterMap(binding.Key, binding.Value);
+	        }
+        }
 
         private void KeyboardInputCreated(object sender, KeyboardInputListener e)
         {
