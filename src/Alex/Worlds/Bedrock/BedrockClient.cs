@@ -64,33 +64,69 @@ namespace Alex.Worlds.Bedrock
 		public string ClientVersion;
 		public IPEndPoint ServerEndpoint;
 
+		public string LevelSeed;
+		public string LevelName;
+		public string Gamemode;
+		public string Unknown3;
+		public ushort Port;
+		public ushort Port2;
+
+		protected string[] _fields;
+		protected int _fieldCount;
+		
 		public BedrockMotd(string raw)
 		{
 			if (string.IsNullOrWhiteSpace(raw)) return;
 
-			var split = raw.Split(';');
-			int i = 0;
-			Edition = split[i++];
-			MOTD = split[i++];
+			_fields = raw.Split(';');
+			_fieldCount = 0;
+			
+			Edition = _fields[_fieldCount++]; 									// [0]
+			MOTD = _fields[_fieldCount++];										// [1]
 
-			if (int.TryParse(split[i++], out int protocolVersion))
+			if (int.TryParse(_fields[_fieldCount++], out int protocolVersion))	// [2]
 			{
 				ProtocolVersion = protocolVersion;
 			}
 			
-			ClientVersion = split[i++];
+			ClientVersion = _fields[_fieldCount++];								// [3]
 
-			if (int.TryParse(split[i++], out int players))
+			if (int.TryParse(_fields[_fieldCount++], out int players))			// [4]
 			{
 				Players = players;
 			}
 
-			if (int.TryParse(split[i++], out int maxplayers))
+			if (int.TryParse(_fields[_fieldCount++], out int maxplayers))			// [5]
 			{
 				MaxPlayers = maxplayers;
 			}
+			
+			if (_fields.Length <= _fieldCount) return;
+			LevelSeed = _fields[_fieldCount++];
+			
+			if (_fields.Length <= _fieldCount) return;
+			LevelName = _fields[_fieldCount++];
+
+			if (_fields.Length <= _fieldCount) return;
+			Gamemode = _fields[_fieldCount++];
+
+			if (_fields.Length <= _fieldCount) return;
+			Unknown3 = _fields[_fieldCount++];
+
+			if (_fields.Length <= _fieldCount) return;
+			if (ushort.TryParse(_fields[_fieldCount++], out ushort port))
+			{
+				Port = port;
+			}
+			
+			if (_fields.Length <= _fieldCount) return;
+			if (ushort.TryParse(_fields[_fieldCount++], out ushort port2))
+			{
+				Port2 = port2;
+			}
 		}
 	}
+	
 	public class BedrockClient : INetworkProvider, IDisposable
 	{
 		private static readonly Logger Log = LogManager.GetCurrentClassLogger(typeof(BedrockClient));

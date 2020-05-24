@@ -33,6 +33,12 @@ namespace Alex.GameStates.Gui.Common
 		    base.OnUpdate(gameTime);
 	    }
 
+	    public void InsertItem(int index, TGuiListItemContainer item)
+	    {
+		    _items.Insert(index, item);
+		    ListContainer.InsertChild(index, item);
+	    }
+	    
 	    public void AddItem(TGuiListItemContainer item)
         {
             _items.Add(item);

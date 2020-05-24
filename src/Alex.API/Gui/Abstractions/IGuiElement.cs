@@ -112,5 +112,7 @@ namespace Alex.API.Gui
 
 
         #endregion
+
+        void InsertChild(int index, IGuiElement element);
     }
 }

@@ -13,10 +13,14 @@ using Alex.Networking.Java.Packets.Handshake;
 using Alex.Networking.Java.Packets.Status;
 using Alex.Utils;
 using Alex.Worlds.Bedrock;
+using MiNET;
+using MiNET.Net;
+using MiNET.Net.RakNet;
 using MiNET.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NLog;
+using ConnectionState = Alex.Networking.Java.ConnectionState;
 
 namespace Alex.Services
 {
@@ -68,6 +72,51 @@ namespace Alex.Services
 		    return new ResolveResult(true, ipAddresses[Rnd.Next(0, ipAddresses.Length - 1)]);
 	    }
 
+	    public async Task QueryLocalBedrockServersAsync(CancellationToken cancellationToken, ServerDiscoveredDelegate discoveredCallBack)
+	    {   
+		    using (DedicatedThreadPool threadPool =
+			    new DedicatedThreadPool(new DedicatedThreadPoolSettings(1, ThreadType.Background,
+				    "BedrockLANDiscoveryThread")))
+		    {
+			    var rak = new RakConnection(new IPEndPoint(IPAddress.Any, 19132), new GreyListManager(), new MotdProvider(), threadPool);
+			    rak.AutoConnect = false;
+			    rak.CustomMessageHandlerFactory = session => new MessageHandler(session, new BedrockLocalDiscoveryMessageHandler());
+			    rak.Start();
+
+			    await Task.Run(async () =>
+			    {
+				    if (!rak.TryLocate(null, out var info))
+				    {
+					     discoveredCallBack?.Invoke(new ServerDiscoveredResponse(false));
+					    
+						return;
+				    }
+				    
+				    var motd = new BedrockMotd(info.serverName);
+				    
+				    discoveredCallBack.Invoke(new ServerDiscoveredResponse((info.serverEndPoint, !string.IsNullOrWhiteSpace(motd.LevelName) ? motd.MOTD : motd.ServerEndpoint.ToString()), new ServerQuery()
+				    {
+					    Description = new Description()
+					    {
+						    Text = !string.IsNullOrWhiteSpace(motd.LevelName) ? $"{motd.LevelName} - {motd.ClientVersion}" : motd.MOTD
+					    },
+					    Version = new API.Services.Version()
+					    {
+						    Name = motd.ClientVersion,
+						    Protocol = motd.ProtocolVersion
+					    },
+					    Players = new Players()
+					    {
+						    Max = motd.MaxPlayers,
+						    Online = motd.Players
+					    }
+				    }));
+			    }, cancellationToken);
+			    
+			    rak.Stop();
+		    }
+	    }
+	    
 		public async Task QueryBedrockServerAsync(string hostname, ushort port, PingServerDelegate pingCallback, ServerStatusDelegate statusCallBack)
 	    {
 		    await QueryPeServerAsync(hostname, port, pingCallback, statusCallBack);
@@ -155,6 +204,7 @@ namespace Alex.Services
 								Version = new API.Services.Version()
 								{
 									Protocol = motd.ProtocolVersion,
+									Name = motd.ClientVersion
 								},
 								Description = new Description()
 								{
@@ -162,7 +212,8 @@ namespace Alex.Services
 								},
 								Modinfo = null,
 								Favicon = null
-							}
+							},
+							LevelName = motd.LevelName
 					    }));
 				    }
 				    else
@@ -523,7 +574,7 @@ namespace Alex.Services
         }
     }
 
-	public static class WaitHandleHelpers{
+    public static class WaitHandleHelpers{
 		/// <summary>
 		/// Wraps a <see cref="WaitHandle"/> with a <see cref="Task"/>. When the <see cref="WaitHandle"/> is signalled, the returned <see cref="Task"/> is completed. If the handle is already signalled, this method acts synchronously.
 		/// </summary>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -12,11 +13,14 @@ namespace Alex.API.Services
 
 	public delegate void PingServerDelegate(ServerPingResponse response);
 	public delegate void ServerStatusDelegate(ServerQueryResponse reponse);
+	public delegate void ServerDiscoveredDelegate(ServerDiscoveredResponse reponse);
+	
     public interface IServerQueryProvider
     {
 	    Task QueryBedrockServerAsync(string hostname, ushort port, PingServerDelegate pingCallback = null, ServerStatusDelegate statusCallBack = null);
 		Task QueryServerAsync(string hostname, ushort port, PingServerDelegate pingCallback = null, ServerStatusDelegate statusCallBack = null);
 
+		Task QueryLocalBedrockServersAsync(CancellationToken cancellationToken, ServerDiscoveredDelegate discoveredCallBack = null);
     }
 
 	public class ServerListPingDescriptionJson
@@ -107,6 +111,29 @@ namespace Alex.API.Services
 		public static ServerQuery FromJson(string json) => JsonConvert.DeserializeObject<ServerQuery>(json);
 	}
 
+	public class ServerDiscoveredResponse
+	{
+		public ServerDiscoveredResponse(bool success = false)
+		{
+			Success = success;
+		}
+		
+		public ServerDiscoveredResponse((IPEndPoint serverEndPoint, string serverName) serverInfo, ServerQuery query) : this(true)
+		{
+			Name = serverInfo.serverName;
+			EndPoint = serverInfo.serverEndPoint;
+			Query = query;
+		}
+
+		public bool Success { get; }
+		
+		public string Name { get; }
+		
+		public IPEndPoint EndPoint { get; }
+		
+		public ServerQuery Query { get; }
+		
+	}
 
 	public class ServerPingResponse
 	{
@@ -156,6 +183,7 @@ namespace Alex.API.Services
         public long Delay   { get; set; }
         public IPEndPoint EndPoint { get; set; }
         public string Address { get; set; }
+        public string LevelName { get; set; }
         public ushort Port { get; set; }
 
 	    public ServerQuery Query { get; set; }

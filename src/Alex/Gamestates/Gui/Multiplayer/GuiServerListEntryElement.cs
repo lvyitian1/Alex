@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -33,6 +34,8 @@ namespace Alex.GameStates.Gui.Multiplayer
 		public IPEndPoint ConnectionEndpoint { get; set; } = null;
 
 		public Texture2D ServerIcon { get; private set; }
+		
+		public bool IsLocalServer { get; set; }
 		
 		private readonly GuiTextureElement     _serverIcon;
 		private readonly GuiStackContainer     _textWrapper;
@@ -290,7 +293,15 @@ namespace Alex.GameStates.Gui.Multiplayer
 				}
 				else
 				{
-					_serverMotd.Text = q.Description.Text;
+					if (IsLocalServer)
+					{
+						_serverName.Text = $"[LAN] - {q.Description.Text}";
+						_serverMotd.Text = $"{response.Status.LevelName} - v{q.Version.Name}";
+					}
+					else
+					{
+						_serverMotd.Text = q.Description.Text;
+					}
 				}
 
 				if (!string.IsNullOrWhiteSpace(q.Favicon))

@@ -171,6 +171,25 @@ namespace Alex.API.Gui.Elements
 		}
 
 
+		public void InsertChild(int index, IGuiElement element)
+		{
+			if (element == this) return;
+			if (element.ParentElement == this) return;
+			if (Children.Contains(element)) return;
+			
+			Children.Insert(index, element);
+			element.ParentElement = this;
+
+			if (_initialised)
+			{
+				element.Init(_guiRenderer);
+			}
+
+			OnChildAdded(element);
+
+			InvalidateLayout();
+		}
+
 		public void AddChild(IGuiElement element)
 		{
 			if (element == this) return;

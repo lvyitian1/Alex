@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Alex.API.Data.Servers;
 using Alex.API.Graphics;
@@ -85,7 +87,10 @@ namespace Alex.GameStates.Gui.Multiplayer
 		    Background = new GuiTexture2D(_skyBox, TextureRepeatMode.Stretch);
 		}
 
-	    protected override void OnShow()
+		private CancellationTokenSource _cts = new CancellationTokenSource();
+
+		private List<Task> _tasks;
+		protected override void OnShow()
 	    {
 		    base.OnShow();
 		    
@@ -94,18 +99,58 @@ namespace Alex.GameStates.Gui.Multiplayer
 		    _listProvider.Load();
 		    
 		    ClearItems();
+		    _localBedrockCache.Clear();
+		    
+		    _cts = new CancellationTokenSource();
 
-		    List<Task> tasks = new List<Task>();
+
+		    _tasks = new List<Task>();
+		    var bedrockDiscovery = queryProvider.QueryLocalBedrockServersAsync(_cts.Token, OnLocalBedrockServerDiscovered);
+		    
+		    _tasks.Add(bedrockDiscovery);
 		    foreach (var entry in _listProvider.Data.ToArray())
 		    {
 			    var element = new GuiServerListEntryElement(queryProvider, entry);
 			    AddItem(element);
 			    
-			    tasks.Add(element.PingAsync(false));
+			    _tasks.Add(element.PingAsync(false));
 		    }
 		}
 
-	    protected override void OnSelectedItemChanged(GuiServerListEntryElement newItem)
+		private IDictionary<IPEndPoint, GuiServerListEntryElement> _localBedrockCache = new Dictionary<IPEndPoint, GuiServerListEntryElement>();
+
+		private void OnLocalBedrockServerDiscovered(ServerDiscoveredResponse reponse)
+		{
+			if(!reponse.Success) return;
+			
+			if (_localBedrockCache.TryGetValue(reponse.EndPoint, out var existingItem))
+			{
+				existingItem.ServerName = reponse.Name;
+				return;
+			}
+			
+			var queryProvider = GetService<IServerQueryProvider>();
+			var element = new GuiServerListEntryElement(queryProvider, new SavedServerEntry()
+			{
+				ListIndex = int.MinValue,
+				ServerType = ServerType.Bedrock,
+				Host = reponse.EndPoint.Address.ToString(),
+				Port = (ushort) reponse.EndPoint.Port,
+				Name = reponse.Name,
+				IntenalIdentifier = Guid.NewGuid()
+			})
+			{
+				IsLocalServer = true
+			};
+			
+			_localBedrockCache.Add(reponse.EndPoint, element);
+			
+			InsertItem(0, element);
+			
+			_tasks.Add(element.PingAsync(false));
+		}
+
+		protected override void OnSelectedItemChanged(GuiServerListEntryElement newItem)
 	    {
 		    if (newItem != null)
 		    {
@@ -317,6 +362,8 @@ namespace Alex.GameStates.Gui.Multiplayer
 
 	    protected override void OnHide()
 	    {
+		    _cts.Cancel();
+		    
 		    base.OnHide();
 			SaveAll();
 	    }
