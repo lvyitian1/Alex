@@ -6,7 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Alex\Alex.csproj" />
+      <ProjectReference Include="..\..\Alex.OpenGL\Alex.OpenGL.csproj" />
     </ItemGroup>
 
 </Project>

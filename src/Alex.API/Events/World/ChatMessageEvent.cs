@@ -1,5 +1,4 @@
 ﻿using Alex.API.Utils;
-using MiNET;
 
 namespace Alex.API.Events.World
 {

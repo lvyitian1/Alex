@@ -1,9 +1,0 @@
-{
-  "profiles": {
-    "Alex": {
-      "commandName": "Project",
-      "workingDirectory": "",
-      "commandLineArgs": ""
-    }
-  }
-}

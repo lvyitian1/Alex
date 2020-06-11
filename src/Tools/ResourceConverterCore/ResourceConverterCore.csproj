@@ -30,8 +30,8 @@
 
 	<ItemGroup>
     <ProjectReference Include="..\..\Alex.API\Alex.API.csproj" />
+    <ProjectReference Include="..\..\Alex.OpenGL\Alex.OpenGL.csproj" />
     <ProjectReference Include="..\..\Alex.ResourcePackLib\Alex.ResourcePackLib.csproj" />
-    <ProjectReference Include="..\..\Alex\Alex.csproj" />
   </ItemGroup>
 
   <ItemGroup>

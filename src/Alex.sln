@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29021.104
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Alex", "Alex\Alex.csproj", "{C360D9A4-C1AC-4A41-8A49-ADE1306DB389}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Alex.OpenGL", "Alex.OpenGL\Alex.OpenGL.csproj", "{C360D9A4-C1AC-4A41-8A49-ADE1306DB389}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Alex.API", "Alex.API\Alex.API.csproj", "{DFC77469-ABB6-4111-A961-AE9B3AD22F34}"
 EndProject
@@ -37,6 +37,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeToJE", "Tools\BeToJE\BeToJE.csproj", "{03F9EF81-5393-434F-BFD3-14B60B12984F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCJavaTest", "Testing\MCJavaTest\MCJavaTest.csproj", "{68EAA4D3-4546-494B-803B-9308FE898A50}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Alex.DirectX", "Alex.DirectX\Alex.DirectX.csproj", "{89B234FA-A9CA-4F8D-BDF9-9A571FB7AE95}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Alex.Core", "Alex.Core\Alex.Core.shproj", "{BD296E0F-999C-45B7-B8A4-01919CAE332F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Alex.Android", "Alex.Android\Alex.Android.csproj", "{1A745F94-2A85-4107-BC0E-3FE482BA4392}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -173,6 +179,30 @@ Global
 		{68EAA4D3-4546-494B-803B-9308FE898A50}.Release|Any CPU.Build.0 = Release|Any CPU
 		{68EAA4D3-4546-494B-803B-9308FE898A50}.Release|x64.ActiveCfg = Release|Any CPU
 		{68EAA4D3-4546-494B-803B-9308FE898A50}.Release|x64.Build.0 = Release|Any CPU
+		{89B234FA-A9CA-4F8D-BDF9-9A571FB7AE95}.Appveyor|Any CPU.ActiveCfg = Debug|Any CPU
+		{89B234FA-A9CA-4F8D-BDF9-9A571FB7AE95}.Appveyor|Any CPU.Build.0 = Debug|Any CPU
+		{89B234FA-A9CA-4F8D-BDF9-9A571FB7AE95}.Appveyor|x64.ActiveCfg = Debug|Any CPU
+		{89B234FA-A9CA-4F8D-BDF9-9A571FB7AE95}.Appveyor|x64.Build.0 = Debug|Any CPU
+		{89B234FA-A9CA-4F8D-BDF9-9A571FB7AE95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89B234FA-A9CA-4F8D-BDF9-9A571FB7AE95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89B234FA-A9CA-4F8D-BDF9-9A571FB7AE95}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{89B234FA-A9CA-4F8D-BDF9-9A571FB7AE95}.Debug|x64.Build.0 = Debug|Any CPU
+		{89B234FA-A9CA-4F8D-BDF9-9A571FB7AE95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89B234FA-A9CA-4F8D-BDF9-9A571FB7AE95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89B234FA-A9CA-4F8D-BDF9-9A571FB7AE95}.Release|x64.ActiveCfg = Release|Any CPU
+		{89B234FA-A9CA-4F8D-BDF9-9A571FB7AE95}.Release|x64.Build.0 = Release|Any CPU
+		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Appveyor|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Appveyor|Any CPU.Build.0 = Debug|Any CPU
+		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Appveyor|x64.ActiveCfg = Debug|Any CPU
+		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Appveyor|x64.Build.0 = Debug|Any CPU
+		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Debug|x64.Build.0 = Debug|Any CPU
+		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Release|x64.ActiveCfg = Release|Any CPU
+		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
