@@ -528,7 +528,7 @@ namespace Alex
 		
 		public static byte[] ReadResource(string resource)
 		{
-			var fontStream = Assembly.GetEntryAssembly().GetManifestResourceStream(resource);
+			var fontStream = typeof(AssetsHelper).Assembly.GetManifestResourceStream(resource);
 			return fontStream.ReadAllBytes();
 		}
 	}

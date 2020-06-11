@@ -69,7 +69,8 @@ namespace Alex
 			string loggerConfigFile = Path.Combine(baseDir, "NLog.config");
 			if (!File.Exists(loggerConfigFile))
 			{
-				File.WriteAllText(loggerConfigFile, Resources.NLogConfig);
+				//ResourceManager.ReadStringResource("Alex.Resources.DebugFont.xnb")
+				File.WriteAllText(loggerConfigFile, ResourceManager.ReadStringResource("Alex.NLogConfig"));
 			}
 
 			string logsDir = Path.Combine(baseDir, "logs");

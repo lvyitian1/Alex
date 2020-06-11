@@ -592,7 +592,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Plugins\PluginManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ProfileManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ResourceManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Resources.Designer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\AlexIpcService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\Discord\RichPresenceProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Services\GuiDebuggerService.cs" />

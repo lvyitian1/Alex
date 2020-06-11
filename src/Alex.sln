@@ -44,6 +44,8 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Alex.Core", "Alex.Core\Alex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Alex.Android", "Alex.Android\Alex.Android.csproj", "{1A745F94-2A85-4107-BC0E-3FE482BA4392}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Alex.Assets", "Alex.Assets\Alex.Assets.csproj", "{F4E6E99D-3608-4FD1-A835-ACF314D5E1BB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Appveyor|Any CPU = Appveyor|Any CPU
@@ -203,6 +205,18 @@ Global
 		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Release|x64.ActiveCfg = Release|Any CPU
 		{1A745F94-2A85-4107-BC0E-3FE482BA4392}.Release|x64.Build.0 = Release|Any CPU
+		{F4E6E99D-3608-4FD1-A835-ACF314D5E1BB}.Appveyor|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4E6E99D-3608-4FD1-A835-ACF314D5E1BB}.Appveyor|Any CPU.Build.0 = Debug|Any CPU
+		{F4E6E99D-3608-4FD1-A835-ACF314D5E1BB}.Appveyor|x64.ActiveCfg = Debug|Any CPU
+		{F4E6E99D-3608-4FD1-A835-ACF314D5E1BB}.Appveyor|x64.Build.0 = Debug|Any CPU
+		{F4E6E99D-3608-4FD1-A835-ACF314D5E1BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4E6E99D-3608-4FD1-A835-ACF314D5E1BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4E6E99D-3608-4FD1-A835-ACF314D5E1BB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F4E6E99D-3608-4FD1-A835-ACF314D5E1BB}.Debug|x64.Build.0 = Debug|Any CPU
+		{F4E6E99D-3608-4FD1-A835-ACF314D5E1BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4E6E99D-3608-4FD1-A835-ACF314D5E1BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4E6E99D-3608-4FD1-A835-ACF314D5E1BB}.Release|x64.ActiveCfg = Release|Any CPU
+		{F4E6E99D-3608-4FD1-A835-ACF314D5E1BB}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
