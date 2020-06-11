@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <UseWindowsForms>true</UseWindowsForms>
+        <RootNamespace>Alex</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="JKang.IpcServiceFramework.Server" Version="2.3.1" />  
+      <PackageReference Include="Collections.Pooled" Version="2.0.0-preview.27" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.0-preview.5.20278.1" />
+      <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.0.1375-develop" />
+      <PackageReference Include="NLog" Version="4.7.2" />
+      <PackageReference Include="OpenMiNET.OpenAPI" Version="1.0.82" />
+      <PackageReference Include="DiscordRichPresence" Version="1.0.150" />
+      <PackageReference Include="Hawezo.MojangSharp" Version="0.5.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Alex.API\Alex.API.csproj" />
+      <ProjectReference Include="..\Alex.GuiDebugger.Common\Alex.GuiDebugger.Common.csproj" />
+      <ProjectReference Include="..\Alex.Networking\Alex.Networking.csproj" />
+      <ProjectReference Include="..\Alex.ResourcePackLib\Alex.ResourcePackLib.csproj" />
+    </ItemGroup>
+
+    <Import Project="..\Alex.Core\Alex.Core.projitems" Label="Shared" />
+
+    <ItemGroup>
+        <KnownFrameworkReference Update="Microsoft.WindowsDesktop.App" IsWindowsOnly="false" />
+        <KnownFrameworkReference Update="Microsoft.WindowsDesktop.App.WPF" IsWindowsOnly="false" />
+        <KnownFrameworkReference Update="Microsoft.WindowsDesktop.App.WindowsForms" IsWindowsOnly="false" />
+    </ItemGroup>
+</Project>
