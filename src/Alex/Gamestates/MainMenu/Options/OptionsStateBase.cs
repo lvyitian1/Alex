@@ -5,6 +5,7 @@ using Alex.API.Graphics;
 using Alex.API.Gui;
 using Alex.API.Gui.Elements.Controls;
 using Alex.API.Gui.Graphics;
+using Alex.API.Input;
 using Alex.API.Services;
 using Alex.Gamestates.Common;
 using Alex.Gui;
@@ -34,7 +35,8 @@ namespace Alex.Gamestates.MainMenu.Options
             {
                 TranslationKey = "gui.done",
                 Anchor = Alignment.TopFill,
-				Modern = false
+				Modern = false,
+                AccessCommand = InputCommand.NavigateBack
             });
 
             Footer.ChildAnchor = Alignment.MiddleCenter;

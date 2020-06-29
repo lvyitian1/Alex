@@ -86,4 +86,16 @@ namespace Alex.API.Input
             return PlayerInputManagers.Values.ToArray().Any(playerInputManagerFunc);
         }
     }
+
+    public static class InputManagerExtensions
+    {
+        public static bool IsAnyBeginPress(this InputManager inputManager, params InputCommand[] inputCommands)
+            => inputManager.Any(x => inputCommands.Any(x.IsBeginPress));
+        public static bool IsAnyPressed(this InputManager inputManager, params InputCommand[] inputCommands)
+            => inputManager.Any(x => inputCommands.Any(x.IsPressed));
+        public static bool IsAnyDown(this InputManager inputManager, params InputCommand[] inputCommands)
+            => inputManager.Any(x => inputCommands.Any(x.IsDown));
+        public static bool IsAnyUp(this InputManager inputManager, params InputCommand[] inputCommands)
+            => inputManager.Any(x => inputCommands.Any(x.IsUp));
+    }
 }

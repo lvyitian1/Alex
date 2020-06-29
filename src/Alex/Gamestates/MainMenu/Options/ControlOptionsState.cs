@@ -46,9 +46,9 @@ namespace Alex.Gamestates.MainMenu.Options
                     InputCommand inputCommand = ic;
 
                     Keys value = KeybindElement.Unbound;
-                    if (inputs.TryGetValue(ic, out Keys key))
+                    if (inputs.TryGetValue(ic, out List<Keys> key))
                     {
-                        value = key;
+                        value = key.FirstOrDefault();
                     }
 
                     KeybindElement textInput = new KeybindElement(value);

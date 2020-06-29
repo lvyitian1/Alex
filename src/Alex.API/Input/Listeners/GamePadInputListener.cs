@@ -5,7 +5,7 @@ namespace Alex.API.Input.Listeners
 {
     public class GamePadInputListener : InputListenerBase<GamePadState, Buttons>, ICursorInputListener
     {
-        private GamePadCapabilities _gamePadCapabilities;
+        //private GamePadCapabilities _gamePadCapabilities;
 
         public bool IsConnected => CurrentState.IsConnected;
         
@@ -49,6 +49,10 @@ namespace Alex.API.Input.Listeners
             RegisterMap(InputCommand.NavigateDown, Buttons.DPadDown);
             RegisterMap(InputCommand.NavigateLeft, Buttons.DPadLeft);
             RegisterMap(InputCommand.NavigateRight, Buttons.DPadRight);
+            RegisterMap(InputCommand.NavigateUp, Buttons.LeftThumbstickUp);
+            RegisterMap(InputCommand.NavigateDown, Buttons.LeftThumbstickDown);
+            RegisterMap(InputCommand.NavigateLeft, Buttons.LeftThumbstickLeft);
+            RegisterMap(InputCommand.NavigateRight, Buttons.LeftThumbstickRight);
             
             RegisterMap(InputCommand.Navigate, Buttons.A);
             RegisterMap(InputCommand.NavigateBack, Buttons.B);
@@ -72,7 +76,7 @@ namespace Alex.API.Input.Listeners
         protected override void OnUpdate(GameTime gameTime)
         {
             var dt = gameTime.ElapsedGameTime.TotalSeconds;
-            _gamePadCapabilities = GamePad.GetCapabilities(PlayerIndex);
+            //_gamePadCapabilities = GamePad.GetCapabilities(PlayerIndex);
             var leftStick = CurrentState.ThumbSticks.Left;
             
             _cursorPosition = new Vector2((float) (_cursorPosition.X + (leftStick.X * 200 * dt)), (float) (_cursorPosition.Y + (-leftStick.Y * 200 * dt)));

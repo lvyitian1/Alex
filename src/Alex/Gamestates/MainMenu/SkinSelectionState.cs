@@ -3,6 +3,7 @@ using System.Linq;
 using Alex.API.Graphics;
 using Alex.API.Gui.Elements.Controls;
 using Alex.API.Gui.Graphics;
+using Alex.API.Input;
 using Alex.API.Services;
 using Alex.API.Utils;
 using Alex.Gamestates.Common;
@@ -48,6 +49,7 @@ namespace Alex.Gamestates.MainMenu
              
                 row.AddChild(_cancelBtn = new GuiButton("Cancel", OnCancelButtonPressed)
                 {
+                    AccessCommand = InputCommand.NavigateBack
                 });
                 
             });

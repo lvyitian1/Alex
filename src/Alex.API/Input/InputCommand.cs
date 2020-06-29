@@ -2,6 +2,7 @@
 {
     public enum InputCommand
     {
+	    None,
         MoveForwards,
         MoveLeft,
         MoveBackwards,

@@ -92,6 +92,7 @@ namespace Alex.API.Gui.Elements.Controls
         public bool CanHighlight { get; set; } = true;
         public bool Highlighted { get; private set; }
 
+        public InputCommand AccessCommand { get; set; } = InputCommand.None;
         public Keys AccessKey { get; set; } = Keys.None;
         public int TabIndex { get; set; } = -1;
 

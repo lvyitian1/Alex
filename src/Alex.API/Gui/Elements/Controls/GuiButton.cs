@@ -139,21 +139,11 @@ namespace Alex.API.Gui.Elements.Controls
 		    }
 	    }
 
-		protected override void OnCursorMove(Point cursorPosition, Point previousCursorPosition, bool isCursorDown)
+	    protected override void OnFocusActivate()
 		{
-			base.OnCursorMove(cursorPosition, previousCursorPosition, isCursorDown);
-		}
-
-		protected override void OnCursorPressed(Point cursorPosition, MouseButton button)
-		{
-			//Focus();
+			base.OnFocusActivate();
 			Action?.Invoke();
 		}
-
-		protected override void OnDraw(GuiSpriteBatch graphics, GameTime gameTime)
-	    {
-		    base.OnDraw(graphics, gameTime);
-	    }
 
 		protected override void OnEnabledChanged()
 	    {

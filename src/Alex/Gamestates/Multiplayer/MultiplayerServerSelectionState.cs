@@ -6,6 +6,7 @@ using Alex.API.Data.Servers;
 using Alex.API.Graphics;
 using Alex.API.Gui.Elements.Controls;
 using Alex.API.Gui.Graphics;
+using Alex.API.Input;
 using Alex.API.Services;
 using Alex.API.Utils;
 using Alex.Gamestates.Common;
@@ -78,7 +79,8 @@ namespace Alex.Gamestates.Multiplayer
 			    });
 			    row.AddChild(new GuiButton("Cancel", OnCancelButtonPressed)
 			    {
-				    TranslationKey = "gui.cancel"
+				    TranslationKey = "gui.cancel",
+				    AccessCommand = InputCommand.NavigateBack
 			    });
 		    });
 

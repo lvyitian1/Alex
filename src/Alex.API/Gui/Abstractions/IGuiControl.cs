@@ -13,6 +13,7 @@ namespace Alex.API.Gui
         [DebuggerVisible] bool CanHighlight { get; }
         [DebuggerVisible] bool Highlighted { get; }
 
+        [DebuggerVisible] InputCommand AccessCommand { get; set; }
         [DebuggerVisible] Keys AccessKey { get; set; }
         [DebuggerVisible] int TabIndex { get; set; }
 
