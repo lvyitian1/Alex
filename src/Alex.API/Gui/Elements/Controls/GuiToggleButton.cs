@@ -1,5 +1,6 @@
 ﻿using System;
 using Alex.API.Gui.Graphics;
+using Alex.API.Input;
 using Alex.API.Utils;
 using Microsoft.Xna.Framework;
 using RocketUI;
@@ -40,7 +41,20 @@ namespace Alex.API.Gui.Elements.Controls
             }
         }
 
-		public ValueFormatter<bool> DisplayFormat { get; set; } = DefaultDisplayFormat;
+		private ValueFormatter<bool> _formatter = DefaultDisplayFormat;
+
+		public ValueFormatter<bool> DisplayFormat
+		{
+			get
+			{
+				return _formatter;
+			}
+			set
+			{
+				_formatter = value;
+				Text = _formatter?.FormatValue(_value) ?? string.Empty;
+			}
+		}
 
 		public GuiToggleButton() : base()
 	    {
@@ -97,7 +111,7 @@ namespace Alex.API.Gui.Elements.Controls
 			}
 		}
 
-		protected override void OnCursorPressed(Point cursorPosition)
+		protected override void OnCursorPressed(Point cursorPosition, MouseButton button)
 	    {
 		    Value = !_value;
 	    }

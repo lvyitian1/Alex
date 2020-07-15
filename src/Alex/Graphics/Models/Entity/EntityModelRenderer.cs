@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using Alex.API.Graphics;
 using Alex.API.Utils;
-using Alex.Graphics.Models.Entity.Geometry;
 using Alex.ResourcePackLib.Json.Models.Entities;
 using Alex.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Newtonsoft.Json;
 using NLog;
+using MathF = System.MathF;
 
 namespace Alex.Graphics.Models.Entity
 {
@@ -19,9 +19,36 @@ namespace Alex.Graphics.Models.Entity
 
 		//private EntityModel Model { get; }
 		private IReadOnlyDictionary<string, ModelBone> Bones { get; }
-		public PooledTexture2D Texture { get; set; }
+		
+		private PooledTexture2D _texture;
+
+		public PooledTexture2D Texture
+		{
+			get
+			{
+				return _texture;
+			}
+			set
+			{
+				_texture = value;
+				var bones = Bones;
+
+				if (bones != null && bones.Count > 0)
+				{
+					foreach (var kv in bones)
+					{
+						var bone = kv.Value;
+						bone.SetTexture(_texture);
+					}
+				}
+			}
+		}
+
 		private PooledVertexBuffer VertexBuffer { get; set; }
 		public bool Valid { get; private set; }
+		private bool CanRender { get; set; } = true;
+
+		public long Vertices => CanRender && VertexBuffer != null ? VertexBuffer.VertexCount : 0;
 		//public float Height { get; private set; } = 0f;
 		public EntityModelRenderer(EntityModel model, PooledTexture2D texture)
 		{
@@ -46,172 +73,8 @@ namespace Alex.Graphics.Models.Entity
 			}
 		}
 
-		public EntityModelRenderer(MinecraftGeometry geometry, PooledTexture2D texture)
-		{
-			Texture = texture;
-			
-			var cubes = new Dictionary<string, ModelBone>();
-
-			var converted = geometry.Convert();
-			if (converted != null)
-			{
-				Cache(converted, cubes);
-			}
-			else
-			{
-				Cache(geometry, cubes);
-			}
-
-			Bones = cubes;
-		}
-
-		private void Cache(MinecraftGeometry model, Dictionary<string, ModelBone> modelBones)
-		{
-			List<VertexPositionNormalTexture> vertices = new List<VertexPositionNormalTexture>();
-			
-			foreach (var bone in model.Bones)
-			{
-				if (bone == null)
-				{
-					Log.Warn("Bone null");
-					continue;
-				}
-				
-				if (bone.NeverRender) continue;
-				
-				bool partOfHead = false;
-
-				//bone.Pivot = new Vector3(-bone.Pivot.X, bone.Pivot.Y, bone.Pivot.Z);
-				List<ModelBoneCube> c = new List<ModelBoneCube>();
-				ModelBone modelBone;
-				
-				if (bone.PolyMesh != null && bone.PolyMesh.Positions != null)
-				{
-					var positions = bone.PolyMesh.Positions;
-					var uvs = bone.PolyMesh.Uvs;
-					var normals = bone.PolyMesh.Normals;
-					var polys = bone.PolyMesh.Polys;
-
-					//var verts = new VertexPositionNormalTexture[positions.Length];
-				/*	short[] indexes = new short[positions.Length];
-					for (int i = 0; i < bone.PolyMesh.Positions.Length; i++)
-					{
-						vertices.Add(new VertexPositionNormalTexture(positions[i], normals[i], uvs[i]));
-						indexes[i] = (short) ((short)startIndex + i);
-					}
-					*/
-
-				List<short> indices = new List<short>();
-				for (int i = 0; i < polys.Length; i++)
-				{
-					int startIndex = vertices.Count - 1;
-
-					int added = 0;
-					var poly = polys[i];
-					foreach (var p in poly)
-					{
-
-						var pos = positions[p[0]];
-						var normal = normals[p[1]];
-						var uv = uvs[p[2]];
-
-						vertices.Add(new VertexPositionNormalTexture(pos, normal, uv));
-						added++;
-						//indices.Add((short) (vertices.Count - 1));
-					}
-
-					/*int target = added == 4 ? 6 : 8;
-					
-					for (int indiceCounter = 0; indiceCounter < added; indiceCounter++)
-					{
-						//if (indiceCounter < added)
-						//{
-							indices.Add((short) (startIndex + indiceCounter));
-						//}
-						//else
-						//{
-							
-						//}
-					}*/
-					indices.Add( (short) startIndex);
-					indices.Add( (short) (startIndex + 1));
-					indices.Add((short) (startIndex + 2));
-					indices.Add( (short) startIndex);
-					indices.Add((short) (startIndex + 3));
-					indices.Add((short) (startIndex + 2));
-				}
-					
-					//(VertexPositionNormalTexture[] vertices, short[] indexes) a = (verts, indexes);
-					
-					var part = new ModelBoneCube(indices.ToArray(), Texture, bone.Rotation, bone.Pivot, Vector3.Zero);
-
-					part.Mirror = false;
-					if (partOfHead)
-					{
-						part.ApplyHeadYaw = true;
-						part.ApplyYaw = true;
-					}
-					else
-					{
-						part.ApplyPitch = false;
-						part.ApplyYaw = true;
-						part.ApplyHeadYaw = false;
-					}
-
-					c.Add(part);
-				}
-
-				modelBone = new ModelBone(c.ToArray(), bone.Parent);
-				modelBone.UpdateRotationMatrix = true;
-					if (!modelBones.TryAdd(bone.Name, modelBone))
-					{
-						Log.Warn($"Failed to add bone! {model.Description.Identifier}:{bone.Name}");
-					}
-				
-			}
-
-			if (vertices.Count == 0)
-			{
-				Log.Warn($"No vertices. {JsonConvert.SerializeObject(model,Formatting.Indented)}");
-				Valid = false;
-				return;
-			}
-
-			VertexBuffer = GpuResourceManager.GetBuffer(this, Alex.Instance.GraphicsDevice,
-				VertexPositionNormalTexture.VertexDeclaration, vertices.Count, BufferUsage.None);
-			VertexBuffer.SetData(vertices.ToArray());
-
-			Valid = true;
-		}
-
 		private void Cache(EntityModel model, Dictionary<string, ModelBone> modelBones)
 		{
-			List<EntityModelBone> headBones = new List<EntityModelBone>();
-
-			var headBone =
-				model.Bones.FirstOrDefault(x => x.Name.Contains("head", StringComparison.InvariantCultureIgnoreCase));
-			if (headBone != null)
-			{
-				headBones.Add(headBone);
-				foreach (var bone in model.Bones)
-				{
-					if (bone == headBone) continue;
-					if (bone.Parent != null && bone.Parent.Equals(headBone.Name))
-					{
-						headBones.Add(bone);
-					}
-				}
-
-				foreach (var bone in model.Bones.Where(x =>
-					!headBones.Any(hb => hb.Name.Equals(x.Name, StringComparison.InvariantCultureIgnoreCase))))
-				{
-					if (headBones.Any(x => x.Name.Equals(bone.Name, StringComparison.InvariantCultureIgnoreCase)))
-					{
-						headBones.Add(bone);
-					}
-				}
-			}
-			
 			List<VertexPositionNormalTexture> vertices = new List<VertexPositionNormalTexture>();
 
 			var textureSize = new Vector2(model.Texturewidth, model.Textureheight);
@@ -222,75 +85,36 @@ namespace Alex.Graphics.Models.Entity
 			
 			var uvScale = newSize / textureSize;
 			
-			foreach (var bone in model.Bones)
+			foreach (var bone in model.Bones.Where(x => string.IsNullOrWhiteSpace(x.Parent)))
 			{
-				if (bone == null || bone.NeverRender) continue;
-			//	if (bone.NeverRender) continue;
-				bool partOfHead = headBones.Contains(bone);
-
-				//bone.Pivot = new Vector3(-bone.Pivot.X, bone.Pivot.Y, bone.Pivot.Z);
-				List<ModelBoneCube> c = new List<ModelBoneCube>();
-				ModelBone modelBone;
+				//if (bone.NeverRender) continue;
+				if (modelBones.ContainsKey(bone.Name)) continue;
 				
-				if (bone.Cubes != null)
+				ProcessBone(bone, vertices, uvScale, textureSize, modelBones);
+			}
+			
+			foreach (var bone in model.Bones.Where(x => !string.IsNullOrWhiteSpace(x.Parent)))
+			{
+				//if (bone.NeverRender) continue;
+				if (modelBones.ContainsKey(bone.Name)) continue;
+
+				var newBone = ProcessBone(bone, vertices, uvScale, textureSize, modelBones);
+
+				if (modelBones.TryGetValue(bone.Parent, out ModelBone parentBone))
 				{
-					foreach (var cube in bone.Cubes)
-					{
-						if (cube == null)
-						{
-							Log.Warn("Cube was null!");
-							continue;
-						}
-
-						var size = cube.Size;
-						var origin = cube.Origin;
-						var pivot = bone.Pivot;
-						var rotation = bone.Rotation;
-
-						//VertexPositionNormalTexture[] vertices;
-						Cube built = new Cube(size * (float)cube.Inflate, textureSize);
-						built.Mirrored = bone.Mirror;
-						built.BuildCube(cube.Uv * uvScale);
-
-						vertices = ModifyCubeIndexes(vertices, ref built.Front, origin);
-						vertices = ModifyCubeIndexes(vertices, ref built.Back, origin);
-						vertices = ModifyCubeIndexes(vertices, ref built.Top, origin);
-						vertices = ModifyCubeIndexes(vertices, ref built.Bottom, origin);
-						vertices = ModifyCubeIndexes(vertices, ref built.Left, origin);
-						vertices = ModifyCubeIndexes(vertices, ref built.Right, origin);
-
-						var part = new ModelBoneCube(built.Front.indexes
-							.Concat(built.Back.indexes)
-							.Concat(built.Top.indexes)
-							.Concat(built.Bottom.indexes)
-							.Concat(built.Left.indexes)
-							.Concat(built.Right.indexes)
-							.ToArray(), Texture, rotation, pivot, origin);
-
-						part.Mirror = bone.Mirror;
-						if (partOfHead)
-						{
-							part.ApplyHeadYaw = true;
-							part.ApplyYaw = true;
-						}
-						else
-						{
-							part.ApplyPitch = false;
-							part.ApplyYaw = true;
-							part.ApplyHeadYaw = false;
-						}
-
-						c.Add(part);
-					}
+					parentBone.Children = parentBone.Children.Concat(new[] {newBone}).ToArray();
+					newBone.Parent = parentBone;
+					
+					modelBones[bone.Parent] = parentBone;
 				}
-
-				modelBone = new ModelBone(c.ToArray(), bone.Parent);
-				modelBone.UpdateRotationMatrix = !bone.NeverRender;
-					if (!modelBones.TryAdd(bone.Name, modelBone))
-					{
-						Log.Warn($"Failed to add bone! {model.Name}:{bone.Name}");
-					}
-				
+			}
+			
+			if (vertices.Count == 0)
+			{
+			//	Log.Warn($"No vertices. {JsonConvert.SerializeObject(model,Formatting.Indented)}");
+				Valid = true;
+				CanRender = false;
+				return;
 			}
 
 			VertexBuffer = GpuResourceManager.GetBuffer(this, Alex.Instance.GraphicsDevice,
@@ -300,19 +124,88 @@ namespace Alex.Graphics.Models.Entity
 			Valid = true;
 		}
 
-		private List<VertexPositionNormalTexture> ModifyCubeIndexes(List<VertexPositionNormalTexture> vertices,
-			ref (VertexPositionNormalTexture[] vertices, short[] indexes) data, Vector3 offset)
+		private ModelBone ProcessBone(EntityModelBone bone, List<VertexPositionNormalTexture> vertices, Vector2 uvScale, Vector2 textureSize, Dictionary<string, ModelBone> modelBones)
 		{
+			ModelBone           modelBone;
+				
+			List<short> indices = new List<short>();
+			
+			if (bone.Cubes != null)
+			{
+				foreach (var cube in bone.Cubes)
+				{
+					if (cube == null)
+					{
+						Log.Warn("Cube was null!");
+						continue;
+					}
+
+					Cube built = new Cube(cube.Size * (float)cube.Inflate, textureSize);
+					built.Mirrored = bone.Mirror;
+					built.BuildCube(cube.Uv * uvScale);
+					
+					vertices = ModifyCubeIndexes(vertices, cube, ref built.Front);
+					vertices = ModifyCubeIndexes(vertices, cube, ref built.Back);
+					vertices = ModifyCubeIndexes(vertices, cube, ref built.Top);
+					vertices = ModifyCubeIndexes(vertices, cube, ref built.Bottom);
+					vertices = ModifyCubeIndexes(vertices, cube, ref built.Left);
+					vertices = ModifyCubeIndexes(vertices, cube, ref built.Right);
+
+					indices.AddRange(built.Front.indexes.Concat(built.Back.indexes).Concat(built.Top.indexes)
+					   .Concat(built.Bottom.indexes).Concat(built.Left.indexes).Concat(built.Right.indexes)
+					   .ToArray());
+				}
+			}
+			
+			var bindPoseMatrix = Matrix.CreateTranslation(-bone.Pivot)
+			                     * Matrix.CreateRotationX(MathUtils.ToRadians(-bone.BindPoseRotation.X))
+			                     * Matrix.CreateRotationY(MathUtils.ToRadians(-bone.BindPoseRotation.Y))
+			                     * Matrix.CreateRotationZ(MathUtils.ToRadians(-bone.BindPoseRotation.Z))
+			                     * Matrix.CreateTranslation(bone.Pivot);
+
+			var boneMatrix = Matrix.Identity * Matrix.CreateTranslation(-bone.Pivot)
+			                                 * Matrix.CreateFromAxisAngle(
+				                                 Vector3.Right, MathUtils.ToRadians(bone.Rotation.X))
+			                                 * Matrix.CreateFromAxisAngle(
+				                                 Vector3.Backward, MathUtils.ToRadians(bone.Rotation.Z))
+			                                 * Matrix.CreateFromAxisAngle(
+				                                 Vector3.Up, MathUtils.ToRadians(bone.Rotation.Y))
+			                                 * Matrix.CreateTranslation(bone.Pivot);
+
+			modelBone = new ModelBone(Texture, indices.ToArray(), bone.Parent, bone, bindPoseMatrix * boneMatrix);
+			
+			//modelBone.UpdateRotationMatrix = !bone.NeverRender;
+			if (!modelBones.TryAdd(bone.Name, modelBone))
+			{
+				Log.Debug($"Failed to add bone! {bone.Name}");
+			}
+
+			return modelBone;
+		}
+
+		private List<VertexPositionNormalTexture> ModifyCubeIndexes(List<VertexPositionNormalTexture> vertices, EntityModelCube cube,
+			ref (VertexPositionNormalTexture[] vertices, short[] indexes) data)
+		{
+			//var origin = new Vector3(-(cube.Origin.X + cube.Size.X), cube.Origin.Y, cube.Origin.Z);
+			//var pivot = new Vector3(-(cube.Pivot.X), cube.Pivot.Y, cube.Pivot.Z);
+			var origin = cube.Origin;
+			var pivot = cube.Pivot;
+			
+			Matrix cubeRotationMatrix = Matrix.CreateTranslation(-pivot)
+			                            * Matrix.CreateRotationX(MathUtils.ToRadians(cube.Rotation.X))
+			                            * Matrix.CreateRotationY(MathUtils.ToRadians(cube.Rotation.Y))
+			                            * Matrix.CreateRotationZ(MathUtils.ToRadians(cube.Rotation.Z))
+			                            * Matrix.CreateTranslation(pivot)
+				* Matrix.CreateTranslation(origin);
+			
 			var startIndex = (short)vertices.Count;
 			foreach (var vertice in data.vertices)
 			{
 				var vertex = vertice;
-				//vertex.Position += offset;
+				vertex.Position = Vector3.Transform(vertex.Position, cubeRotationMatrix);
 				vertices.Add(vertex);
 			}
-			
-			//vertices.AddRange(data.vertices);
-			
+
 			for (int i = 0; i < data.indexes.Length; i++)
 			{
 				data.indexes[i] += startIndex;
@@ -325,24 +218,36 @@ namespace Alex.Graphics.Models.Entity
 		{
 			DepthBias = 0.0001f,
 			CullMode = CullMode.CullClockwiseFace,
-			FillMode = FillMode.Solid,
-			//DepthClipEnable = true,
-			//ScissorTestEnable = true
+			FillMode = FillMode.Solid
 		};
 		
 		public virtual void Render(IRenderArgs args, PlayerLocation position, bool mock)
 		{
+			if (!CanRender)
+				return;
+			
 			var originalRaster = args.GraphicsDevice.RasterizerState;
-			args.GraphicsDevice.RasterizerState = RasterizerState;
-			args.GraphicsDevice.SetVertexBuffer(VertexBuffer);
+			var blendState = args.GraphicsDevice.BlendState;
 
-			if (Bones == null) return;
-			foreach (var bone in Bones)
+			try
 			{
-				bone.Value.Render(args, position, CharacterMatrix, mock);
-			}
+				args.GraphicsDevice.BlendState = BlendState.Opaque;
+				args.GraphicsDevice.RasterizerState = RasterizerState;
+				
+				args.GraphicsDevice.SetVertexBuffer(VertexBuffer);
 
-			args.GraphicsDevice.RasterizerState = originalRaster;
+				if (Bones == null) return;
+
+				foreach (var bone in Bones)
+				{
+					bone.Value.Render(args, mock);
+				}
+			}
+			finally
+			{
+				args.GraphicsDevice.RasterizerState = originalRaster;
+				args.GraphicsDevice.BlendState = blendState;
+			}
 		}
 
 		public Vector3 EntityColor { get; set; } = Color.White.ToVector3();
@@ -354,25 +259,26 @@ namespace Alex.Graphics.Models.Entity
 		{
 			if (Bones == null) return;
 
-			CharacterMatrix = Matrix.CreateScale(Scale / 16f) *
-			                         Matrix.CreateRotationY(MathUtils.ToRadians((180f - position.Yaw))) *
+			CharacterMatrix = 
+				Matrix.CreateScale(Scale / 16f) *
+			                         Matrix.CreateRotationY(MathUtils.ToRadians(180f - (position.Yaw))) *
 			                         Matrix.CreateTranslation(position);
 
-			foreach (var bone in Bones)
+			foreach (var bone in Bones.Where(x => x.Value.Parent == null))
 			{
-				bone.Value.Update(args, CharacterMatrix, EntityColor * DiffuseColor);
+				bone.Value.Update(args, CharacterMatrix, EntityColor * DiffuseColor, position);
 			}
 
-			foreach (var bone in Bones.Where(x => !string.IsNullOrWhiteSpace(x.Value.Parent)))
+			/*foreach (var bone in Bones.Where(x => !string.IsNullOrWhiteSpace(x.Value.Parent)))
 			{
 				var parent = Bones.FirstOrDefault(x =>
 					x.Key.Equals(bone.Value.Parent, StringComparison.InvariantCultureIgnoreCase));
 
 				if (parent.Value != null)
 				{
-					bone.Value.RotationMatrix = parent.Value.RotationMatrix;
+					//bone.Value.RotationMatrix = parent.Value.RotationMatrix;
 				}
-			}
+			}*/
 		}
 
 		public bool GetBone(string name, out ModelBone bone)
@@ -385,12 +291,15 @@ namespace Alex.Graphics.Models.Entity
 
 			return Bones.TryGetValue(name, out bone);
 		}
-
-		/*public override string ToString()
+		
+		public void SetVisibility(string bone, bool visible)
 		{
-			return Model.Name;
+			if (GetBone(bone, out var boneValue))
+			{
+				boneValue.Rendered = visible;
+			}
 		}
-*/
+
 		public void Dispose()
 		{
 			if (Bones != null && Bones.Any())

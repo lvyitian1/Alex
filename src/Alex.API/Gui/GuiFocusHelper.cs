@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Alex.API.Gui.Elements;
 using Alex.API.Input;
 using Alex.API.Input.Listeners;
@@ -6,11 +7,14 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using RocketUI;
+using NLog;
 
 namespace Alex.API.Gui
 {
     public class GuiFocusHelper
     {
+        private static readonly Logger Log = LogManager.GetCurrentClassLogger(typeof(GuiFocusHelper));
+        
         private GuiManager GuiManager { get; }
         private GraphicsDevice GraphicsDevice { get; }
         private InputManager InputManager { get; }
@@ -62,11 +66,23 @@ namespace Alex.API.Gui
             }
         }
 
+        private GamePadInputListener _gamePadInputListener;
         public GuiFocusHelper(GuiManager guiManager, InputManager inputManager, GraphicsDevice graphicsDevice)
         {
             GuiManager = guiManager;
             InputManager = inputManager;
             GraphicsDevice = graphicsDevice;
+            
+            var ip = InputManager.GetOrAddPlayerManager(PlayerIndex.One);
+
+            if (ip.TryGetListener<GamePadInputListener>(out var gamePadInputListener))
+            {
+                _gamePadInputListener = gamePadInputListener;
+            }
+            else
+            {
+                _gamePadInputListener = new GamePadInputListener(PlayerIndex.One);
+            }
         }
         
 
@@ -80,13 +96,15 @@ namespace Alex.API.Gui
         public void OnTextInput(object sender, TextInputEventArgs args)
         {
             //if (args.Key == Keys.None) return;
-
             if (args.Key != Keys.None && TryGetElement(e => e is IGuiControl c && c.AccessKey == args.Key, out var controlByAccessKey))
             {
-                FocusedElement = controlByAccessKey as IGuiControl;
-                return;
+                if (FocusedElement != controlByAccessKey)
+                {
+                    FocusedElement = controlByAccessKey as IGuiControl;
+                    return;
+                }
             }
-
+            
 	        if (FocusedElement == null || !FocusedElement.InvokeKeyInput(args.Character, args.Key))
 	        {
 		        if (args.Key == Keys.Tab)
@@ -114,8 +132,25 @@ namespace Alex.API.Gui
 	        }
         }
 
+        private Vector2 _previousGamepadPosition = Vector2.Zero;
         private void UpdateHighlightedElement()
         {
+            if (_gamePadInputListener != null)
+            {
+                var gamepadPosition = _gamePadInputListener.GetVirtualCursorPosition();
+
+                if (gamepadPosition != _previousGamepadPosition)
+                {
+                    var gp = gamepadPosition.ToPoint();
+                    Mouse.SetPosition(gp.X, gp.Y);
+                    
+                    UpdateCursor(gamepadPosition);
+                    
+                    _previousGamepadPosition = gamepadPosition;
+                    return;
+                }
+            }
+            
             var rawCursorPosition = CursorInputListener.GetCursorPosition();
 
             var cursorPosition = GuiManager.GuiRenderer.Unproject(rawCursorPosition);
@@ -124,34 +159,70 @@ namespace Alex.API.Gui
             {
                 _previousCursorPosition = CursorPosition;
                 CursorPosition = cursorPosition;
+                
+                UpdateCursor(CursorPosition);
             }
+        }
 
+        private void UpdateCursor(Vector2 cursorPosition)
+        {
             IGuiControl newHighlightedElement = null;
 
-            if (TryGetElementAt(CursorPosition, e => e is IGuiControl c && c.IsVisible && c.Enabled && c.CanHighlight, out var controlMatchingPosition))
+            if (TryGetElementAt(cursorPosition, e => e is IGuiControl c && c.IsVisible && c.Enabled && c.CanHighlight, out var controlMatchingPosition))
             {
                 newHighlightedElement = controlMatchingPosition as IGuiControl;
             }
 
             if (newHighlightedElement != HighlightedElement)
             {
-                HighlightedElement?.InvokeCursorLeave(CursorPosition);
+                HighlightedElement?.InvokeCursorLeave(cursorPosition);
                 HighlightedElement = newHighlightedElement;
-                HighlightedElement?.InvokeCursorEnter(CursorPosition);
+                HighlightedElement?.InvokeCursorEnter(cursorPosition);
             }
         }
 
         private bool _cursorDown = false;
+
         private void UpdateInput()
         {
+            if (InputManager.Any(x => x.IsPressed(InputCommand.NavigateUp)))
+            {
+                if (TryFindNextControl(InputCommand.NavigateUp, out IGuiControl control))
+                {
+                    FocusedElement = control;
+                }
+            }
+            else if (InputManager.Any(x => x.IsPressed(InputCommand.NavigateDown)))
+            {
+                if (TryFindNextControl(InputCommand.NavigateDown, out IGuiControl control))
+                {
+                    FocusedElement = control;
+                }
+            }
+            else if (InputManager.Any(x => x.IsPressed(InputCommand.NavigateLeft)))
+            {
+                if (TryFindNextControl(InputCommand.NavigateLeft, out IGuiControl control))
+                {
+                    FocusedElement = control;
+                }
+            }
+            else if (InputManager.Any(x => x.IsPressed(InputCommand.NavigateRight)))
+            {
+                if (TryFindNextControl(InputCommand.NavigateRight, out IGuiControl control))
+                {
+                    FocusedElement = control;
+                }
+            }
+
             if (HighlightedElement == null) return;
 
-            if (CursorInputListener.IsBeginPress(InputCommand.LeftClick) && HighlightedElement.CanFocus)
+            if ((CursorInputListener.IsBeginPress(InputCommand.LeftClick) || _gamePadInputListener.IsBeginPress(InputCommand.Navigate)) && HighlightedElement.CanFocus)
             {
                 FocusedElement = HighlightedElement;
             }
 
-            var isDown = CursorInputListener.IsDown(InputCommand.LeftClick);
+            var isDown = CursorInputListener.IsDown(InputCommand.LeftClick) || _gamePadInputListener.IsDown(InputCommand.Navigate);
+
             if (CursorPosition != _previousCursorPosition)
             {
                 FocusedElement?.InvokeCursorMove(CursorPosition, _previousCursorPosition, isDown);
@@ -162,16 +233,26 @@ namespace Alex.API.Gui
                 FocusedElement?.InvokeCursorDown(CursorPosition);
             }
 
-            if (HighlightedElement == FocusedElement && CursorInputListener.IsPressed(InputCommand.LeftClick))
+            if (HighlightedElement == FocusedElement && (CursorInputListener.IsPressed(InputCommand.LeftClick) || _gamePadInputListener.IsPressed(InputCommand.Navigate)))
             {
-                FocusedElement?.InvokeCursorPressed(CursorPosition);
+                FocusedElement?.InvokeCursorPressed(CursorPosition, MouseButton.Left);
+            }
+
+            if (HighlightedElement == FocusedElement && CursorInputListener.IsPressed(InputCommand.RightClick))
+            {
+                FocusedElement?.InvokeCursorPressed(CursorPosition, MouseButton.Right);
+            }
+
+            if (HighlightedElement == FocusedElement && CursorInputListener.IsPressed(InputCommand.MiddleClick))
+            {
+                FocusedElement?.InvokeCursorPressed(CursorPosition, MouseButton.Middle);
             }
 
             if (!isDown && _cursorDown)
             {
                 FocusedElement?.InvokeCursorUp(CursorPosition);
             }
-            
+
             _cursorDown = isDown;
         }
 
@@ -197,6 +278,68 @@ namespace Alex.API.Gui
                 }
             }
         }
+        private bool TryFindNextControl(InputCommand command, out IGuiControl control)
+        {
+            var focused = FocusedElement;
+            if (focused == null)
+            {
+                if (TryGetElement(x => x is IGuiControl, out var element))
+                {
+                    control = (IGuiControl) element;
+                    return true;
+                }
+
+                control = null;
+                return false;
+            }
+
+            if (TryGetElement(
+                x =>
+                {
+                    if (x is IGuiControl c)
+                    {
+                        switch (command)
+                        {
+                            case InputCommand.NavigateUp:
+                                if (c.Position.Y > focused.Position.Y)
+                                {
+                                    return true;
+                                }
+                                break;
+                            case InputCommand.NavigateDown:
+                                if (c.Position.Y < focused.Position.Y)
+                                {
+                                    return true;
+                                }
+                                break;
+                            case InputCommand.NavigateLeft:
+                                if (c.Position.X < focused.Position.X)
+                                {
+                                    return true;
+                                }
+                                break;
+                            case InputCommand.NavigateRight:
+                                if (c.Position.X > focused.Position.X)
+                                {
+                                    return true;
+                                }
+                                break;
+                            default:
+                                return false;
+                        }
+                    }
+
+                    return false;
+                }, out IGuiElement el))
+            {
+                control = (IGuiControl) el;
+                return true;
+            }
+
+            control = null;
+            return false;
+        }
+        
         private bool TryFindNextControl(Vector2 scanVector, out IGuiElement nextControl)
         {
             Vector2 scan = CursorPosition + scanVector;

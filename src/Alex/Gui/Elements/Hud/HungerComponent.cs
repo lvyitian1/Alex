@@ -7,7 +7,7 @@ using Alex.Entities;
 using Microsoft.Xna.Framework;
 using RocketUI;
 
-namespace Alex.Gui.Elements
+namespace Alex.Gui.Elements.Hud
 {
     public class HungerComponent : GuiStackContainer
     {
@@ -38,11 +38,11 @@ namespace Alex.Gui.Elements
 
         protected override void OnUpdate(GameTime gameTime)
         {
-            if (Player.Hunger != Hunger)
+            if (Player.HealthManager.Hunger != Hunger)
             {
-                Hunger = Player.Hunger;
+                Hunger = Player.HealthManager.Hunger;
                 
-                var hearts = Player.Hunger * (10d / Player.MaxHunger);
+                var hearts = Player.HealthManager.Hunger * (10d / Player.HealthManager.MaxHunger);
                 bool isRounded = (hearts % 1 == 0);
                 
                 var ceil = isRounded ? (int)hearts : (int)Math.Ceiling(hearts);

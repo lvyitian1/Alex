@@ -1,16 +1,19 @@
-﻿using Alex.API.Blocks;
-using Alex.API.Blocks.State;
+﻿using System;
+using Alex.API.Blocks;
 using Alex.API.Items;
 using Alex.API.Resources;
 using Alex.API.Utils;
 using Alex.API.World;
+using Alex.Blocks.Properties;
 using Alex.Blocks.State;
 using Alex.Entities;
+using Alex.Items;
 using Alex.ResourcePackLib.Json;
 using Alex.Utils;
+using Alex.Worlds;
+using Alex.Worlds.Abstraction;
 using Microsoft.Xna.Framework;
 using MiNET.Blocks;
-using MiNET.Items;
 using NLog;
 using ItemBlock = Alex.Items.ItemBlock;
 using ItemMaterial = Alex.API.Utils.ItemMaterial;
@@ -18,16 +21,17 @@ using ItemType = Alex.API.Utils.ItemType;
 
 namespace Alex.Blocks.Minecraft
 {
-	public class Block : IBlock, IRegistryEntry<Block>
+	public class Block : IRegistryEntry<Block>
 	{
 		private static readonly Logger Log = LogManager.GetCurrentClassLogger(typeof(Block));
 
+		protected static PropertyBool Lit = new PropertyBool("lit", "true", "false");
+		
 		public bool Solid { get; set; }
 		public bool Transparent { get; set; }
 		public bool Animated { get; set; } = false;
 		public bool Renderable { get; set; }
 		public bool HasHitbox { get; set; }
-		public bool IsBlockNormalCube { get; set; } = false;
 		public bool IsFullCube { get; set; } = true;
 		public bool IsFullBlock { get; set; } = true;
 
@@ -35,21 +39,18 @@ namespace Alex.Blocks.Minecraft
 		public bool IsReplacible { get; set; } = false;
 		public bool RequiresUpdate { get; set; } = false;
 		public bool CanInteract { get; set; } = false;
-		
-		public float Drag { get; set; }
 
 		public string Name
 		{
 			get { return Location.ToString(); }
 			set { Location = value; }
 		}
-
-		public double AmbientOcclusionLightValue { get; set; } = 1.0;
-	    public virtual int LightValue { get; set; } = 0;
+		
+	    public virtual byte LightValue { get; set; } = 0;
 	    public int LightOpacity { get; set; } = 1;
 
 		//public BlockModel BlockModel { get; set; }
-		public IBlockState BlockState { get; set; }
+		public BlockState BlockState { get; set; }
 		public bool IsWater { get; set; } = false;
 		public bool IsSourceBlock { get; set; } = false;
 		
@@ -160,7 +161,7 @@ namespace Alex.Blocks.Minecraft
 			return BlockState.Model.GetPartBoundingBox(blockPosition, entityBox);
 		}
 		
-		public virtual IBlockState BlockPlaced(IWorld world, IBlockState state, BlockCoordinates position)
+		public virtual BlockState BlockPlaced(IBlockAccess world, BlockState state, BlockCoordinates position)
 		{
 			return state;
 			/*if (BlockState is BlockState s)
@@ -178,33 +179,28 @@ namespace Alex.Blocks.Minecraft
 				}
 			}*/
 		}
-
-		public virtual bool Tick(IWorld world, Vector3 position)
-		{
-			return false;
-		}
-
-		public virtual void Interact(IWorld world, BlockCoordinates position, BlockFace face, Entity sourceEntity)
+		
+		public virtual void Interact(World world, BlockCoordinates position, BlockFace face, Entity sourceEntity)
 		{
 
 		}
 
-		public virtual void BlockUpdate(IWorld world, BlockCoordinates position, BlockCoordinates updatedBlock)
+		public virtual void BlockUpdate(World world, BlockCoordinates position, BlockCoordinates updatedBlock)
 		{
 			
 		}
 
-		public virtual IItem[] GetDrops(IItem tool)
+		public virtual Item[] GetDrops(Item tool)
 		{
 			if (BlockMaterial.IsToolRequired() && !BlockMaterial.CanUseTool(tool.ItemType, tool.Material))
 			{
-				return new IItem[0];
+				return new Item[0];
 			}
 			
-			return new IItem[] { new ItemBlock(BlockState) { Count = 1 } };
+			return new Item[] { new ItemBlock(BlockState) { Count = 1 } };
 		}
 
-        public double GetBreakTime(IItem miningTool)
+        public double GetBreakTime(Item miningTool)
 		{
 			double secondsForBreak = Hardness;
 			bool isHarvestable = GetDrops(miningTool)?.Length > 0;
@@ -281,7 +277,12 @@ namespace Alex.Blocks.Minecraft
 			return secondsForBreak;
 		}
 
-        public virtual bool ShouldRenderFace(BlockFace face, IBlock neighbor)
+        public virtual bool CanCollide()
+        {
+	        return true;
+        }
+
+        public virtual bool ShouldRenderFace(BlockFace face, Block neighbor)
         {
 	        if (Transparent)
 	        {
@@ -296,8 +297,9 @@ namespace Alex.Blocks.Minecraft
 
 				        if (!IsFullBlock || !neighbor.IsFullBlock) return true;
 			        }
-
-			        if (neighbor.Solid && !(neighbor.Transparent || !neighbor.IsFullCube)) return false;
+			        
+			        //If neighbor is solid & not transparent. Hmmm?
+			        if (neighbor.Solid && !(neighbor.Transparent || !neighbor.IsFullCube)) return true;
 		        }
 		        else
 		        {
@@ -319,15 +321,21 @@ namespace Alex.Blocks.Minecraft
 	        return true;
         }
 
+        public virtual bool CanAttach(BlockFace face, Block block)
+        {
+	        return block.Solid && (block.IsFullCube || (block.BlockState.Name.Equals(
+		        BlockState.Name, StringComparison.InvariantCultureIgnoreCase)));
+        }
+
         public string DisplayName { get; set; } = null;
 	    public override string ToString()
 	    {
 		    return DisplayName ?? GetType().Name;
 	    }
 
-		public virtual IBlockState GetDefaultState()
+		public virtual BlockState GetDefaultState()
 		{
-			IBlockState r = null;
+			BlockState r = null;
 			if (BlockState is BlockState s)
 			{
 				r = s.VariantMapper.GetDefaultState();

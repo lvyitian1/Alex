@@ -1,11 +1,12 @@
 ﻿using System;
 using Alex.API.Blocks;
-using Alex.API.Blocks.State;
 using Alex.API.Utils;
 using Alex.API.World;
 using Alex.Blocks.Properties;
+using Alex.Blocks.State;
 using Alex.Entities;
 using Alex.ResourcePackLib.Json;
+using Alex.Worlds;
 
 namespace Alex.Blocks.Minecraft
 {
@@ -32,7 +33,7 @@ namespace Alex.Blocks.Minecraft
 			Transparent = true;
 		}
 
-		private void Toggle(IWorld world, BlockCoordinates position)
+		private void Toggle(World world, BlockCoordinates position)
 		{
 		/*	if (IsUpper)
 			{
@@ -64,7 +65,7 @@ namespace Alex.Blocks.Minecraft
 			}*/
 		}
 
-		public override void Interact(IWorld world, BlockCoordinates position, BlockFace face, Entity sourceEntity)
+		public override void Interact(World world, BlockCoordinates position, BlockFace face, Entity sourceEntity)
 		{
 			Toggle(world, position);
 		}

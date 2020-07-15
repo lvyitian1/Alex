@@ -196,7 +196,16 @@
 		Llama = 103,
 		Parrot = 105,
 		Villager = 120,
-
-		EnderCrystal = 200
+		Bee,
+		EnderCrystal = 200,
+		
+		
+		
+		ZombieVillagerV2 =500,
+		VillagerV2,
+		WanderingTrader,
+		ChestMinecart,
+		
+		LlamaSpit,
 	}
 }

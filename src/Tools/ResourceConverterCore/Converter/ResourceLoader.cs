@@ -1,16 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Alex.ResourcePackLib.Json.Converters;
 using Alex.ResourcePackLib.Json.Models.Entities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NLog;
 
-namespace ResourceConverter
+namespace ResourceConverterCore.Converter
 {
     public class ResourceLoader
     {
@@ -181,12 +178,15 @@ namespace ResourceConverter
 
         private void ProcessEntityDefinitions()
         {
-            foreach (var file in _definitionDirectory.EnumerateFiles())
+            if (_definitionDirectory != null)
             {
-                LoadEntityDefinition(file);
+                foreach (var file in _definitionDirectory.EnumerateFiles())
+                {
+                    LoadEntityDefinition(file);
+                }
             }
 
-            
+
             var res = new Dictionary<string, EntityModel>();
             GetEntries(_mobsFile, res);
 
@@ -257,6 +257,11 @@ namespace ResourceConverter
         
         private void GetEntries(FileInfo file, Dictionary<string, EntityModel> entries)
         {
+            var serializer = new JsonSerializer()
+            {
+                Converters = {new Vector3Converter(), new Vector2Converter()}
+            };
+            
             using (var open = file.OpenText())
             {
                 var     json = open.ReadToEnd();
@@ -264,17 +269,51 @@ namespace ResourceConverter
 
                 foreach (var e in obj)
                 {
-                    if (e.Key == "format_version") continue;
+                    if (e.Key == "minecraft:geometry" && e.Value.Type == JTokenType.Array)
+                    {
+                        var models = e.Value.ToObject<NewEntityModel[]>(serializer);
+                        if (models != null)
+                        {
+                            foreach (var model in models)
+                            {
+                                model.Name = model.Description.Identifier;
+                                model.Textureheight = model.Description.TextureHeight;
+                                model.Texturewidth = model.Description.TextureWidth;
+                                model.VisibleBoundsHeight = model.Description.VisibleBoundsHeight;
+                                model.VisibleBoundsWidth = model.Description.VisibleBoundsWidth;
+                                model.VisibleBoundsOffset = model.Description.VisibleBoundsOffset;
+                                
+                                if (!entries.TryAdd(model.Description.Identifier, model))
+                                {
+                                    Log.Warn($"The name {model.Description.Identifier} was already in use!");
+                                }
+                            }
+                            
+                            continue;
+                        }
+                    } 
+                    
+                    if ( /*e.Key == "format_version" || e.Value.Type == JTokenType.Array*/
+                        !e.Key.StartsWith("geometry."))
+                    {
+                        if (e.Value.Type == JTokenType.Array)
+                        {
+                            continue;
+                            foreach (var type in e.Value.ToObject<EntityModel[]>(serializer))
+                            {
+                                entries.TryAdd(e.Key, type);
+                            }
+                        }
+                        continue;
+                    }
+
                     //if (e.Key == "minecraft:client_entity") continue;
                     //if (e.Key.Contains("zombie")) Console.WriteLine(e.Key);
-                    entries.TryAdd(e.Key, e.Value.ToObject<EntityModel>(new JsonSerializer()
-                    {
-                        Converters = { new Vector3Converter(), new Vector2Converter() }
-                    }));
+                    entries.TryAdd(e.Key, e.Value.ToObject<EntityModel>(serializer));
                 }
             }
         }
-        
+
         private int LoadMobs(Dictionary<string, EntityModel> entries)
         {
             int c = 0;

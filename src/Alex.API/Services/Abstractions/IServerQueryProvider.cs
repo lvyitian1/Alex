@@ -14,11 +14,23 @@ namespace Alex.API.Services
 	public delegate void ServerStatusDelegate(ServerQueryResponse reponse);
     public interface IServerQueryProvider
     {
-	    Task QueryBedrockServerAsync(string hostname, ushort port, PingServerDelegate pingCallback = null, ServerStatusDelegate statusCallBack = null);
-		Task QueryServerAsync(string hostname, ushort port, PingServerDelegate pingCallback = null, ServerStatusDelegate statusCallBack = null);
+	  //  Task QueryBedrockServerAsync(string hostname, ushort port, PingServerDelegate pingCallback = null, ServerStatusDelegate statusCallBack = null);
+		Task QueryServerAsync(ServerConnectionDetails connectionDetails, PingServerDelegate pingCallback = null, ServerStatusDelegate statusCallBack = null);
 
     }
-
+    
+    public class ServerConnectionDetails
+    {
+	    public string     Hostname { get; set; }
+	    public IPEndPoint EndPoint { get; set; }
+		
+	    public ServerConnectionDetails(IPEndPoint endPoint, string hostname = null)
+	    {
+		    EndPoint = endPoint;
+		    Hostname = hostname;
+	    }
+    }
+    
 	public class ServerListPingDescriptionJson
 	{
 		public string Text { get; set; }
@@ -100,11 +112,21 @@ namespace Alex.API.Services
 	{
 		[J("name")] public string Name { get; set; }
 		[J("protocol")] public int Protocol { get; set; }
+
+		[JsonIgnore] public CompatibilityResult Compatibility { get; set; } = CompatibilityResult.Unknown;
 	}
 
 	public partial class ServerQuery
 	{
 		public static ServerQuery FromJson(string json) => JsonConvert.DeserializeObject<ServerQuery>(json);
+	}
+
+	public enum CompatibilityResult
+	{
+		Compatible,
+		OutdatedClient,
+		OutdatedServer,
+		Unknown
 	}
 
 

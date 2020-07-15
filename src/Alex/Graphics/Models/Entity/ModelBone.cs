@@ -5,7 +5,6 @@ using Alex.API.Entities;
 using Alex.API.Graphics;
 using Alex.API.Utils;
 using Alex.ResourcePackLib.Json.Models.Entities;
-using Alex.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -15,10 +14,12 @@ namespace Alex.Graphics.Models.Entity
 	{
 		public class ModelBone : IDisposable
 		{
+			private Texture2D Texture { get; set; }
 			private PooledIndexBuffer Buffer { get; set; }
-			public ModelBoneCube[] Parts { get; }
-
+			public ModelBone[] Children { get; internal set; } = new ModelBone[0];
+			
 			private Vector3 _rotation = Vector3.Zero;
+
 			public Vector3 Rotation
 			{
 				get { return _rotation; }
@@ -31,124 +32,200 @@ namespace Alex.Graphics.Models.Entity
 				get { return _position; }
 				set { _position = value; }
 			}
-			
-			private List<IAttachable> Attachables { get; } = new List<IAttachable>();
+
+			public bool Rendered { get; set; } = true;
 
 			private string OriginalBone { get; }
-			public string Parent => OriginalBone;
-			public ModelBone(ModelBoneCube[] parts, string parent)
+			public string ParentName => OriginalBone;
+
+			public ModelBone Parent { get; set; } = null;
+			
+			public Queue<ModelBoneAnimation> Animations { get; }
+			private ModelBoneAnimation CurrentAnim { get; set; } = null;
+			public bool IsAnimating => CurrentAnim != null || Animations.Count > 0;
+			internal EntityModelBone EntityModelBone { get; }
+			
+			private short[] Indices { get; }
+			public ModelBone(Texture2D texture, short[] indices, string parent, EntityModelBone bone, Matrix defaultMatrix)
 			{
-				Parts = parts;
+				Texture = texture;
+				EntityModelBone = bone;
+				Indices = indices;
 				OriginalBone = parent;
+
+				Animations = new Queue<ModelBoneAnimation>();
+
+				DefaultMatrix = defaultMatrix;
 			}
 
 			private bool _isDirty = true;
-
-			public Matrix RotationMatrix = Matrix.Identity;
-			public bool UpdateRotationMatrix = true;
 			private Matrix CharacterMatrix { get; set; }
-			public void Render(IRenderArgs args, PlayerLocation position, Matrix characterMatrix, bool mock)
+
+			private bool _applyHeadYaw = false;
+			private bool _applyPitch = false;
+
+			public bool ApplyHeadYaw
 			{
-				if (Buffer == null)
-					return;
-				
-				args.GraphicsDevice.Indices = Buffer;
-
-				int idx = 0;
-				for (var index = 0; index < Parts.Length; index++)
+				get
 				{
-					var part = Parts[index];
-
-					AlphaTestEffect effect = part.Effect;
-					if (effect == null) continue;
-					
-					var headYaw = part.ApplyHeadYaw ? MathUtils.ToRadians(-(position.HeadYaw - position.Yaw)) : 0f;
-					var pitch = part.ApplyPitch ? MathUtils.ToRadians(position.Pitch) : 0f;
-
-					var rot = _rotation + part.Rotation;
-
-					/*Matrix rotMatrix = Matrix.CreateTranslation(-part.Pivot)
-									   * Matrix.CreateFromYawPitchRoll(
-																	   MathUtils.ToRadians(rot.Y),
-																	   MathUtils.ToRadians(rot.X),
-																	   MathUtils.ToRadians(rot.Z)
-																	  );
-					rotMatrix *= Matrix.CreateTranslation(part.Pivot);
-					
-					if (part.ApplyYaw)
-						rotMatrix *= Matrix.CreateRotationY(yaw);*/
-
-					Matrix rotMatrix = Matrix.CreateTranslation(-part.Pivot)
-					                   * Matrix.CreateRotationX(MathUtils.ToRadians(rot.X))
-					                   * Matrix.CreateRotationY(MathUtils.ToRadians(rot.Y))
-					                   * Matrix.CreateRotationZ(MathUtils.ToRadians(rot.Z))
-					                   * Matrix.CreateTranslation(part.Pivot);
-
-
-					var rotMatrix2 = Matrix.CreateTranslation(-part.Pivot) *
-						Matrix.CreateFromYawPitchRoll(headYaw, pitch, 0f) *
-					                 Matrix.CreateTranslation(part.Pivot);
-					
-					var rotateMatrix = Matrix.CreateTranslation(part.Origin) * (rotMatrix2 *
-					                  rotMatrix);
-					
-					RotationMatrix = rotateMatrix * characterMatrix;
-						
-					effect.World = rotateMatrix * characterMatrix;
-					effect.View = args.Camera.ViewMatrix;
-					effect.Projection = args.Camera.ProjectionMatrix;
-
-					if (!mock)
-					{
-						foreach (var pass in effect.CurrentTechnique.Passes)
-						{
-							pass.Apply();
-						}
-
-						args.GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, idx,
-							part.Indexes.Length / 3);
-					}
-
-					idx += part.Indexes.Length;
+					return _applyHeadYaw;
 				}
-
-				foreach (var attach in Attachables.ToArray())
+				set
 				{
-					attach.Render(args);
+					_applyHeadYaw = value;
+					
+					foreach (var child in Children)
+					{
+						child.ApplyHeadYaw = value;
+					}
 				}
 			}
 
-			public void Update(IUpdateArgs args, Matrix characterMatrix, Vector3 diffuseColor)
+			public bool ApplyPitch 
 			{
-				CharacterMatrix = characterMatrix;
-				foreach (var part in Parts)
+				get
 				{
-					if (part.Effect != null)
+					return _applyPitch;
+				}
+				set
+				{
+					_applyPitch = value;
+
+					foreach (var child in Children)
 					{
-						part.Effect.DiffuseColor = diffuseColor;
+						child.ApplyPitch = value;
+					}
+				}
+			}
+			
+			public AlphaTestEffect Effect { get; private set; }
+
+			public void Render(IRenderArgs args, bool mock)
+			{
+				if (Buffer == null || Effect == null || Effect.Texture == null)
+					return;
+
+				var effect = Effect;
+				args.GraphicsDevice.Indices = Buffer;
+
+				effect.View = args.Camera.ViewMatrix;
+				effect.Projection = args.Camera.ProjectionMatrix;
+				
+				if (!mock && Rendered && !EntityModelBone.NeverRender)
+				{
+					foreach (var pass in effect.CurrentTechnique.Passes)
+					{
+						pass.Apply();
 					}
 
-					if (!part.IsDirty)
-						continue;
-
-					_isDirty = true;
-					part.Update(args);
+					args.GraphicsDevice.DrawIndexedPrimitives(
+						PrimitiveType.TriangleList, 0, 0, Indices.Length / 3);
 				}
+									
+				var children = Children;
 
-				foreach (var attachable in Attachables.ToArray())
+				if (children.Length > 0)
 				{
-					attachable.Update(RotationMatrix);
+					foreach (var child in children)
+					{
+						child.Render(args, mock);
+					}
 				}
+			}
 
-				if (_isDirty)
+			public void ClearAnimations()
+			{
+				var anim = CurrentAnim;
+
+				if (anim != null)
 				{
-					UpdateVertexBuffer(args.GraphicsDevice);
+					anim.Reset();
+					CurrentAnim = null;
+				}
+			}
+
+			private Matrix DefaultMatrix { get; set; } = Matrix.Identity;
+
+			public void Update(IUpdateArgs args,
+				Matrix characterMatrix,
+				Vector3 diffuseColor,
+				PlayerLocation modelLocation)
+			{
+				var device = args.GraphicsDevice;
+
+				if (Effect == null)
+				{
+					Effect = new AlphaTestEffect(device);
+					Effect.Texture = Texture;
+				}
+				else
+				{
+
+					if (CurrentAnim == null && Animations.TryDequeue(out var animation))
+					{
+						animation.Setup();
+						animation.Start();
+
+						CurrentAnim = animation;
+					}
+
+					if (CurrentAnim != null)
+					{
+						CurrentAnim.Update(args.GameTime);
+
+						if (CurrentAnim.IsFinished())
+						{
+							CurrentAnim.Reset();
+							CurrentAnim = null;
+						}
+					}
+
+
+
+					Matrix yawPitchMatrix = Matrix.Identity;
+
+					if (ApplyHeadYaw || ApplyPitch)
+					{
+						var headYaw = ApplyHeadYaw ? MathUtils.ToRadians(-(modelLocation.HeadYaw - modelLocation.Yaw)) :
+							0f;
+
+						var pitch = ApplyPitch ? MathUtils.ToRadians(modelLocation.Pitch) : 0f;
+
+						yawPitchMatrix = Matrix.CreateTranslation(-EntityModelBone.Pivot)
+						                 * Matrix.CreateFromYawPitchRoll(headYaw, pitch, 0f)
+						                 * Matrix.CreateTranslation(EntityModelBone.Pivot);
+					}
+
+					var userRotationMatrix = Matrix.CreateTranslation(-EntityModelBone.Pivot)
+					                         * Matrix.CreateRotationX(MathUtils.ToRadians(Rotation.X))
+					                         * Matrix.CreateRotationY(MathUtils.ToRadians(Rotation.Y))
+					                         * Matrix.CreateRotationZ(MathUtils.ToRadians(Rotation.Z))
+					                         * Matrix.CreateTranslation(EntityModelBone.Pivot);
+
+					Effect.World = yawPitchMatrix * userRotationMatrix * DefaultMatrix
+					               * Matrix.CreateTranslation(_position) * characterMatrix;
+
+					Effect.DiffuseColor = diffuseColor;
+					var children = Children;
+
+					if (children.Length > 0)
+					{
+						foreach (var child in children)
+						{
+							child.Update(args, userRotationMatrix * characterMatrix, diffuseColor, modelLocation);
+						}
+					}
+
+					if (_isDirty)
+					{
+						UpdateVertexBuffer(args.GraphicsDevice);
+					}
 				}
 			}
 
 			private void UpdateVertexBuffer(GraphicsDevice device)
 			{
-				var indices = Parts.SelectMany(x => x.Indexes).ToArray();
+				var indices = Indices;
 
 				PooledIndexBuffer currentBuffer = Buffer;
 
@@ -164,20 +241,19 @@ namespace Alex.Graphics.Models.Entity
 				}
 			}
 
-			public void Attach(IAttachable attachable)
+			internal void SetTexture(PooledTexture2D texture)
 			{
-				if (!Attachables.Contains(attachable))
-					Attachables.Add(attachable);
+				if (Effect != null)
+				{
+					Effect.Texture = texture;
+				}
+
+				Texture = texture;
 			}
 
-			public void Detach(IAttachable attachable)
-			{
-				if (Attachables.Contains(attachable))
-					Attachables.Remove(attachable);
-			}
-			
 			public void Dispose()
 			{
+				Effect?.Dispose();
 				Buffer?.MarkForDisposal();
 			}
 		}

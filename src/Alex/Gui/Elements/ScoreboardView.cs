@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using Alex.API.Gui.Elements;
 using Alex.API.Gui.Elements.Layout;
 using Alex.API.Gui.Graphics;
@@ -7,72 +10,156 @@ using RocketUI;
 
 namespace Alex.Gui.Elements
 {
+	public class ScoreboardElement : GuiElement
+	{
+		private GuiTextElement Left { get; }
+		private GuiTextElement Right { get; }
+		
+		public ScoreboardElement(string left, uint value)
+		{
+			Left = new GuiTextElement()
+			{
+				Text = left,
+				Anchor = Alignment.TopLeft,
+				Margin = new Thickness(0, 0, 2, 0)
+			};
+
+			Right = new GuiTextElement()
+			{
+				Anchor = Alignment.TopRight,
+				Text = value.ToString()
+			};
+			
+			AddChild(Left);
+			AddChild(Right);
+		}	
+		
+	/*	protected override void GetPreferredSize(out Size size, out Size minSize, out Size maxSize)
+		{
+			base.GetPreferredSize(out size, out minSize, out maxSize);
+			
+			size = new Size(Left.Width + Right.Width, Math.Max(Left.Height, Right.Height));
+		}*/
+	}
+	
 	public class ScoreboardView : GuiStackContainer
 	{
+		private ConcurrentDictionary<string, EntryData> Rows { get; set; } = new ConcurrentDictionary<string, EntryData>();
 		public ScoreboardView() : base()
 		{
 			BackgroundOverlay = new Color(Color.Black, 0.5f);
-			
-			//ChildAnchor = Alignment.TopLeft;
+			ChildAnchor = Alignment.Fill;
 		}
 
-		protected override void ArrangeChildrenCore(Rectangle finalRect, IReadOnlyCollection<GuiElement> children)
+		public void Clear()
 		{
-			var positioningBounds = finalRect;
-
-			var alignment = NormalizeAlignmentForArrange(Orientation, ChildAnchor);
-
-			var offset = Thickness.Zero;
-			var lastOffset = Thickness.Zero;
-			var childSize = Thickness.Zero;
-
-
-			foreach (var child in children)
+			Rows.Clear();
+			foreach (var child in Children.ToArray())
 			{
-				
-				//positioningBounds -= offset;
-				//var alignment = NormalizeAlignmentForArrange(Orientation, child.Anchor);
-				//var alignment = child.Anchor;
-				//alignment = child.Anchor;
-				var layoutBounds = PositionChild(child, alignment, positioningBounds, lastOffset, offset, true);
+				RemoveChild(child);
+			}
+		}
+		
+		public void AddString(string text)
+		{
+			GuiContainer container = new GuiContainer();
+			container.AddChild(new GuiTextElement(text)
+			{
+				Anchor = Alignment.CenterX
+			});
+			AddChild(container);
+		}
 
-				var currentOffset = CalculateOffset(alignment, layoutBounds.Size, layoutBounds.Margin, lastOffset);
-
-				offset += currentOffset;
-
-				
-
-				lastOffset = CalculateOffset(alignment, Size.Zero, layoutBounds.Margin, lastOffset);
+		public void Remove(string id)
+		{
+			if (Rows.TryRemove(id, out var old))
+			{
+				RemoveChild(old.Container);
 			}
 		}
 
-		protected override void OnInit(IGuiRenderer renderer)
+		public void AddRow(string id, string key, uint value)
 		{
+			if (Rows.TryRemove(id, out var old))
+			{
+				RemoveChild(old.Container);
+			}
 			
-			base.OnInit(renderer);
-		}
+			/*GuiTextElement keyElement, valueElement;
+			keyElement = new GuiTextElement()
+			{
+				 Text = key,
+				 Anchor = Alignment.TopLeft
+			};
+			
+			valueElement = new GuiTextElement()
+			{
+				 Text = value.ToString(),
+				 Anchor = Alignment.TopRight
+			};
+			
+			var container = new GuiContainer();
+			GuiMultiStackContainer stackContainer = new GuiMultiStackContainer()
+			{
+				Orientation = Orientation.Horizontal,
+				Anchor = Alignment.Fill,
+				ChildAnchor = Alignment.FillCenter
+			};
+			stackContainer.AddRow(
+				r =>
+				{
+					r.ChildAnchor = Alignment.Fill;
+					
+					var c = new GuiContainer();
+					c.AddChild(keyElement);
+					
+					r.AddChild(c);
+				});
+			stackContainer.AddRow(
+				r =>
+				{
+					r.ChildAnchor = Alignment.Fill;
+					
+					var c = new GuiContainer();
+					c.AddChild(valueElement);
+					
+					r.AddChild(c);
+				});
+			
+			container.AddChild(stackContainer);*/
 
-		public void AddString(string text)
-		{
-			AddRow(string.Empty, text);
-		}
+			var container = new ScoreboardElement(key, value);
 
-		public void AddRow(string key, string value)
-		{
-			GuiTextElement keyElement, valueElement;
+			//AddChild(container);
+			if (Rows.TryAdd(id, new EntryData() {Container = container, Score = value}))
+			{
+				var rows = Rows.ToArray();
+				
+				foreach (var child in rows)
+				{
+					RemoveChild(child.Value.Container);
+				}
+				
+				foreach (var row in rows.OrderBy(x => x.Value.Score))
+				{
+					AddChild(row.Value.Container);
+				}
+			}
+			/*
 			var row = AddRow(keyElement = new GuiTextElement()
 				{
 					Text = key,
-
+					Anchor = Alignment.MiddleLeft
 				},
 				valueElement = new GuiTextElement()
 				{
-					Text = value
+					Text = value,
+					Anchor = Alignment.MiddleRight
 				});
-
+*/
 			//	row.Anchor = Alignment.TopFill;
-			keyElement.Anchor = Alignment.TopLeft;
-				valueElement.Anchor = Alignment.TopRight;
+			//keyElement.Anchor = Alignment.TopLeft;
+			//	valueElement.Anchor = Alignment.TopRight;
 			//	var keyElementMargin = keyElement.Margin;
 			//	keyElementMargin.Left = 0;
 
@@ -87,23 +174,10 @@ namespace Alex.Gui.Elements
 
 		}
 
-		private GuiStackContainer AddRow(params GuiElement[] elements)
+		private class EntryData
 		{
-			var stack = new GuiStackContainer()
-			{
-				Orientation = Orientation == Orientation.Horizontal ? Orientation.Vertical : Orientation.Horizontal,
-				//Anchor = Alignment.TopLeft
-			};
-
-			AddChild(stack);
-
-		//	stack.Anchor = Alignment.TopFill;
-			foreach (var element in elements)
-			{
-				stack.AddChild(element);
-			}
-
-			return stack;
+			public ScoreboardElement Container { get; set; }
+			public uint Score { get; set; }
 		}
 	}
 }

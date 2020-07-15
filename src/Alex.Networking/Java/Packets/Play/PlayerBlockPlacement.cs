@@ -1,8 +1,8 @@
 ﻿using System;
+using Alex.API.Blocks;
 using Alex.API.Utils;
 using Alex.Networking.Java.Util;
 using Microsoft.Xna.Framework;
-using MiNET;
 
 namespace Alex.Networking.Java.Packets.Play
 {
@@ -15,7 +15,7 @@ namespace Alex.Networking.Java.Packets.Play
         public bool InsideBlock;
         public PlayerBlockPlacementPacket()
         {
-            PacketId = 0x2C;
+            PacketId = 0x2D;
         }
 
         public override void Decode(MinecraftStream stream)

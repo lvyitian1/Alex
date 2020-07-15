@@ -1,7 +1,7 @@
 ﻿using Alex.API.Gui.Elements.Layout;
 using RocketUI;
 
-namespace Alex.API.Gui.Dialogs
+namespace Alex.API.Gui
 {
     public abstract class GuiDialogBase : GuiScreen
     {
@@ -18,8 +18,9 @@ namespace Alex.API.Gui.Dialogs
                 Anchor = Alignment.MiddleCenter
             });
         }
-
-
-
+        public virtual void OnClose()
+        {
+            
+        }
     }
 }

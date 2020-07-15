@@ -1,24 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <UpgradeBackupLocation>
-    </UpgradeBackupLocation>
     <OldToolsVersion>2.0</OldToolsVersion>
     <Configurations>Release;Debug;Appveyor</Configurations>
     <Platforms>x64;AnyCPU</Platforms>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Description>Provides the MC:Java networking implementation in Alex</Description>
+    <Copyright>Kenny van Vulpen - 2020</Copyright>
+    <PackageProjectUrl>https://github.com/kennyvv/Alex</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/kennyvv/Alex/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/kennyvv/Alex</RepositoryUrl>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="Bedrock\" />
-    <Folder Include="Bedrock\Net\Pe" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Iconic.Zlib.Netstandard" Version="1.0.0" />
-    <PackageReference Include="MiNET" Version="1.0.2099" />
-    <PackageReference Include="MonoGame.Framework.DesktopGL.Core" Version="3.8.0.13" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="NLog" Version="4.5.0" />
+    <PackageReference Include="NLog" Version="4.7.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Alex.API\Alex.API.csproj" />

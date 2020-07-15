@@ -2,13 +2,30 @@
 using Alex.API.Blocks;
 using Alex.API.Graphics;
 using Alex.API.World;
+using Alex.Blocks.Minecraft;
 using Alex.ResourcePackLib.Json;
 using Alex.Utils;
+using Alex.Worlds;
+using Alex.Worlds.Abstraction;
+using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 
 namespace Alex.Graphics.Models.Blocks
 {
-	public class BlockModel : Model, IBlockModel
+	public class VerticesResult
+	{
+		public BlockShaderVertex[] Vertices { get; }
+		public int[] Indexes { get; }
+		[CanBeNull] public int[] AnimatedIndexes { get; }
+		public VerticesResult(BlockShaderVertex[] vertices, int[] indexes, [CanBeNull] int[] animatedIndexes = null)
+		{
+			Vertices = vertices;
+			Indexes = indexes;
+			AnimatedIndexes = animatedIndexes;
+		}
+	}
+
+	public class BlockModel : Model
 	{
         public BlockModel()
         {
@@ -18,15 +35,13 @@ namespace Alex.Graphics.Models.Blocks
         public virtual BoundingBox BoundingBox { get; } = new BoundingBox(Vector3.Zero, Vector3.One);
         
 		public float Scale { get; set; } = 1f;
-		public bool Transparent { get; set; }
-		public bool Animated { get; set; }
 
-		public virtual (VertexPositionNormalTextureColor[] vertices, int[] indexes) GetVertices(IWorld world, Vector3 position, IBlock baseBlock)
+		public virtual VerticesResult GetVertices(IBlockAccess world, Vector3 position, Block baseBlock)
         {
-            return (new VertexPositionNormalTextureColor[0], new int[0]);
+            return new VerticesResult(new BlockShaderVertex[0], new int[0], null);
         }
 
-	    public virtual BoundingBox GetBoundingBox(Vector3 position, IBlock requestingBlock)
+	    public virtual BoundingBox GetBoundingBox(Vector3 position, Block requestingBlock)
 	    {
 			return new BoundingBox(position, position + Vector3.One);
 	    }
@@ -41,10 +56,8 @@ namespace Alex.Graphics.Models.Blocks
 		    return new BoundingBox[0];
 	    }
 
-	    protected VertexPositionNormalTextureColor[] GetFaceVertices(BlockFace blockFace, Vector3 startPosition, Vector3 endPosition, UVMap uvmap, out int[] indexes)
+	    protected BlockShaderVertex[] GetFaceVertices(BlockFace blockFace, Vector3 startPosition, Vector3 endPosition, UVMap uvmap, out int[] indexes)
 		{
-			var size = (endPosition - startPosition);
-
 			Color faceColor = Color.White;
 			Vector3 normal = Vector3.Zero;
 			Vector3 positionTopLeft = Vector3.Zero, positionBottomLeft = Vector3.Zero, positionBottomRight = Vector3.Zero, positionTopRight = Vector3.Zero;
@@ -52,61 +65,61 @@ namespace Alex.Graphics.Models.Blocks
 			switch (blockFace)
 			{
 				case BlockFace.Up: //Positive Y
-					positionTopLeft = From(startPosition, endPosition, endPosition);
-					positionTopRight = From(endPosition, endPosition, endPosition);
+					positionTopLeft = new Vector3(startPosition.X, endPosition.Y, endPosition.Z);
+					positionTopRight = new Vector3(endPosition.X, endPosition.Y, endPosition.Z);
 
-					positionBottomLeft = From(startPosition, endPosition, startPosition);
-					positionBottomRight = From(endPosition, endPosition, startPosition);
+					positionBottomLeft = new Vector3(startPosition.X, endPosition.Y, startPosition.Z);
+					positionBottomRight = new Vector3(endPosition.X, endPosition.Y, startPosition.Z);
 
 					normal = Vector3.Up;
 					faceColor = uvmap.ColorTop; //new Color(0x00, 0x00, 0xFF);
 					break;
 				case BlockFace.Down: //Negative Y
-					positionTopLeft = From(startPosition, startPosition, endPosition);
-					positionTopRight = From(endPosition, startPosition, endPosition);
+					positionTopLeft = new Vector3(startPosition.X, startPosition.Y, endPosition.Z);
+					positionTopRight = new Vector3(endPosition.X, startPosition.Y, endPosition.Z);
 
-					positionBottomLeft = From(startPosition, startPosition, startPosition);
-					positionBottomRight = From(endPosition, startPosition, startPosition);
+					positionBottomLeft = new Vector3(startPosition.X, startPosition.Y, startPosition.Z);
+					positionBottomRight = new Vector3(endPosition.X, startPosition.Y, startPosition.Z);
 
 					normal = Vector3.Down;
 					faceColor = uvmap.ColorBottom; //new Color(0xFF, 0xFF, 0x00);
 					break;
 				case BlockFace.West: //Negative X
-					positionTopLeft = From(startPosition, endPosition, startPosition);
-					positionTopRight = From(startPosition, endPosition, endPosition);
+					positionTopLeft = new Vector3(startPosition.X, endPosition.Y, startPosition.Z);
+					positionTopRight = new Vector3(startPosition.X, endPosition.Y, endPosition.Z);
 
-					positionBottomLeft = From(startPosition, startPosition, startPosition);
-					positionBottomRight = From(startPosition, startPosition, endPosition);
+					positionBottomLeft = new Vector3(startPosition.X, startPosition.Y, startPosition.Z);
+					positionBottomRight = new Vector3(startPosition.X, startPosition.Y, endPosition.Z);
 
 					normal = Vector3.Left;
 					faceColor = uvmap.ColorLeft; // new Color(0xFF, 0x00, 0xFF);
 					break;
 				case BlockFace.East: //Positive X
-					positionTopLeft = From(endPosition, endPosition, startPosition);
-					positionTopRight = From(endPosition, endPosition, endPosition);
+					positionTopLeft = new Vector3(endPosition.X, endPosition.Y, startPosition.Z);
+					positionTopRight = new Vector3(endPosition.X, endPosition.Y, endPosition.Z);
 
-					positionBottomLeft = From(endPosition, startPosition, startPosition);
-					positionBottomRight = From(endPosition, startPosition, endPosition);
+					positionBottomLeft = new Vector3(endPosition.X, startPosition.Y, startPosition.Z);
+					positionBottomRight = new Vector3(endPosition.X, startPosition.Y, endPosition.Z);
 
 					normal = Vector3.Right;
 					faceColor = uvmap.ColorRight; //new Color(0x00, 0xFF, 0xFF);
 					break;
 				case BlockFace.South: //Positive Z
-					positionTopLeft = From(startPosition, endPosition, startPosition);
-					positionTopRight = From(endPosition, endPosition, startPosition);
+					positionTopLeft = new Vector3(startPosition.X, endPosition.Y, startPosition.Z);
+					positionTopRight = new Vector3(endPosition.X, endPosition.Y, startPosition.Z);
 
-					positionBottomLeft = From(startPosition, startPosition, startPosition);
-					positionBottomRight = From(endPosition, startPosition, startPosition);
+					positionBottomLeft = new Vector3(startPosition.X, startPosition.Y, startPosition.Z);
+					positionBottomRight = new Vector3(endPosition.X, startPosition.Y, startPosition.Z);
 
 					normal = Vector3.Backward;
 					faceColor = uvmap.ColorFront; // ew Color(0x00, 0xFF, 0x00);
 					break;
 				case BlockFace.North: //Negative Z
-					positionTopLeft = From(startPosition, endPosition, endPosition);
-					positionTopRight = From(endPosition, endPosition, endPosition);
+					positionTopLeft = new Vector3(startPosition.X, endPosition.Y, endPosition.Z);
+					positionTopRight = new Vector3(endPosition.X, endPosition.Y, endPosition.Z);
 
-					positionBottomLeft = From(startPosition, startPosition, endPosition);
-					positionBottomRight = From(endPosition, startPosition, endPosition);
+					positionBottomLeft = new Vector3(startPosition.X, startPosition.Y, endPosition.Z);
+					positionBottomRight = new Vector3(endPosition.X, startPosition.Y, endPosition.Z);
 
 					normal = Vector3.Forward;
 					faceColor = uvmap.ColorBack; // new Color(0xFF, 0x00, 0x00);
@@ -115,11 +128,11 @@ namespace Alex.Graphics.Models.Blocks
 					break;
 			}
 
-			var topLeft = new VertexPositionNormalTextureColor(positionTopLeft, normal, uvmap.TopLeft, faceColor);
-			var topRight = new VertexPositionNormalTextureColor(positionTopRight, normal, uvmap.TopRight, faceColor);
-			var bottomLeft = new VertexPositionNormalTextureColor(positionBottomLeft, normal, uvmap.BottomLeft,
+			var topLeft = new BlockShaderVertex(positionTopLeft, normal, uvmap.TopLeft, faceColor);
+			var topRight = new BlockShaderVertex(positionTopRight, normal, uvmap.TopRight, faceColor);
+			var bottomLeft = new BlockShaderVertex(positionBottomLeft, normal, uvmap.BottomLeft,
 				faceColor);
-			var bottomRight = new VertexPositionNormalTextureColor(positionBottomRight, normal, uvmap.BottomRight,
+			var bottomRight = new BlockShaderVertex(positionBottomRight, normal, uvmap.BottomRight,
 				faceColor);
 
 			switch (blockFace)
@@ -176,22 +189,22 @@ namespace Alex.Graphics.Models.Blocks
 				topLeft, topRight, bottomLeft, bottomRight
 			};
 
-			return new VertexPositionNormalTextureColor[0];
+			return new BlockShaderVertex[0];
 		}
 
-		protected byte GetLight(IWorld world, Vector3 blockPosition, Vector3 facePosition, bool smooth = false)
+		protected void GetLight(IBlockAccess world, Vector3 facePosition, out byte blockLight, out byte skyLight, bool smooth = false)
 		{
-			var faceBlock = world.GetBlock(facePosition);
+			var faceBlock = world.GetBlockState(facePosition).Block;
 			
-			byte skyLight = world.GetSkyLight(facePosition);
-			byte blockLight = world.GetBlockLight(facePosition);
+			skyLight = world.GetSkyLight(facePosition);
+			blockLight = world.GetBlockLight(facePosition);
 
-			if (skyLight == 15 || blockLight == 15)
-				return 15;
+			//if (skyLight == 15 || blockLight == 15)
+			//	return;
 			
 			if (!smooth && !faceBlock.Transparent && !(skyLight > 0 || blockLight > 0))
-		    {
-			    return (byte)Math.Min(blockLight + skyLight, 15);
+			{
+				return;// (byte)Math.Min(blockLight + skyLight, 15);
 			}
 
 
@@ -255,55 +268,57 @@ namespace Alex.Graphics.Models.Blocks
 			    }
 		    }
 
-		    return (byte)Math.Min(Math.Max(0, blockLight + skyLight), 15);
+		    //(byte)Math.Min(Math.Max(0, blockLight + skyLight), 15);
 	    }
-		
-	    protected UVMap GetTextureUVMap(ResourceManager resources, string texture, float x1, float x2, float y1, float y2, int rot, Color color)
-	    {
-		    if (resources == null)
-		    {
-			    x1 = 0;
-			    x2 = 1 / 32f;
-			    y1 = 0;
-			    y2 = 1 / 32f;
 
-			    return new UVMap(new Microsoft.Xna.Framework.Vector2(x1, y1),
-				    new Microsoft.Xna.Framework.Vector2(x2, y1), new Microsoft.Xna.Framework.Vector2(x1, y2),
-				    new Microsoft.Xna.Framework.Vector2(x2, y2), color, color, color);
-		    }
-
-		    var textureInfo = resources.Atlas.GetAtlasLocation(texture, out var uvSize);
-		    var textureLocation = textureInfo.Position;
-
-		    var xw = (textureInfo.Width / 16f) / uvSize.X;
-            var yh = (textureInfo.Height / 16f) / uvSize.Y;
-            
-            textureLocation.X /= uvSize.X;
-		    textureLocation.Y /= uvSize.Y;
-
-		    x1 = textureLocation.X + (x1 * xw);
-		   x2 = textureLocation.X + (x2 * xw) ;
-		   y1 = textureLocation.Y + (y1 * yh) ;
-		   y2 = textureLocation.Y + (y2 * yh) ;
-		   
-           /* x1 = textureLocation.X + x1 * (((textureInfo.Width / 16f) / uvSize.X));
-            x2 = textureLocation.X + x2 * (((textureInfo.Width / 16f) / uvSize.X));
-            y1 = textureLocation.Y + y1 * (((textureInfo.Height / 16f) / uvSize.Y));
-            y2 = textureLocation.Y + y2 * (((textureInfo.Height / 16f) / uvSize.Y));*/
-           
-            var map = new UVMap(new Microsoft.Xna.Framework.Vector2(x1, y1),
-			    new Microsoft.Xna.Framework.Vector2(x2, y1), new Microsoft.Xna.Framework.Vector2(x1, y2),
-			    new Microsoft.Xna.Framework.Vector2(x2, y2), color, color, color);
-
-			if (rot > 0)
+		protected UVMap GetTextureUVMap(Block block, ResourceManager resources,
+			string texture,
+			float x1,
+			float x2,
+			float y1,
+			float y2,
+			int rot,
+			Color color)
+		{
+			if (resources == null)
 			{
-				map.Rotate(rot);
+				x1 = 0;
+				x2 = 1 / 32f;
+				y1 = 0;
+				y2 = 1 / 32f;
+
+				return new UVMap(
+					new Microsoft.Xna.Framework.Vector2(x1, y1), new Microsoft.Xna.Framework.Vector2(x2, y1),
+					new Microsoft.Xna.Framework.Vector2(x1, y2), new Microsoft.Xna.Framework.Vector2(x2, y2), color,
+					color, color);
 			}
 
-			return map;
-	    }
+			var textureInfo     = resources.Atlas.GetAtlasLocation(block, texture, out var uvSize);
+			var textureLocation = textureInfo.Position;
 
-	    public static BlockFace[] INVALID_FACE_ROTATION = new BlockFace[]
+			var xw = (textureInfo.Width / 16f) / uvSize.X;
+			var yh = (textureInfo.Height / 16f) / uvSize.Y;
+
+			textureLocation.X /= uvSize.X;
+			textureLocation.Y /= uvSize.Y;
+
+			x1 = textureLocation.X + (x1 * xw);
+			x2 = textureLocation.X + (x2 * xw);
+			y1 = textureLocation.Y + (y1 * yh);
+			y2 = textureLocation.Y + (y2 * yh);
+
+			var map = new UVMap(
+				new Microsoft.Xna.Framework.Vector2(x1, y1), new Microsoft.Xna.Framework.Vector2(x2, y1),
+				new Microsoft.Xna.Framework.Vector2(x1, y2), new Microsoft.Xna.Framework.Vector2(x2, y2), color, color,
+				color, textureInfo.Animated);
+
+			 if (rot > 0)
+				 map.Rotate(rot);
+
+			return map;
+		}
+
+		public static BlockFace[] INVALID_FACE_ROTATION = new BlockFace[]
 	    {
 		    BlockFace.Up,
 		    BlockFace.Down,
@@ -360,11 +375,6 @@ namespace Alex.Graphics.Models.Blocks
 			}
 
 			return rots[(rots.Length + pos + offset) % rots.Length];
-		}
-
-		public static Vector3 From(Vector3 x, Vector3 y, Vector3 z)
-		{
-			return new Vector3(x.X, y.Y, z.Z);
 		}
 	}
 }

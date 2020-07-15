@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using Alex.API.Graphics;
 using Alex.API.World;
+using Alex.Blocks.Minecraft;
+using Alex.Worlds;
+using Alex.Worlds.Abstraction;
 using Microsoft.Xna.Framework;
 
 namespace Alex.Graphics.Models.Blocks
@@ -13,11 +16,12 @@ namespace Alex.Graphics.Models.Blocks
 			Models = models;
 		}
 
-	    public override (VertexPositionNormalTextureColor[] vertices, int[] indexes) GetVertices(IWorld world, Vector3 position, IBlock baseBlock)
+	    public override VerticesResult GetVertices(IBlockAccess world, Vector3 position, Block baseBlock)
 	    {
-			List<VertexPositionNormalTextureColor> vertices = new List<VertexPositionNormalTextureColor>();
+			List<BlockShaderVertex> vertices = new List<BlockShaderVertex>();
 			List<int> indexes = new List<int>();
-			
+		    List<int> animatedIndexes = new List<int>();
+		    
 		    for (var index = 0; index < Models.Length; index++)
 		    {
 			    var model = Models[index];
@@ -25,15 +29,23 @@ namespace Alex.Graphics.Models.Blocks
 
 			    var verts = model.GetVertices(world, position, baseBlock);
 			    
-				for (int i = 0; i < verts.indexes.Length; i++)
+				for (int i = 0; i < verts.Indexes.Length; i++)
 				{
-					indexes.Add(vertices.Count + verts.indexes[i]);
+					indexes.Add(vertices.Count + verts.Indexes[i]);
 				}
-				
-				vertices.AddRange(verts.vertices);
+
+				if (verts.AnimatedIndexes != null)
+				{
+					for (int i = 0; i < verts.AnimatedIndexes.Length; i++)
+					{
+						indexes.Add(vertices.Count + verts.AnimatedIndexes[i]);
+					}
+				}
+
+				vertices.AddRange(verts.Vertices);
 		    }
 
-		    return (vertices.ToArray(), indexes.ToArray());
+		    return new VerticesResult(vertices.ToArray(), indexes.ToArray(), animatedIndexes.Count > 0 ? animatedIndexes.ToArray() : null);
 	    }
     }
 }

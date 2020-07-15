@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
-using Alex.API.Blocks.State;
 using Alex.API.Data.Options;
 using Alex.API.Data.Servers;
 using Alex.API.Entities;
@@ -16,14 +15,20 @@ using Alex.API.Network;
 using Alex.API.Services;
 using Alex.API.Utils;
 using Alex.API.World;
+using Alex.Blocks;
 using Alex.Blocks.Minecraft;
+using Alex.Blocks.State;
+using Alex.Blocks.Storage;
 using Alex.Entities;
-using Alex.GameStates;
+using Alex.Gamestates;
 using Alex.Graphics.Camera;
 using Alex.Graphics.Models;
 using Alex.Graphics.Models.Items;
-using Alex.Gui.Forms.Bedrock;
-using Alex.Worlds.Bedrock;
+using Alex.Net;
+using Alex.Utils;
+using Alex.Worlds.Abstraction;
+using Alex.Worlds.Chunks;
+using Alex.Worlds.Lighting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -33,7 +38,7 @@ using NLog;
 using BlockCoordinates = Alex.API.Utils.BlockCoordinates;
 using ChunkCoordinates = Alex.API.Utils.ChunkCoordinates;
 using Color = Microsoft.Xna.Framework.Color;
-using IBlockState = Alex.API.Blocks.State.IBlockState;
+using Inventory = MiNET.Inventory;
 using MathF = System.MathF;
 using Player = Alex.Entities.Player;
 using PlayerLocation = Alex.API.Utils.PlayerLocation;
@@ -45,24 +50,26 @@ using UUID = Alex.API.Utils.UUID;
 
 namespace Alex.Worlds
 {
-	public class World : IWorld, IWorldReceiver, IBlockAccess
+	public class World : IBlockAccess
 	{
 		private static readonly Logger Log = LogManager.GetCurrentClassLogger(typeof(World));
 
 		private GraphicsDevice Graphics { get; }
 		public Camera Camera { get; set; }
 
-		public LevelInfo WorldInfo { get; set; }
-
 		public Player Player { get; set; }
 		private AlexOptions Options { get; }
 		
 		private IEventDispatcher EventDispatcher { get; }
-		public BedrockFormManager FormManager { get; }
+		public InventoryManager InventoryManager { get; }
 		private SkyBox SkyRenderer { get; }
 		private bool UseDepthMap { get; set; }
 		//public SkyLightCalculations SkyLightCalculations { get; }
-		private ServerType ServerType { get; }
+		//private ServerType ServerType { get; }
+
+		public long WorldTick { get; set; } = 0;
+		public long Time { get; set; } = 0;
+		public bool Raining { get; set; } = false;
 		
 		public bool DrowningDamage { get; set; } = true;
 		public bool CommandblockOutput { get; set; } = true;
@@ -85,7 +92,7 @@ namespace Alex.Worlds
 		public int RandomTickSpeed { get; set; } = 3;
 		
 		public World(IServiceProvider serviceProvider, GraphicsDevice graphics, AlexOptions options, Camera camera,
-			INetworkProvider networkProvider)
+			NetworkProvider networkProvider)
 		{
 			Graphics = graphics;
 			Camera = camera;
@@ -94,10 +101,11 @@ namespace Alex.Worlds
 			PhysicsEngine = new PhysicsManager(this);
 			ChunkManager = new ChunkManager(serviceProvider, graphics, this);
 			EntityManager = new EntityManager(graphics, this, networkProvider);
-			Ticker = new TickManager(this);
+			Ticker = new TickManager();
 			PlayerList = new PlayerList();
 
 			ChunkManager.Start();
+		//	var alex = serviceProvider.GetRequiredService<Alex>();
 			var settings = serviceProvider.GetRequiredService<IOptionsProvider>();
 			var profileService = serviceProvider.GetRequiredService<IPlayerProfileService>();
 			var resources = serviceProvider.GetRequiredService<ResourceManager>();
@@ -121,7 +129,7 @@ namespace Alex.Worlds
 				username = profileService.CurrentProfile.Username;
 			}
 
-			Player = new Player(graphics, serviceProvider.GetRequiredService<Alex>().InputManager, username, this, skin, networkProvider, PlayerIndex.One);
+			Player = new Player(graphics, serviceProvider.GetRequiredService<Alex>().InputManager, username, this, skin, networkProvider, PlayerIndex.One, camera);
 
 			Player.KnownPosition = new PlayerLocation(GetSpawnPoint());
 			Camera.MoveTo(Player.KnownPosition, Vector3.Zero);
@@ -130,8 +138,16 @@ namespace Alex.Worlds
 			Camera.FOV = Options.FieldOfVision.Value;
 
 			PhysicsEngine.AddTickable(Player);
-			
-			Player.Inventory.IsPeInventory = true;
+
+			/*if (networkProvider is BedrockClient)
+			{
+				Player.SetInventory(new BedrockInventory(46));
+			}
+			else
+			{
+				Player.SetInventory(new Utils.Inventory(46));
+			}*/
+		//	Player.Inventory.IsPeInventory = true;
 			/*if (ItemFactory.TryGetItem("minecraft:diamond_sword", out var sword))
 			{
 				Player.Inventory[Player.Inventory.SelectedSlot] = sword;
@@ -143,16 +159,17 @@ namespace Alex.Worlds
 			}*/
 			
 			EventDispatcher.RegisterEvents(this);
-			
-			FormManager = new BedrockFormManager(networkProvider, serviceProvider.GetRequiredService<GuiManager>(), serviceProvider.GetService<Alex>().InputManager);
-			
+
+			var guiManager = serviceProvider.GetRequiredService<GuiManager>();
+			InventoryManager = new InventoryManager(guiManager);
+				
 			SkyRenderer = new SkyBox(serviceProvider, graphics, this);
 			//SkyLightCalculations = new SkyLightCalculations();
 
 			UseDepthMap = options.VideoOptions.Depthmap;
 			options.VideoOptions.Depthmap.Bind((old, newValue) => { UseDepthMap = newValue; });
 
-			ServerType = (networkProvider is BedrockClient) ? ServerType.Bedrock : ServerType.Java;
+			//ServerType = (networkProvider is BedrockClient) ? ServerType.Bedrock : ServerType.Java;
 		}
 
 		private void FieldOfVisionOnValueChanged(int oldvalue, int newvalue)
@@ -170,7 +187,7 @@ namespace Alex.Worlds
 
 		public long Vertices
         {
-            get { return ChunkManager.Vertices; }
+            get { return ChunkManager.Vertices + EntityManager.VertexCount; }
         }
 
 		public int IndexBufferSize
@@ -233,7 +250,8 @@ namespace Alex.Worlds
 	        {
 		        Player.RenderEntity = false;
 	        }
-	        
+
+	        Player.Camera = Camera;
 	        Player.Render(args);
         }
 
@@ -261,7 +279,7 @@ namespace Alex.Worlds
 		private float _fovModifier = -1;
 		private bool UpdatingPriorities = false;
 		private float BrightnessMod = 0f;
-        public void Update(UpdateArgs args)
+		public void Update(UpdateArgs args)
 		{
 			args.Camera = Camera;
 			if (Player.FOVModifier != _fovModifier)
@@ -284,6 +302,11 @@ namespace Alex.Worlds
 			var diffuseColor = Color.White.ToVector3() * SkyRenderer.BrightnessModifier;
 			ChunkManager.AmbientLightColor = diffuseColor;
 
+			if (Math.Abs(ChunkManager.BrightnessModifier - SkyRenderer.BrightnessModifier) > 0f)
+			{
+				ChunkManager.BrightnessModifier = SkyRenderer.BrightnessModifier;
+			}
+
 			Player.ModelRenderer.DiffuseColor = diffuseColor;
 			Player.Update(args);
 
@@ -302,7 +325,7 @@ namespace Alex.Worlds
 			{
 				if (DoDaylightcycle)
 				{
-					WorldInfo.Time++;
+					Time++;
 				}
 			}
 		}
@@ -341,7 +364,7 @@ namespace Alex.Worlds
 
         public void SetSkyLight(BlockCoordinates coordinates, byte p1)
         {
-	        IChunkColumn chunk;
+	        ChunkColumn chunk;
 	        if (ChunkManager.TryGetChunk(new ChunkCoordinates(coordinates), out chunk))
 	        {
 		        chunk.SetSkyLight(coordinates.X & 0xf, coordinates.Y & 0xff, coordinates.Z & 0xf, p1);
@@ -352,7 +375,12 @@ namespace Alex.Worlds
         {
 	        return GetSkyLight(position.X, position.Y, position.Z);
         }
-        
+
+        public byte GetBlockLight(BlockCoordinates coordinates)
+        {
+	        return GetBlockLight(coordinates.X, coordinates.Y, coordinates.Z);
+        }
+
         public byte GetSkyLight(Vector3 position)
         {
             return GetSkyLight(position.X, position.Y, position.Z);
@@ -366,8 +394,8 @@ namespace Alex.Worlds
         public byte GetSkyLight(int x, int y, int z)
         {
             if (y < 0 || y > ChunkColumn.ChunkHeight) return 15;
-
-			IChunkColumn chunk;
+            
+            ChunkColumn chunk;
 	        if (ChunkManager.TryGetChunk(new ChunkCoordinates(x >> 4, z >> 4), out chunk))
 	        {
 				return chunk.GetSkylight(x & 0xf, y & 0xff, z & 0xf);
@@ -389,7 +417,7 @@ namespace Alex.Worlds
         {
             if (y < 0 || y > ChunkColumn.ChunkHeight) return 0;
 
-			IChunkColumn chunk;
+			ChunkColumn chunk;
 	        if (ChunkManager.TryGetChunk(new ChunkCoordinates(x >> 4, z >> 4), out chunk))
 	        {
                 return chunk.GetBlocklight(x & 0xf, y & 0xff, z & 0xf);
@@ -397,46 +425,46 @@ namespace Alex.Worlds
             return 0;
         }
 
-		public IBlock GetBlock(BlockCoordinates position)
+		public Block GetBlock(BlockCoordinates position)
 		{
 			return GetBlock(position.X, position.Y, position.Z);
 		}
 
-		public IBlock GetBlock(Vector3 position)
+		public Block GetBlock(Vector3 position)
         {
             return GetBlock(position.X, position.Y, position.Z);
         }
 
-		public IBlock GetBlock(float x, float y, float z)
+		public Block GetBlock(float x, float y, float z)
 	    {
 		    return GetBlock((int) Math.Floor(x), (int) Math.Floor(y), (int) Math.Floor(z)); // Fix. xd
 	    }
 
-		public IBlock GetBlock(int x, int y, int z)
+		public Block GetBlock(int x, int y, int z)
         {
 	      //  try
 	      //  {
-		        IChunkColumn chunk;
+		        ChunkColumn chunk;
 		        if (ChunkManager.TryGetChunk(new ChunkCoordinates(x >> 4, z >> 4), out chunk))
 		        {
-			        return chunk.GetBlock(x & 0xf, y & 0xff, z & 0xf);
+			        return chunk.GetBlockState(x & 0xf, y & 0xff, z & 0xf).Block;
 		        }
 			//}
 		//	catch { }
 
-	        return BlockFactory.GetBlockState("minecraft:air").Block;
+	        return Airstate.Block;
         }
 		
-		public void SetBlockState(int x, int y, int z, IBlockState block)
+		public void SetBlockState(int x, int y, int z, BlockState block)
 		{
 			SetBlockState(x, y, z, block, 0);
 		}
 		
-		public void SetBlockState(int x, int y, int z, IBlockState block, int storage)
+		public void SetBlockState(int x, int y, int z, BlockState block, int storage)
 		{
 			var chunkCoords = new ChunkCoordinates(x >> 4, z >> 4);
 
-			IChunkColumn chunk;
+			ChunkColumn chunk;
 			if (ChunkManager.TryGetChunk(chunkCoords, out chunk))
 			{
 				var cx = x & 0xf;
@@ -476,9 +504,12 @@ namespace Alex.Worlds
 		private void UpdateNeighbors(int x, int y, int z)
 		{
 			var source = new BlockCoordinates(x, y, z);
-			new SkyLightCalculations().Calculate(this, source);
-			
-			
+
+			if (Options.VideoOptions.ClientSideLighting)
+			{
+				new SkyLightCalculations().Calculate(this, source);
+			}
+
 			ScheduleBlockUpdate(source, new BlockCoordinates(x + 1, y, z));
 			ScheduleBlockUpdate(source, new BlockCoordinates(x - 1, y, z));
 
@@ -489,6 +520,21 @@ namespace Alex.Worlds
 			ScheduleBlockUpdate(source, new BlockCoordinates(x, y - 1, z));
 		}
 
+		public void ScheduleBlockUpdate(BlockCoordinates coordinates)
+		{
+			var chunkCoords = new ChunkCoordinates(coordinates.X >> 4, coordinates.Z >> 4);
+			
+			ChunkColumn chunk;
+			if (ChunkManager.TryGetChunk(chunkCoords, out chunk))
+			{
+				var cx = coordinates.X & 0xf;
+				var cy = coordinates.Y & 0xff;
+				var cz = coordinates.Z & 0xf;
+
+				chunk.ScheduleBlockUpdate(cx, cy, cz);
+			}
+		}
+		
 		private void ScheduleBlockUpdate(BlockCoordinates updatedBlock, BlockCoordinates block)
 		{
 			Ticker.ScheduleTick(() =>
@@ -498,9 +544,9 @@ namespace Alex.Worlds
 			}, 1);
 		}
 
-		public IEnumerable<(IBlockState state, int storage)> GetBlockStates(int x, int y, int z)
+		public IEnumerable<ChunkSection.BlockEntry> GetBlockStates(int x, int y, int z)
 		{
-			IChunkColumn chunk;
+			ChunkColumn chunk;
 			if (ChunkManager.TryGetChunk(new ChunkCoordinates(x >> 4, z >> 4), out chunk))
 			{
 				foreach (var bs in chunk.GetBlockStates(x & 0xf, y & 0xff, z & 0xf))
@@ -512,30 +558,42 @@ namespace Alex.Worlds
 			yield break;
 		}
 
-		public IBlockState GetBlockState(int x, int y, int z, int storage)
+		private static BlockState Airstate = BlockFactory.GetBlockState("minecraft:air");
+		public BlockState GetBlockState(int x, int y, int z, int storage)
 		{
-			IChunkColumn chunk;
+			ChunkColumn chunk;
 			if (ChunkManager.TryGetChunk(new ChunkCoordinates(x >> 4, z >> 4), out chunk))
 			{
 				return chunk.GetBlockState(x & 0xf, y & 0xff, z & 0xf, storage);
 			}
 
-			return BlockFactory.GetBlockState("minecraft:air");
+			return Airstate;
 		}
 		
-		public IBlockState GetBlockState(int x, int y, int z)
+		public BlockState GetBlockState(int x, int y, int z)
 		{
 			return GetBlockState(x, y, z, 0);
 		}
-		
-		public IBlockState GetBlockState(BlockCoordinates coords)
+
+		public IEnumerable<ChunkSection.BlockEntry> GetBlockStates(int positionX, in int positionY, int positionZ)
+		{
+			ChunkColumn chunk;
+			if (ChunkManager.TryGetChunk(new ChunkCoordinates(positionX >> 4, positionZ >> 4), out chunk))
+			{
+				return chunk.GetBlockStates(positionX  & 0xf, positionY & 0xff, positionZ  & 0xf);
+			}
+
+			return new ChunkSection.BlockEntry[0];
+		}
+
+		public BlockState GetBlockState(BlockCoordinates coords)
 		{
 			return GetBlockState(coords.X, coords.Y, coords.Z);
 		}
 
 		public int GetHeight(BlockCoordinates coords)
 		{
-			IChunkColumn chunk;
+			ChunkColumn chunk;
 			if (ChunkManager.TryGetChunk(new ChunkCoordinates(coords.X >> 4, coords.Z >> 4), out chunk))
 			{
 				//Worlds.ChunkColumn realColumn = (Worlds.ChunkColumn)chunk;
@@ -560,12 +618,9 @@ namespace Alex.Worlds
 			}
 			
 			if (chunk == null)
-				return new Air
-				{
-					Coordinates = blockCoordinates
-				};
+				return (Block) Airstate.Block;
 
-			var block = (Block)chunk.GetBlock(blockCoordinates.X & 0x0f, blockCoordinates.Y & 0xff, blockCoordinates.Z & 0x0f);
+			var block = (Block)chunk.GetBlockState(blockCoordinates.X & 0x0f, blockCoordinates.Y & 0xff, blockCoordinates.Z & 0x0f).Block;
 			block.Coordinates = blockCoordinates;
 
 			return block;
@@ -582,7 +637,7 @@ namespace Alex.Worlds
 			
 			if (calculateLight && chunk.GetHeight(block.Coordinates.X & 0x0f, block.Coordinates.Z & 0x0f) <= block.Coordinates.Y + 1)
 			{
-				chunk.RecalculateHeight(block.Coordinates.X & 0x0f, block.Coordinates.Z & 0x0f);
+				chunk.RecalculateHeight(block.Coordinates.X & 0x0f, block.Coordinates.Z & 0x0f, Options.VideoOptions.ClientSideLighting);
 			}
 
 			if (calculateLight)
@@ -593,10 +648,10 @@ namespace Alex.Worlds
 
 		public int GetBiome(int x, int y, int z)
 		{
-			IChunkColumn chunk;
+			ChunkColumn chunk;
 			if (ChunkManager.TryGetChunk(new ChunkCoordinates(x >> 4, z >> 4), out chunk))
 			{
-				Worlds.ChunkColumn realColumn = (Worlds.ChunkColumn) chunk;
+				ChunkColumn realColumn = (ChunkColumn) chunk;
 				return	realColumn.GetBiome(x & 0xf, z & 0xf);
 			}
 
@@ -607,7 +662,7 @@ namespace Alex.Worlds
 		public bool HasBlock(int x, int y, int z)
 		{
 			
-			IChunkColumn chunk;
+			ChunkColumn chunk;
 			if (ChunkManager.TryGetChunk(new ChunkCoordinates(x >> 4, z >> 4), out chunk))
 			{
 				//Worlds.ChunkColumn realColumn = (Worlds.ChunkColumn)chunk;
@@ -620,7 +675,7 @@ namespace Alex.Worlds
 
 		public bool IsTransparent(int x, int y, int z)
 		{
-			IChunkColumn chunk;
+			ChunkColumn chunk;
 			if (ChunkManager.TryGetChunk(new ChunkCoordinates(x >> 4, z >> 4), out chunk))
 			{
 				return chunk.IsTransparent(x & 0xf, y & 0xff, z & 0xf);
@@ -632,7 +687,7 @@ namespace Alex.Worlds
 
 		public bool IsSolid(int x, int y, int z)
 		{
-			IChunkColumn chunk;
+			ChunkColumn chunk;
 			if (ChunkManager.TryGetChunk(new ChunkCoordinates(x >> 4, z >> 4), out chunk))
 			{
 				return chunk.IsSolid(x & 0xf, y & 0xff, z & 0xf);
@@ -644,7 +699,7 @@ namespace Alex.Worlds
 
 	    public bool IsScheduled(int x, int y, int z)
 	    {
-	        IChunkColumn chunk;
+	        ChunkColumn chunk;
 	        if (ChunkManager.TryGetChunk(new ChunkCoordinates(x >> 4, z >> 4), out chunk))
 	        {
 	            return chunk.IsScheduled(x & 0xf, y & 0xff, z & 0xf);
@@ -656,7 +711,7 @@ namespace Alex.Worlds
 
 	    public void GetBlockData(int x, int y, int z, out bool transparent, out bool solid)
 		{
-			IChunkColumn chunk;
+			ChunkColumn chunk;
 			if (ChunkManager.TryGetChunk(new ChunkCoordinates(x >> 4, z >> 4), out chunk))
 			{
 				chunk.GetBlockData(x & 0xf, y & 0xff, z & 0xf, out transparent, out solid);
@@ -670,7 +725,7 @@ namespace Alex.Worlds
 			//return false;
 		}
 
-        public BlockCoordinates FindBlockPosition(BlockCoordinates coords, out IChunkColumn chunk)
+        public BlockCoordinates FindBlockPosition(BlockCoordinates coords, out ChunkColumn chunk)
 		{
 			ChunkManager.TryGetChunk(new ChunkCoordinates(coords.X >> 4, coords.Z >> 4), out chunk);
 			return new BlockCoordinates(coords.X & 0xf, coords.Y & 0xff, coords.Z & 0xf);
@@ -825,14 +880,9 @@ namespace Alex.Worlds
 
 		#region IWorldReceiver (Handle WorldProvider callbacks)
 
-		public IEntity GetPlayerEntity()
+		public ChunkColumn GetChunkColumn(int x, int z)
 		{
-			return Player;
-		}
-
-		public IChunkColumn GetChunkColumn(int x, int z)
-		{
-			if (ChunkManager.TryGetChunk(new ChunkCoordinates(x, z), out IChunkColumn val))
+			if (ChunkManager.TryGetChunk(new ChunkCoordinates(x, z), out ChunkColumn val))
 			{
 				return val;
 			}
@@ -842,42 +892,43 @@ namespace Alex.Worlds
 			}
 		}
 
-		[EventHandler(EventPriority.Highest)]
+	/*	[EventHandler(EventPriority.Highest)]
 		private void OnChunkReceived(ChunkReceivedEvent e)
 		{
 			if (e.IsCancelled)
 				return;
 			
 			ChunkManager.AddChunk(e.Chunk, e.Coordinates, e.DoUpdates);
-		}
+		}*/
 
-		[EventHandler(EventPriority.Highest, true)]
-		private void OnChunkUnload(ChunkUnloadEvent e)
+		public void ClearChunksAndEntities()
 		{
-			ChunkManager.RemoveChunk(e.Coordinates);
-			EntityManager.UnloadEntities(e.Coordinates);
+			EntityManager.ClearEntities();
+			ChunkManager.ClearChunks();
 		}
-
-		public void SpawnEntity(long entityId, IEntity entity)
+	
+		public void UnloadChunk(ChunkCoordinates coordinates)
 		{
-			if (EntityManager.AddEntity(entityId, (Entity) entity))
-			{
-				PhysicsEngine.AddTickable((Entity) entity);
-			}
+			ChunkManager.RemoveChunk(coordinates);
+			EntityManager.UnloadEntities(coordinates);
 		}
 
-		public void SpawnEntity(long entityId, Entity entity)
+		public bool SpawnEntity(long entityId, Entity entity)
 		{
 			if (EntityManager.AddEntity(entityId, entity))
 			{
 				PhysicsEngine.AddTickable(entity);
+
+				return true;
 			}
+
+			return false;
 			//Log.Info($"Spawned entity {entityId} : {entity} at {entity.KnownPosition} with renderer {entity.GetModelRenderer()}");
 		}
 
 		public void DespawnEntity(long entityId)
 		{
-			if (EntityManager.TryGet(entityId, out IEntity entity))
+			if (EntityManager.TryGet(entityId, out Entity entity))
 			{
 				PhysicsEngine.Remove(entity);
 				entity.Dispose();
@@ -895,39 +946,40 @@ namespace Alex.Worlds
 			}
 
 			Player.KnownPosition = location;
-			
 		}
 
 		public void UpdateEntityPosition(long entityId, PlayerLocation position, bool relative = false, bool updateLook = false, bool updatePitch = false)
 		{
-			if (EntityManager.TryGet(entityId, out IEntity entity))
+			if (EntityManager.TryGet(entityId, out Entity entity))
 			{
 				entity.KnownPosition.OnGround = position.OnGround;
 				if (!relative)
 				{
 					var oldPosition = entity.KnownPosition;
 					entity.KnownPosition = position;
-					if (entity is PlayerMob p)
+					//if (entity is PlayerMob p)
 					{
-						p.DistanceMoved += MathF.Abs(Vector3.Distance(oldPosition, position));
+						entity.DistanceMoved += MathF.Abs(Vector3.Distance(oldPosition, position));
 					}
 				}
 				else
 				{
 					var oldPosition = entity.KnownPosition;
 					float offset = 0f;
-					if (this.ServerType == ServerType.Bedrock)
+				/*	if (this.ServerType == ServerType.Bedrock)
 					{
 						offset = (float) entity.PositionOffset;
-					}
+					}*/
+				
+				//TODO: Fix position offset
 					
 					entity.KnownPosition.X += position.X;
 					entity.KnownPosition.Y += (position.Y - offset);
 					entity.KnownPosition.Z += position.Z;	
 					
-					if (entity is PlayerMob p)
+					//if (entity is PlayerMob p)
 					{
-						p.DistanceMoved += MathF.Abs(Vector3.Distance(oldPosition, entity.KnownPosition));
+						entity.DistanceMoved += MathF.Abs(Vector3.Distance(oldPosition, entity.KnownPosition));
 					}
 					//entity.KnownPosition.Move(position);
 				}
@@ -948,7 +1000,7 @@ namespace Alex.Worlds
 
 		public void UpdateEntityLook(long entityId, float yaw, float pitch, bool onGround)
 		{
-			if (EntityManager.TryGet(entityId, out IEntity entity))
+			if (EntityManager.TryGet(entityId, out Entity entity))
 			{
 				entity.KnownPosition.OnGround = onGround;
 				entity.KnownPosition.Pitch = pitch;
@@ -956,27 +1008,27 @@ namespace Alex.Worlds
 			}
 		}
 
-		public bool TryGetEntity(long entityId, out IEntity entity)
+		public bool TryGetEntity(long entityId, out Entity entity)
 		{
 			return EntityManager.TryGet(entityId, out entity);
 		}
 
 		public void SetTime(long worldTime)
 		{
-			WorldInfo.Time = worldTime;
+			Time = worldTime;
 		}
 
 		public void SetRain(bool raining)
 		{
-			WorldInfo.Raining = raining;
+			Raining = raining;
 		}
 
-		public void SetBlockState(BlockCoordinates coordinates, IBlockState blockState)
+		public void SetBlockState(BlockCoordinates coordinates, BlockState blockState)
 		{
 			SetBlockState(coordinates.X, coordinates.Y, coordinates.Z, blockState);
 		}
 
-		public void SetBlockState(BlockCoordinates coordinates, IBlockState blockState, int storage)
+		public void SetBlockState(BlockCoordinates coordinates, BlockState blockState, int storage)
 		{
 			SetBlockState(coordinates.X, coordinates.Y, coordinates.Z, blockState, storage);
 		}

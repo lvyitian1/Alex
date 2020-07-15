@@ -1,6 +1,8 @@
 ﻿using Alex.Entities;
+using Alex.Entities.Generic;
 using Alex.Entities.Hostile;
 using Alex.Entities.Passive;
+using Alex.Entities.Projectiles;
 using Alex.Worlds;
 
 namespace Alex.Utils
@@ -72,6 +74,9 @@ namespace Alex.Utils
 				case EntityType.Slime:
 					entity = new Slime(world);
 					break;
+				case EntityType.Endermite:
+					entity = new Endermite(world);
+					break;
 				case EntityType.Enderman:
 					entity = new Enderman(world);
 					break;
@@ -114,6 +119,9 @@ namespace Alex.Utils
 				case EntityType.Horse:
 					entity = new Horse(world);
 					break;
+				case EntityType.ZombieHorse:
+					entity = new ZombieHorse(world);
+					break;
 				case EntityType.PolarBear:
 					entity = new PolarBear(world);
 					break;
@@ -137,6 +145,63 @@ namespace Alex.Utils
 					break;
 				case EntityType.Vex:
 					entity = new Vex(world);
+					break;
+				case EntityType.FallingBlock:
+					entity = new EntityFallingBlock(world);
+					break;
+				case EntityType.ArmorStand:
+					entity = new EntityArmorStand(world, null);
+					break;
+				case EntityType.Arrow:
+					entity = new ArrowEntity(world, null);
+					break;
+				case EntityType.Item:
+					entity = new ItemEntity(world);
+					break;
+				case EntityType.Mooshroom:
+					entity = new Mooshroom(world);
+					break;
+				case EntityType.Snowball:
+					entity = new SnowballEntity(world, null);
+					break;
+				case EntityType.ThrownEgg:
+					entity = new EggEntity(world, null);
+					break;
+				case EntityType.Salmon:
+					entity = new Salmon(world);
+					break;
+				case EntityType.Donkey:
+					entity = new Donkey(world);
+					break;
+				case EntityType.Llama:
+					entity = new Llama(world);
+					break;
+				case EntityType.Mule:
+					entity = new Mule(world);
+					break;
+				case EntityType.Fox:
+					entity = new Fox(world);
+					break;
+				case EntityType.Parrot:
+					entity = new Parrot(world);
+					break;
+				case EntityType.Phantom:
+					entity = new Phantom(world);
+					break;
+				case EntityType.Bee:
+					entity = new Bee(world);
+					break;
+				case EntityType.LlamaSpit:
+					entity = new LlamaSpit(world);
+					break;
+				case EntityType.Cat:
+					entity = new Cat(world);
+					break;
+				case EntityType.SmallFireball:
+					entity = new SmallFireball(world);
+					break;
+				case EntityType.Fireball:
+					entity = new Fireball(world);
 					break;
 				//case EntityType.Human:
 					//entity = new PlayerMob("test", world, );

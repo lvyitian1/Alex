@@ -36,7 +36,7 @@ namespace Alex.API.Utils
 		{
 		}
 
-		public PlayerLocation(MiNET.Utils.PlayerLocation p)
+		/*public PlayerLocation(MiNET.Utils.PlayerLocation p)
 		{
 			if (p == null) return;
 			X = p.X;
@@ -46,7 +46,7 @@ namespace Alex.API.Utils
 			Yaw = p.Yaw;
 			HeadYaw = p.HeadYaw;
 			Pitch = p.Pitch;
-		}
+		}*/
 
 		public BlockCoordinates GetCoordinates3D()
 		{
@@ -73,6 +73,11 @@ namespace Alex.API.Utils
 		public Vector3 ToVector3()
 		{
 			return new Vector3(X, Y, Z);
+		}
+		
+		public Vector3 ToRotationVector3(bool withPitch = false)
+		{
+			return new Vector3(withPitch ? Pitch : 0f, HeadYaw, 0f);
 		}
 
 		public Vector3 GetDirection()

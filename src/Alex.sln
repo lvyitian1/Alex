@@ -38,6 +38,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCJavaTest", "Testing\MCJav
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Alex.GuiDebugger", "Tools\Alex.GuiDebugger\Alex.GuiDebugger.csproj", "{346630B5-5976-454C-8BAD-015811273AFE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Other", "Other", "{5339DA92-BA8E-441B-AF71-27B75FEEC760}"
+ProjectSection(SolutionItems) = preProject
+	..\Directory.Build.props = ..\Directory.Build.props
+EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Appveyor|Any CPU = Appveyor|Any CPU

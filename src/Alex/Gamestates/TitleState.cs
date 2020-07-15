@@ -1,56 +1,126 @@
 ﻿using System;
-using System.Drawing;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Alex.API.Graphics;
 using Alex.API.Graphics.Textures;
 using Alex.API.Gui.Elements;
 using Alex.API.Gui.Elements.Controls;
+using Alex.API.Gui.Elements.Layout;
 using Alex.API.Gui.Graphics;
 using Alex.API.Services;
 using Alex.API.Utils;
 using Alex.Entities;
-using Alex.GameStates.Gui.Common;
-using Alex.Gamestates.Gui.MainMenu;
-using Alex.GameStates.Gui.MainMenu;
-using Alex.GameStates.Gui.Multiplayer;
+using Alex.Gamestates.Common;
+using Alex.Gamestates.MainMenu;
+using Alex.Gamestates.Multiplayer;
+using Alex.Graphics.Models.Entity;
 using Alex.Gui;
 using Alex.Gui.Elements;
-using Alex.Networking.Java;
-using Alex.Services;
-using Alex.Utils;
-using Alex.Worlds;
-using Alex.Worlds.Generators;
+using Alex.Gui.Elements.Context3D;
+using Alex.Items;
+using Alex.Utils.Inventories;
+using Alex.Worlds.Abstraction;
+using Alex.Worlds.Singleplayer;
+using Alex.Worlds.Singleplayer.Generators;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using MiNET.Net;
 using NLog;
 using RocketUI;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace Alex.GameStates
+namespace Alex.Gamestates
 {
-	public class TitleState : GuiGameStateBase
+	public class TitleState : GuiGameStateBase, IMenuHolder
 	{
 		private static readonly Logger Log = LogManager.GetCurrentClassLogger(typeof(TitleState));
 
 		private readonly GuiStackMenu _mainMenu;
-		private readonly GuiStackMenu _debugMenu;
-		private readonly GuiStackMenu _spMenu;
-		
+
 		private readonly GuiTextElement _splashText;
 
 		private readonly GuiPanoramaSkyBox _backgroundSkyBox;
 		private GuiEntityModelView _playerView;
 		private IPlayerProfileService _playerProfileService;
-		
+
 		public TitleState()
 		{
 			_backgroundSkyBox = new GuiPanoramaSkyBox(Alex);
 
 			Background.Texture = _backgroundSkyBox;
 			Background.RepeatMode = TextureRepeatMode.Stretch;
+
+			MenuItem baseMenu = new MenuItem(MenuType.Menu)
+			{
+				Children =
+				{
+					new MenuItem()
+					{
+						Title = "menu.multiplayer",
+						OnClick = MultiplayerButtonPressed,
+						IsTranslatable = true
+					},
+					new MenuItem(MenuType.SubMenu)
+					{
+						Title = "Debugging",
+						IsTranslatable = false,
+						Children =
+						{
+							new MenuItem()
+							{
+								Title = "Blockstates",
+								OnClick = (sender, args) =>
+								{
+									Debug(new DebugWorldGenerator());
+								}
+							},
+							new MenuItem()
+							{
+								Title = "Demo",
+								OnClick = (sender, args) =>
+								{
+									Debug(new DemoGenerator());
+								}
+							},
+							new MenuItem()
+							{
+								Title = "Flatland",
+								OnClick = (sender, args) =>
+								{
+									Debug(new FlatlandGenerator());
+								}
+							},
+							new MenuItem()
+							{
+								Title = "Chunk Debug",
+								OnClick = (sender, args) =>
+								{
+									Debug(new ChunkDebugWorldGenerator());
+								}
+							}
+						}
+					},
+					new MenuItem()
+					{
+						Title = "menu.options",
+						OnClick = (sender, args) =>
+						{
+							Alex.GameStateManager.SetActiveState("options");
+						},
+						IsTranslatable = true
+					},
+					new MenuItem()
+					{
+						Title = "menu.quit",
+						OnClick = (sender, args) =>
+						{
+							Alex.Exit();
+						},
+						IsTranslatable = true
+					},
+				}
+			};
 
 			#region Create MainMenu
 
@@ -65,60 +135,11 @@ namespace Alex.GameStates
 				BackgroundOverlay = new Color(Color.Black, 0.35f)
 			};
 
-			_mainMenu.AddMenuItem("menu.multiplayer", JavaEditionButtonPressed, EnableMultiplayer, true);
-			_mainMenu.AddMenuItem("menu.singleplayer", OnSinglePlayerPressed, true, true);
-
-			_mainMenu.AddMenuItem("menu.options", () => { Alex.GameStateManager.SetActiveState("options"); }, true, true);
-			_mainMenu.AddMenuItem("menu.quit", () => { Alex.Exit(); }, true, true);
-			#endregion
-
-			#region Create DebugMenu
-
-			_debugMenu = new GuiStackMenu()
-			{
-				Margin = new Thickness(15, 0, 15, 0),
-				Padding = new Thickness(0, 50, 0, 0),
-				Width = 125,
-				Anchor = Alignment.FillY | Alignment.MinX,
-
-				ChildAnchor = Alignment.CenterY | Alignment.FillX,
-				BackgroundOverlay = new Color(Color.Black, 0.35f),
-
-			};
-
-			_debugMenu.AddMenuItem("Debug Blockstates", DebugWorldButtonActivated);
-			_debugMenu.AddMenuItem("Demo", DemoButtonActivated);
-			_debugMenu.AddMenuItem("Debug Flatland", DebugFlatland);
-			//_debugMenu.AddMenuItem("Debug Anvil", DebugAnvil);
-			_debugMenu.AddMenuItem("Debug Chunk", DebugChunkButtonActivated);
-		//	_debugMenu.AddMenuItem("Debug XBL Login", BedrockEditionButtonPressed);
-            _debugMenu.AddMenuItem("Go Back", DebugGoBackPressed);
-
-			#endregion
-
-			#region Create SPMenu
-
-			_spMenu = new GuiStackMenu()
-			{
-				Margin = new Thickness(15, 0, 15, 0),
-				Padding = new Thickness(0, 50, 0, 0),
-				Width = 125,
-				Anchor = Alignment.FillY | Alignment.MinX,
-
-				ChildAnchor = Alignment.CenterY | Alignment.FillX,
-				BackgroundOverlay = new Color(Color.Black, 0.35f),
-			};
-
-			_spMenu.AddMenuItem("SinglePlayer", () => {}, false);
-			_spMenu.AddMenuItem("Debug Worlds", OnDebugPressed);
-
-			_spMenu.AddMenuItem("Return to main menu", SpBackPressed);
-
-			#endregion
-
-			CreateProtocolMenu();
-
+			ShowMenu(baseMenu);
+			
 			AddChild(_mainMenu);
+			
+			#endregion
 
 			AddChild(new GuiImage(GuiTextures.AlexLogo)
 			{
@@ -137,64 +158,42 @@ namespace Alex.GameStates
 				Text = "Who liek minecwaf?!",
 			});
 			
+			var guiItemStack = new GuiStackContainer()
+			{
+				Anchor = Alignment.CenterX | Alignment.CenterY,
+				Orientation = Orientation.Vertical
+			};
+			
+			AddChild(guiItemStack);
+			
+			var row = new GuiStackContainer() {
+				Orientation = Orientation.Horizontal,
+				Anchor = Alignment.TopFill,
+				ChildAnchor = Alignment.FillCenter,
+				Margin = Thickness.One
+			};
+			guiItemStack.AddChild(row);
+
 			_playerProfileService = Alex.Services.GetService<IPlayerProfileService>();
 			_playerProfileService.ProfileChanged += PlayerProfileServiceOnProfileChanged;
+			
+			/*ScoreboardView scoreboardView;
+			AddChild(scoreboardView = new ScoreboardView());
+			scoreboardView.Anchor = Alignment.MiddleRight;
+			
+			scoreboardView.AddString("Title");
+			scoreboardView.AddRow("Key", "200");
+			scoreboardView.AddRow("Key 2", "200");*/
 		}
 
-		private bool _mpEnabled = true;
-		public bool EnableMultiplayer
+		private void MultiplayerButtonPressed(object sender, MenuItemClickedEventArgs e)
 		{
-			get { return _mpEnabled; }
-			set
-			{
-				_mpEnabled = value;
-				if (!value)
-				{
-					RemoveChild(_mainMenu);
-					AddChild(_spMenu);
-				}
-				else
-				{
-					DebugGoBackPressed();
-				}
-			}
+			MultiplayerButtonPressed();
 		}
 
 		#region ProtocolMenu
-
-		private GuiStackMenu _protocolMenu;
-		private void CreateProtocolMenu()
-		{
-			_protocolMenu = new GuiStackMenu()
-			{
-				Margin = new Thickness(15, 0, 15, 0),
-				Padding = new Thickness(0, 50, 0, 0),
-				Width = 125,
-				Anchor = Alignment.FillY | Alignment.MinX,
-
-				ChildAnchor = Alignment.CenterY | Alignment.FillX,
-				BackgroundOverlay = new Color(Color.Black, 0.35f),
-			};
-
-			_protocolMenu.AddMenuItem($"Java - {JavaProtocol.FriendlyName}", JavaEditionButtonPressed);
-			_protocolMenu.AddMenuItem($"Bedrock - {McpeProtocolInfo.GameVersion}", BedrockEditionButtonPressed, false);
-
-			_protocolMenu.AddMenuItem("Return to main menu", ProtocolBackPressed);
-		}
-
-		private void ProtocolBackPressed()
-		{
-			RemoveChild(_protocolMenu);
-			AddChild(_mainMenu);
-		}
-
-		private void BedrockEditionButtonPressed()
-		{
-			var client = Alex.Services.GetRequiredService<XBLMSAService>();
-			var t = client.AsyncBrowserLogin();
-		}
-
-		private void JavaEditionButtonPressed()
+		
+		private void MultiplayerButtonPressed()
 		{
 			Alex.GameStateManager.SetActiveState(new MultiplayerServerSelectionState(_backgroundSkyBox)
 			{
@@ -206,44 +205,26 @@ namespace Alex.GameStates
 
 		private void PlayerProfileServiceOnProfileChanged(object sender, PlayerProfileChangedEventArgs e)
 		{
-			if (e.Profile.Skin.Texture != null)
+			if (e.Profile?.Skin?.Texture != null)
 			{
-				_playerView.Entity = new PlayerMob(e.Profile.Username, null, null, e.Profile.Skin.Texture,
+				_playerView.Entity = new RemotePlayer(e.Profile.Username, null, null, e.Profile.Skin.Texture,
 					e.Profile.Skin.Slim ? "geometry.humanoid.customSlim" : "geometry.humanoid.custom" );
+				_playerView.Entity.SetInventory(new BedrockInventory(46));
 				
-				_playerView.Entity.Inventory.IsPeInventory = true;
 				_playerView.Entity.ShowItemInHand = true;
 
+				if (ItemFactory.TryGetItem("minecraft:grass_block", out var grass))
+				{
+					_playerView.Entity.Inventory.MainHand = grass;
+					_playerView.Entity.Inventory[_playerView.Entity.Inventory.SelectedSlot] = grass;
+				}
+				
 				if (ItemFactory.TryGetItem("minecraft:diamond_sword", out var sword))
 				{
-					_playerView.Entity.Inventory.MainHand = sword;
-					_playerView.Entity.Inventory[_playerView.Entity.Inventory.SelectedSlot] = sword;
+					//_playerView.Entity.Inventory.MainHand = sword;
+					//_playerView.Entity.Inventory[_playerView.Entity.Inventory.SelectedSlot] = sword;
 				}
 			}
-		}
-
-		private void OnSinglePlayerPressed()
-		{
-			RemoveChild(_mainMenu);
-			AddChild(_spMenu);
-		}
-
-		private void SpBackPressed()
-		{
-			RemoveChild(_spMenu);
-			AddChild(_mainMenu);
-		}
-
-		private void DebugGoBackPressed()
-		{
-			RemoveChild(_debugMenu);
-			AddChild(_spMenu);
-		}
-
-		private void OnDebugPressed()
-		{
-			RemoveChild(_spMenu);
-			AddChild(_debugMenu);
 		}
 
 		protected override void OnLoad(IRenderArgs args)
@@ -259,16 +240,8 @@ namespace Alex.GameStates
 				};
 			}
 
-			var entity = new PlayerMob("", null, null, skin.Texture);
-			entity.Inventory.IsPeInventory = true;
-			entity.ShowItemInHand = true;
+			var entity = new RemotePlayer("", null, null, skin.Texture);
 
-			if (ItemFactory.TryGetItem("minecraft:diamond_sword", out var sword))
-			{
-				entity.Inventory.MainHand = sword;
-				entity.Inventory[entity.Inventory.SelectedSlot] = sword;
-			}
-			
 			AddChild(_playerView =
 				new GuiEntityModelView(
 						entity /*new PlayerMob("", null, null, skin.Texture, skin.Slim)*/) /*"geometry.humanoid.customSlim"*/
@@ -283,14 +256,14 @@ namespace Alex.GameStates
 						Anchor = Alignment.BottomRight,
 					});
 
-			AddChild(new GuiButton("Switch user", LoginBtnPressed)
+			AddChild(new GuiButton("Change Skin", ChangeSKinBtnPressed)
 			{
 				Anchor = Alignment.BottomRight,
 				Modern = false,
 				TranslationKey = "",
 				Margin = new Thickness(15, 15, 6, 15),
 				Width = 90,
-				Enabled = false
+				//Enabled = false
 			});
 
 			AutoResetEvent reset = new AutoResetEvent(false);
@@ -317,9 +290,10 @@ namespace Alex.GameStates
 			//Alex.GameStateManager.AddState("profileSelection", new ProfileSelectionState(_backgroundSkyBox));
 		}
 
-		private void LoginBtnPressed()
+		private void ChangeSKinBtnPressed()
 		{
-			Alex.GameStateManager.SetActiveState(new ProfileSelectionState(_backgroundSkyBox, Alex), true);
+			Alex.GameStateManager.SetActiveState(new SkinSelectionState(_backgroundSkyBox, Alex), true);
+			//Alex.GameStateManager.SetActiveState(new ProfileSelectionState(_backgroundSkyBox, Alex), true);
 		}
 
 		private float _rotation;
@@ -354,7 +328,6 @@ namespace Alex.GameStates
 			KeyboardState s = Keyboard.GetState();
 			if (_prevKeyboardState.IsKeyDown(Keys.M) && s.IsKeyUp(Keys.M))
 			{
-				_debugMenu.ModernStyle = !_debugMenu.ModernStyle;
 				_mainMenu.ModernStyle = !_mainMenu.ModernStyle;
 			}
 
@@ -375,12 +348,38 @@ namespace Alex.GameStates
 
 		protected override void OnShow()
 		{
+			if (Alex.PlayerModel != null && Alex.PlayerTexture != null)
+			{
+				Alex.UIThreadQueue.Enqueue(
+					() =>
+					{
+						var texture = TextureUtils.BitmapToTexture2D(Alex.GraphicsDevice, Alex.PlayerTexture);
+						_playerView.Entity.ModelRenderer = new EntityModelRenderer(Alex.PlayerModel, texture);
+					});
+			}
+			
 			if (Alex.GameStateManager.TryGetState<OptionsState>("options", out _))
 			{
 				Alex.GameStateManager.RemoveState("options");
 			}
 			
 			Alex.GameStateManager.AddState("options", new OptionsState(_backgroundSkyBox));
+			
+			_playerView.Entity.SetInventory(new BedrockInventory(46));
+				
+			_playerView.Entity.ShowItemInHand = true;
+
+			if (ItemFactory.TryGetItem("minecraft:grass_block", out var grass))
+			{
+				_playerView.Entity.Inventory.MainHand = grass;
+				_playerView.Entity.Inventory[_playerView.Entity.Inventory.SelectedSlot] = grass;
+			}
+				
+			if (ItemFactory.TryGetItem("minecraft:diamond_sword", out var sword))
+			{
+				//_playerView.Entity.Inventory.MainHand = sword;
+				//_playerView.Entity.Inventory[_playerView.Entity.Inventory.SelectedSlot] = sword;
+			}
 			
 			base.OnShow();
 		}
@@ -401,24 +400,45 @@ namespace Alex.GameStates
 			Alex.LoadWorld(debugProvider, debugProvider.Network);
 		}
 
-		private void DebugFlatland()
+		private LinkedList<MenuItem> _menu = new LinkedList<MenuItem>();
+		/// <inheritdoc />
+		public void ShowMenu(MenuItem menu)
 		{
-			Debug(new FlatlandGenerator());
-		}
-		
-		private void DebugWorldButtonActivated()
-		{
-			Debug(new DebugWorldGenerator());
+			bool isFirst = (_menu.Count == 0 || _menu.First.Value == menu);
+			
+			if (!_menu.Contains(menu))
+			{
+				_menu.AddLast(menu);
+			}
+
+			_mainMenu.ClearChildren();
+
+			foreach (var menuItem in menu.BuildMenu(this, BuildMode.Children))
+			{
+				_mainMenu.AddChild(menuItem);
+			}
+
+			if (!isFirst)
+			{
+				_mainMenu.AddMenuItem("Back", () =>
+				{
+					GoBack();
+				});
+			}
 		}
 
-		private void DebugChunkButtonActivated()
+		/// <inheritdoc />
+		public bool GoBack()
 		{
-			Debug(new ChunkDebugWorldGenerator());
-		}
+			if (_menu.Count > 1)
+			{
+				_menu.RemoveLast();
+				ShowMenu(_menu.Last.Value);
 
-		private void DemoButtonActivated()
-		{
-			Debug(new DemoGenerator());
+				return true;
+			}
+
+			return false;
 		}
 	}
 }

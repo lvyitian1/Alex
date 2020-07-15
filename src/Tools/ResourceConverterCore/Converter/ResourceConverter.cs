@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using NLog;
-using ResourceConverterCore.Converter;
+using ResourceConverterCore.Templates;
 using Templates;
 
-namespace ResourceConverter
+namespace ResourceConverterCore.Converter
 {
     public static class ResourceConverter
     {
@@ -69,13 +70,9 @@ namespace ResourceConverter
 	        var outDir = Path.Combine(outputDirectory.FullName, "Models");
 	        if (!Directory.Exists(outDir))
 		        Directory.CreateDirectory(outDir);
-		        
+
 	        geometryToClass = new Dictionary<string, string>();
-
-               var template = new EntityTemplate();
-	        template.Initialize();
-
-	        //            template.Session["EntityModels"] = loader.EntityModels;
+	        
 	        ResourceConverterContext.EntityModels = loader.EntityModels;
 			
 	        int count = 0;
@@ -85,9 +82,14 @@ namespace ResourceConverter
 		        var pct = 100D * ((double)count / (double)totalCount);
 
 		        Log.Info($"Starting Template Processing for '{model.Key}'");
+		        var template = new EntityTemplate();
+		        template.Session = new Dictionary<string, object>();
+		        //template.Initialize();
 
-		        //template.Session["CurrentModelName"] = model.Key;
-		        //template.Session["CurrentModel"] = model.Value;
+		        template.Session["EntityModels"] = loader.EntityModels;
+				
+		        template.Session["CurrentModelName"] = model.Key;
+		        template.Session["CurrentModel"] = model.Value;
 		        ResourceConverterContext.CurrentModelName = CodeTypeName(model.Value.Name);
 		        ResourceConverterContext.CurrentModel = model.Value;
 

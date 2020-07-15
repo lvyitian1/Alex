@@ -1,15 +1,19 @@
 ﻿using System;
 using Alex.API.Graphics.Typography;
 using Alex.API.Gui.Graphics;
+using Alex.API.Input;
 using Alex.API.Utils;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
+using NLog;
 using RocketUI;
 
 namespace Alex.API.Gui.Elements.Controls
 {
     public class GuiButton : GuiControl, IGuiButton
 	{
-
+		private static readonly Logger Log = LogManager.GetCurrentClassLogger(typeof(GuiButton));
+		
 		[DebuggerVisible] public string Text
         {
             get => TextElement.Text;
@@ -22,8 +26,8 @@ namespace Alex.API.Gui.Elements.Controls
 	    }
 
         protected GuiTextElement TextElement { get; }
-        protected Action Action { get; }
         [DebuggerVisible] public bool InvokeOnPress { get; set; } = true;
+        public Action Action { get; set; }
 
         [DebuggerVisible] public TextColor DisabledTextColor = TextColor.DarkGray;
 		[DebuggerVisible] public TextColor EnabledTextColor = TextColor.White;
@@ -142,7 +146,7 @@ namespace Alex.API.Gui.Elements.Controls
 			base.OnCursorMove(cursorPosition, previousCursorPosition, isCursorDown);
 		}
 
-		protected override void OnCursorPressed(Point cursorPosition)
+		protected override void OnCursorPressed(Point cursorPosition, MouseButton button)
 		{
 			if(InvokeOnPress)
 				Action?.Invoke();
@@ -179,5 +183,16 @@ namespace Alex.API.Gui.Elements.Controls
 			    }
 		    }
 	    }
-    }
+
+		protected override bool OnKeyInput(char character, Keys key)
+		{
+			if (key == Keys.Enter)
+			{
+				Action?.Invoke();
+				return true;
+			}
+			
+			return base.OnKeyInput(character, key);
+		}
+	}
 }

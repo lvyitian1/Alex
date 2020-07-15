@@ -1,10 +1,12 @@
 using System;
 using Alex.API.Blocks;
-using Alex.API.Blocks.State;
 using Alex.API.Utils;
 using Alex.API.World;
+using Alex.Blocks.State;
 using Alex.Graphics.Models.Blocks;
 using Alex.ResourcePackLib.Json;
+using Alex.Worlds;
+using Alex.Worlds.Abstraction;
 using Microsoft.Xna.Framework;
 using NLog;
 using MathF = System.MathF;
@@ -43,6 +45,17 @@ namespace Alex.Blocks.Minecraft
             Hardness = 2;
             
             BlockMaterial = Material.Stone;
+        }
+
+        /// <inheritdoc />
+        public override bool ShouldRenderFace(BlockFace face, Block neighbor)
+        {
+            var facing = GetFacing(BlockState);
+
+            if (facing != face || face == BlockFace.None)
+                return true;
+            
+            return base.ShouldRenderFace(face, neighbor);
         }
 
         public override double GetHeight(Vector3 relative)
@@ -97,7 +110,7 @@ namespace Alex.Blocks.Minecraft
             return base.GetHeight(relative);
         }
 
-        protected static BlockFace GetFacing(IBlockState state)
+        protected static BlockFace GetFacing(BlockState state)
         {
             if (state.TryGetValue("facing", out string facingValue) &&
                 Enum.TryParse<BlockFace>(facingValue, true, out BlockFace face))
@@ -108,7 +121,7 @@ namespace Alex.Blocks.Minecraft
             return BlockFace.None;
         }
         
-        protected static string GetHalf(IBlockState state)
+        protected static string GetHalf(BlockState state)
         {
             if (state.TryGetValue("half", out string facingValue))
             {
@@ -118,7 +131,7 @@ namespace Alex.Blocks.Minecraft
             return string.Empty;
         }
 
-        protected static string GetShape(IBlockState state)
+        protected static string GetShape(BlockState state)
         {
             if (state.TryGetValue("shape", out string facingValue))
             {
@@ -128,14 +141,16 @@ namespace Alex.Blocks.Minecraft
             return string.Empty;
         }
         
-        private bool UpdateState(IWorld world, IBlockState state, BlockCoordinates position, BlockCoordinates updatedBlock, out IBlockState result)
+        private bool UpdateState(IBlockAccess world, BlockState state, BlockCoordinates position, BlockCoordinates updatedBlock, out BlockState result)
         {
             result = state;
-            var block = world.GetBlock(updatedBlock);
+            var block = world.GetBlockState(updatedBlock).Block;
             if (!(block is Stairs)) {return false;}
 
+            var myHalf = GetHalf(state);
+            
             var blockState = block.BlockState;
-            if (GetHalf(state) != GetHalf(blockState))
+            if (myHalf != GetHalf(blockState))
                 return false;
             
             var facing = GetFacing(state);
@@ -143,7 +158,15 @@ namespace Alex.Blocks.Minecraft
 
             var myShape = GetShape(state);
             var neighborShape = GetShape(blockState);
-            
+
+           // int offset = (myHalf == "top") ? -1 : 1;
+
+         //  var innerRight = ""
+           if (myHalf == "top")
+           {
+               
+           }
+           
             //if ()
             {
                // if (neighbor == BlockModel.RotateDirection(facing, 1, BlockModel.FACE_ROTATION,
@@ -151,7 +174,7 @@ namespace Alex.Blocks.Minecraft
                 //if (facing == BlockFace.East && updatedBlock == (position + facing.Opposite().GetBlockCoordinates()))
 
                 BlockCoordinates offset1 = facing.GetVector3();
-                
+
                 if (neighbor != facing && neighbor != facing.Opposite() && updatedBlock == position + offset1)
                 {
                     if (neighbor == BlockModel.RotateDirection(facing, 1, BlockModel.FACE_ROTATION,
@@ -218,7 +241,7 @@ namespace Alex.Blocks.Minecraft
             return false;
         }
         
-        public override void BlockUpdate(IWorld world, BlockCoordinates position, BlockCoordinates updatedBlock)
+        public override void BlockUpdate(World world, BlockCoordinates position, BlockCoordinates updatedBlock)
         {
             if (UpdateState(world, BlockState, position, updatedBlock, out var state))
             {
@@ -226,7 +249,7 @@ namespace Alex.Blocks.Minecraft
             }
         }
 
-        public override IBlockState BlockPlaced(IWorld world, IBlockState state, BlockCoordinates position)
+        public override BlockState BlockPlaced(IBlockAccess world, BlockState state, BlockCoordinates position)
         {
             if (UpdateState(world, state, position, position + BlockCoordinates.Forwards, out state)
                 || UpdateState(world, state, position, position + BlockCoordinates.Backwards, out state)

@@ -46,7 +46,11 @@ namespace Alex.Gui
 		private Texture2D _icons;
 		private Texture2D _scrollbar;
 		private Texture2D _inventory;
-
+		private Texture2D _chestInventory;
+		private Texture2D _craftingTable;
+		private Texture2D _furnace;
+		private Texture2D _tabItemSearch;
+		
 		#region SpriteSheet Definitions
 
 		#region Widgets
@@ -258,6 +262,31 @@ namespace Alex.Gui
 					_inventory = TextureUtils.BitmapToTexture2D(_graphicsDevice, bmp);
 					LoadTextureFromSpriteSheet(GuiTextures.InventoryPlayerBackground, _inventory, new Rectangle(0, 0, 176, 166), IconSize);
 				}
+
+				if (resourcePack.TryGetBitmap("gui/container/generic_54", out var genericInvBmp))
+				{
+					_chestInventory = TextureUtils.BitmapToTexture2D(_graphicsDevice, genericInvBmp);
+					LoadTextureFromSpriteSheet(GuiTextures.InventoryChestBackground, _chestInventory, new Rectangle(0, 0, 175, 221), IconSize);
+				}
+
+				if (resourcePack.TryGetBitmap("gui/container/crafting_table", out var craftingTable))
+				{
+					_craftingTable = TextureUtils.BitmapToTexture2D(_graphicsDevice, craftingTable);
+					LoadTextureFromSpriteSheet(GuiTextures.InventoryCraftingTable, _craftingTable, new Rectangle(0, 0, 175, 165), IconSize);
+				}
+				
+				if (resourcePack.TryGetBitmap("gui/container/furnace", out var furnace))
+				{
+					_furnace = TextureUtils.BitmapToTexture2D(_graphicsDevice, furnace);
+					LoadTextureFromSpriteSheet(GuiTextures.InventoryFurnace, _furnace, new Rectangle(0, 0, 175, 165), IconSize);
+				}
+
+				if (resourcePack.TryGetBitmap("gui/container/creative_inventory/tab_item_search", out var tabImage))
+				{
+					_tabItemSearch = TextureUtils.BitmapToTexture2D(_graphicsDevice, tabImage);
+					LoadTextureFromSpriteSheet(GuiTextures.InventoryCreativeItemSearch, _tabItemSearch, new Rectangle(0, 0, 194, 135), IconSize);
+				}
+				//LoadTextureFromSpriteSheet(GuiTextures.InventoryChestBackground, _inventory, new Rectangle(0, 0, 175, 221), IconSize);
 			}
 
 			progressReceiver?.UpdateProgress(75, null, "gui/title/background");

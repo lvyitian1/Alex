@@ -1,46 +1,39 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using Alex.API.Blocks.State;
 using Alex.API.Graphics;
-using Alex.API.Gui.Elements;
 using Alex.API.Gui.Elements.Controls;
 using Alex.API.Gui.Elements.Layout;
-using Alex.API.Gui.Graphics;
-using Alex.API.Services;
+using Alex.API.Resources;
 using Alex.API.Utils;
+using Alex.Blocks;
 using Alex.Blocks.State;
 using Alex.Entities;
-using Alex.GameStates;
-using Alex.Gamestates.Debugging;
-using Alex.GameStates.Gui.Common;
-using Alex.GameStates.Playing;
-using Alex.Graphics.Camera;
+using Alex.Gamestates.Common;
+using Alex.Gamestates.InGame;
 using Alex.Graphics.Models.Entity;
 using Alex.Gui.Elements;
+using Alex.Gui.Elements.Context3D;
 using Alex.ResourcePackLib;
+using Alex.ResourcePackLib.Json.Bedrock.Entity;
 using Alex.ResourcePackLib.Json.Models.Entities;
-using Alex.Utils;
 using Alex.Worlds;
-using GLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using RocketUI;
 using Color = Microsoft.Xna.Framework.Color;
 using DateTime = System.DateTime;
-using Rectangle = Microsoft.Xna.Framework.Rectangle;
 using Task = System.Threading.Tasks.Task;
 
-namespace Alex.Gamestates.Debug
+namespace Alex.Gamestates.Debugging
 {
 	public class ModelDebugState : GuiGameStateBase
 	{
 		private GuiStackContainer _wrap;
-		private GuiEntityModelView.GuiModelExplorerView _modelExplorerView;
+		private GuiModelExplorerView _modelExplorerView;
 		private readonly GuiStackMenu _mainMenu;
 
 		//  private FirstPersonCamera Camera { get; } = new FirstPersonCamera(16, Vector3.Zero, Vector3.Zero);
@@ -69,7 +62,7 @@ namespace Alex.Gamestates.Debug
 			//	ChildAnchor = Alignment.FillY
 			//});
 
-			AddChild(_modelExplorerView = new GuiEntityModelView.GuiModelExplorerView(ModelExplorer, new Vector3(0f, 1.85f, 6f), new Vector3(0.5f, 0.5f, 0.5f))
+			AddChild(_modelExplorerView = new GuiModelExplorerView(ModelExplorer, new Vector3(0f, 1.85f, 6f), new Vector3(0.5f, 0.5f, 0.5f))
 			{
 				Anchor = Alignment.Fill,
 				Background = Color.TransparentBlack,
@@ -300,7 +293,7 @@ namespace Alex.Gamestates.Debug
 
 	public class EntityModelExplorer : ModelExplorer
 	{
-		private KeyValuePair<string, BedrockResourcePack.EntityDefinition>[] _entityDefinitions;
+		private KeyValuePair<ResourceLocation, EntityDescription>[] _entityDefinitions;
 		private int                                                          _index = 0;
 
 		private GraphicsDevice GraphicsDevice { get; }
@@ -441,7 +434,7 @@ namespace Alex.Gamestates.Debug
 
 	public class BlockModelExplorer : ModelExplorer
 	{
-		private IBlockState[] _blockStates;
+		private BlockState[] _blockStates;
 		private int           _index = 0;
 
 		private GraphicsDevice GraphicsDevice { get; }
@@ -457,7 +450,7 @@ namespace Alex.Gamestates.Debug
 			_blockStates = BlockFactory.AllBlockstates.Values.ToArray();
 		}
 
-		private VertexPositionNormalTextureColor[] _vertices  = null;
+		private BlockShaderVertex[] _vertices  = null;
 		private int[]                              _indices   = null;
 		private bool                               _canRender = false;
 

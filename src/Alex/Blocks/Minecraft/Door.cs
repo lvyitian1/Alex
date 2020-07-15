@@ -1,11 +1,13 @@
 ﻿using System;
 using Alex.API.Blocks;
-using Alex.API.Blocks.State;
 using Alex.API.Utils;
 using Alex.API.World;
 using Alex.Blocks.Properties;
+using Alex.Blocks.State;
 using Alex.Entities;
 using Alex.ResourcePackLib.Json;
+using Alex.Worlds;
+using Alex.Worlds.Abstraction;
 using Microsoft.Xna.Framework;
 using NLog;
 
@@ -37,9 +39,10 @@ namespace Alex.Blocks.Minecraft
 			Transparent = true;
 			RequiresUpdate = true;
 			CanInteract = true;
+			IsFullCube = true;
 		}
 
-		private IBlockState Update(IWorld world, IBlockState blockState, BlockCoordinates coordinates, BlockCoordinates updated)
+		private BlockState Update(IBlockAccess world, BlockState blockState, BlockCoordinates coordinates, BlockCoordinates updated)
 		{
 			var updatedBlock = world.GetBlockState(updated);
 			if (!(updatedBlock.Block is Door))
@@ -75,49 +78,34 @@ namespace Alex.Blocks.Minecraft
 			return blockState;
 		}
 
-		public override IBlockState BlockPlaced(IWorld world, IBlockState state, BlockCoordinates position)
+		public override BlockState BlockPlaced(IBlockAccess world, BlockState state, BlockCoordinates position)
 		{
-			if (state.TryGetValue("half", out string half) && half.Equals("upper", StringComparison.InvariantCultureIgnoreCase))
+			if (state.TryGetValue("half", out string half) && half.Equals(
+				"upper", StringComparison.InvariantCultureIgnoreCase))
 			{
 				return Update(world, state, position, position + BlockCoordinates.Down);
 			}
-			else
-			{
-				return Update(world, state, position, position + BlockCoordinates.Up);
-			}
-			
-			return base.BlockPlaced(world, state, position);
+
+			return Update(world, state, position, position + BlockCoordinates.Up);
 		}
 
-		public override void Interact(IWorld world, BlockCoordinates position, BlockFace face, Entity sourceEntity)
+		public override void BlockUpdate(World world, BlockCoordinates position, BlockCoordinates updatedBlock)
 		{
-			/*if (!IsUpper)
-			{
-				BlockState state = (BlockState)BlockState.WithProperty(OPEN, (!IsOpen).ToString());
-				world.SetBlockState(position.X, position.Y, position.Z, state);
-			}*/
-		}
-
-		public override void BlockUpdate(IWorld world, BlockCoordinates position, BlockCoordinates updatedBlock)
-		{
-			//if (updatedBlock != position - new BlockCoordinates(0, 1, 0))
-			//	return;
-			
 			var newValue = Update(world, BlockState, position, updatedBlock);
 			if (newValue != BlockState)
 			{
 				world.SetBlockState(position.X, position.Y, position.Z, newValue);
 			}
-			/*if (IsUpper && updatedBlock.Y < position.Y)
-			{
-				var changedBlock = world.GetBlockState(updatedBlock.X, updatedBlock.Y, updatedBlock.Z);
-				if (!changedBlock.GetTypedValue(UPPER))
-				{
-					var myMeta = (BlockState) BlockState.WithProperty(OPEN, (changedBlock.GetTypedValue(OPEN)).ToString());
-					world.SetBlockState(position.X, position.Y, position.Z, myMeta);
-				}
-			}
-			Log.Info($"Door blockupdate called!");*/
+		}
+		
+		public override bool ShouldRenderFace(BlockFace face, Block neighbor)
+		{
+			return true;
+		}
+		
+		public override bool CanCollide()
+		{
+			return !BlockState.GetTypedValue(OPEN);
 		}
 	}
 }

@@ -12,19 +12,12 @@ namespace Alex
 	{
 		private static readonly Logger Log = LogManager.GetCurrentClassLogger(typeof(ProfileManager));
 		private Dictionary<string, SavedProfile> Profiles { get; }
-		//public SavedProfile ActiveProfile { get; private set; } = null;
 		public SavedProfile LastUsedProfile { get; private set; } = null;
-		//private Alex Alex { get; }
-		//private IStorageSystem Storage { get; }
-		//private IPlayerProfileService ProfileService { get; }
 		private IServiceProvider ServiceProvider { get; }
-		public ProfileManager(IServiceProvider serviceProvider/*Alex alex, IStorageSystem storage, IPlayerProfileService playerProfileService*/)
+		public ProfileManager(IServiceProvider serviceProvider)
 		{
-			//Alex = alex;
-			//Storage = storage;
 			Profiles = new Dictionary<string, SavedProfile>();
 			ServiceProvider = serviceProvider;
-			//ProfileService = playerProfileService;
 		}
 
 		private const string StatusMessage = "Loading profiles...";
@@ -56,12 +49,12 @@ namespace Alex
 
 						foreach (var profile in profiles)
 						{
-							profile.Profile.IsBedrock = profile.Type == ProfileType.Bedrock;
+							profile.Profile.Type = profile.Type;// == ProfileType.Bedrock;
 							if (profile.Profile.Uuid.Equals(saveFile.SelectedProfile))
 							{
 								progressReceiver.UpdateProgress(90, StatusMessage);
 								LastUsedProfile = profile;
-								profileService.TryAuthenticateAsync(profile.Profile);
+								//profileService.TryAuthenticateAsync(profile.Profile);
 								//profileService.CurrentProfile = profile;
 								break;
 							}
@@ -101,7 +94,7 @@ namespace Alex
 			});
 		}
 
-		public void CreateOrUpdateProfile(ProfileType type, PlayerProfile profile, bool setActive = false)
+		public void CreateOrUpdateProfile(string type, PlayerProfile profile, bool setActive = false)
 		{
 			IPlayerProfileService profileService = ServiceProvider.GetRequiredService<IPlayerProfileService>();
 			var alex = ServiceProvider.GetRequiredService<Alex>();
@@ -119,6 +112,7 @@ namespace Alex
 			SavedProfile savedProfile;
 			if (Profiles.TryGetValue(profile.Uuid, out savedProfile))
 			{
+				savedProfile.Type = type;
 				savedProfile.Profile = profile;
 				Profiles[profile.Uuid] = savedProfile;
 			}
@@ -140,14 +134,9 @@ namespace Alex
 			alex.UIThreadQueue.Enqueue(SaveProfiles);
 		}
 
-		public PlayerProfile[] GetBedrockProfiles()
+		public PlayerProfile[] GetProfiles(string type)
 		{
-			return Profiles.Values.Where(x => x.Type == ProfileType.Bedrock).Select(selector => selector.Profile).ToArray();
-		}
-
-		public PlayerProfile[] GetJavaProfiles()
-		{
-			return Profiles.Values.Where(x => x.Type == ProfileType.Java).Select(selector => selector.Profile).ToArray();
+			return Profiles.Values.Where(x => x.Type == type).Select(selector => selector.Profile).ToArray();
 		}
 
 		private class ProfilesFileFormat
@@ -159,14 +148,8 @@ namespace Alex
 
 		public class SavedProfile
 		{
-			public ProfileType Type;
+			public string Type;
 			public PlayerProfile Profile;
-		}
-
-		public enum ProfileType
-		{
-			Java = 0,
-			Bedrock = 1
 		}
 	}
 }

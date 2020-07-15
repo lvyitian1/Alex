@@ -6,6 +6,7 @@ using Alex.API.Gui.Graphics;
 using Alex.API.Utils;
 using Alex.Items;
 using Alex.Utils;
+using Alex.Utils.Inventories;
 using Microsoft.Xna.Framework;
 using NLog;
 using RocketUI;
@@ -17,7 +18,7 @@ namespace Alex.Gui.Elements.Inventory
 	    private static readonly Logger Log = LogManager.GetCurrentClassLogger(typeof(GuiItemHotbar));
 
 		private const int ItemCount = 9;
-        private const int ItemWidth = 20;
+        private const int ItemWidth = 18;
         
         private int _selectedIndex = 0;
 
@@ -41,31 +42,46 @@ namespace Alex.Gui.Elements.Inventory
             }
         }
 
-		public Utils.Inventory Inventory { get; set; }
+		public Utils.Inventories.Inventory Inventory { get; set; }
 
+		private GuiContainer _hotbar;
 	    private GuiFadingTextElement _itemNameTextElement;
-        public GuiItemHotbar(Utils.Inventory inventory)
+	    private GuiInventoryItem[] _hotbarItems;
+        public GuiItemHotbar(Utils.Inventories.Inventory inventory)
         {
 	        Inventory = inventory;
 			Inventory.SlotChanged += SlotChanged;
 			Inventory.SelectedHotbarSlotChanged += SelectedHotbarSlotChanged;
 
-            Width = ItemWidth * ItemCount;
-            Height = ItemWidth;
+            Width = (ItemWidth + 4) * ItemCount;
+            Height = ItemWidth + 4;
+
+            AutoSizeMode = AutoSizeMode.None;
 
             var hotbarItems = Inventory.GetHotbar();
-
+			
+            _hotbar = new GuiContainer()
+            {
+	            Anchor = Alignment.Fill,
+	            //Padding = new Thickness(4,4)
+            };
+            
+            AddChild(_hotbar);
+            
+            _hotbarItems = new GuiInventoryItem[9];
             for (int i = 0; i < 9; i++)
 	        {
-		        AddChild(new GuiInventoryItem()
+		        _hotbar.AddChild(_hotbarItems[i] = new GuiInventoryItem()
 		        {
-					Width = ItemWidth,
-					Height = ItemWidth,
-			        Margin = new Thickness((i * ItemWidth), 0, 0, 0),
+					Width = ItemWidth + 4,
+					Height = ItemWidth + 4,
+					//Padding = new Thickness(2, 2),
+			        Margin = new Thickness( (i * (ItemWidth + 4)), 0, 4, 0),
 					HighlightedBackground = GuiTextures.Inventory_HotBar_SelectedItemOverlay,
 			        IsSelected = i == SelectedIndex,
 			        Anchor = Alignment.TopLeft,
-			        Item = hotbarItems[i]
+			        Item = hotbarItems[i],
+			        AutoSizeMode = AutoSizeMode.None
 		        });
 	        }
 
@@ -82,6 +98,27 @@ namespace Alex.Gui.Elements.Inventory
 	       AddChild(_itemNameTextElement);
         }
 
+        private bool _showItemCount = true;
+
+        public bool ShowItemCount
+        {
+	        get
+	        {
+		        return _showItemCount;
+	        }
+	        set
+	        {
+		        _showItemCount = value;
+		        
+		        var items = Children.OfType<GuiInventoryItem>().ToArray();
+
+		        foreach (var item in items)
+		        {
+			        item.ShowCount = value;
+		        }
+	        }
+        }
+
 	    private void SelectedHotbarSlotChanged(object sender, SelectedSlotChangedEventArgs e)
 	    {
 		    if (e.NewValue - SelectedIndex != 0)
@@ -92,12 +129,13 @@ namespace Alex.Gui.Elements.Inventory
 
 	    private void SlotChanged(object sender, SlotChangedEventArgs e)
 		{
-			var items = Children.OfType<GuiInventoryItem>().ToArray();
+			var items = _hotbarItems;
 
-			if ((Inventory.IsPeInventory && e.Index >= 0 && e.Index <= 8) || (!Inventory.IsPeInventory && e.Index >= 36 && e.Index <= 44)) //Hotbar
+			bool isBedrock = Inventory is BedrockInventory;
+			if ((isBedrock && e.Index >= 0 && e.Index <= 8) || (!isBedrock && e.Index >= 36 && e.Index <= 44)) //Hotbar
 		    {
 			    int childIndex = 8 - (44 - e.Index);
-                if (Inventory.IsPeInventory)
+                if (isBedrock)
                 {
                     childIndex = e.Index;
                 }
@@ -110,7 +148,7 @@ namespace Alex.Gui.Elements.Inventory
 			    items[childIndex].Item = e.Value;
 			    if (e.Value != null)
 			    {
-				    items[childIndex].Name = e.Value.DisplayName;
+				    //items[childIndex].Name = e.Value.GetDisplayName();
 				  /*  if (ItemFactory.TryGetItem(itemName, out Item item))
 				    {
 					    items[childIndex].Name = item.DisplayName;
@@ -130,7 +168,7 @@ namespace Alex.Gui.Elements.Inventory
 
 	    private void OnSelectedIndexChanged()
         {
-            var items = Children.OfType<GuiInventoryItem>().ToArray();
+            var items = _hotbarItems;
             foreach (var guiInventoryItem in items)
             {
                 guiInventoryItem.IsSelected = false;
@@ -141,9 +179,10 @@ namespace Alex.Gui.Elements.Inventory
 			
 	        if (item.Item != null && !(item.Item is ItemAir))
 	        {
-		        if (!string.IsNullOrWhiteSpace(item.Name))
+		        var displayName = item.Item?.GetDisplayName();
+		        if (!string.IsNullOrWhiteSpace(displayName))
 		        {
-			        _itemNameTextElement.Text = item.Name;
+			        _itemNameTextElement.Text = displayName;
                 }
 		        else
 		        {
@@ -166,7 +205,7 @@ namespace Alex.Gui.Elements.Inventory
 
 	    protected override void OnInit(IGuiRenderer renderer)
         {
-            Background = renderer.GetTexture(GuiTextures.Inventory_HotBar);
+            _hotbar.Background = renderer.GetTexture(GuiTextures.Inventory_HotBar);
 	       
         }
 

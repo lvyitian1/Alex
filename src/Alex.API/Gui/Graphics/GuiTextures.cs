@@ -61,6 +61,10 @@
         DefaultServerIcon,
 
         InventoryPlayerBackground,
+        InventoryChestBackground,
+        InventoryCraftingTable,
+        InventoryFurnace,
+        InventoryCreativeItemSearch,
         
         GreenCheckMark,
         GreyCheckMark,

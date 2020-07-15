@@ -8,7 +8,7 @@
         MoveRight,
         MoveUp,
         MoveDown,
-        
+
         MoveSpeedIncrease,
         MoveSpeedDecrease,
         MoveSpeedReset,
@@ -53,6 +53,22 @@
 		Right,
 		Up,
 		Down,
+		
+		LookUp,
+		LookDown,
+		LookLeft,
+		LookRight,
+		
+		Jump,
+		Sneak,
+		
+		NavigateUp,
+		NavigateDown,
+		NavigateLeft,
+		NavigateRight,
+		
+		Navigate,
+		NavigateBack,
 		
 		GuiScrollUp,
 		GuiScrollDown,

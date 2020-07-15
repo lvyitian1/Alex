@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Xna.Framework.Graphics;
+using Newtonsoft.Json;
 
 namespace Alex.API.Data.Servers
 {
@@ -7,7 +8,7 @@ namespace Alex.API.Data.Servers
     {
         public int ListIndex { get; set; }
 
-        public ServerType ServerType { get; set; }
+        public string ServerType { get; set; } = "Java";
 
         public string Name { get; set; }
 
@@ -16,6 +17,7 @@ namespace Alex.API.Data.Servers
 
         public Texture2D CachedIcon { get; set; }
 
-        public Guid IntenalIdentifier = Guid.NewGuid();
+        [JsonProperty("IntenalIdentifier")]
+        public Guid InternalIdentifier = Guid.NewGuid();
     }
 }

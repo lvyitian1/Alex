@@ -1,12 +1,12 @@
-﻿using Alex.API.Blocks.State;
-using Alex.API.World;
+﻿using Alex.API.World;
+using Alex.Blocks.State;
 
 namespace Alex.Items
 {
     public class ItemBlock : Item
     {
-	    public IBlockState Block { get; }
-	    public ItemBlock(IBlockState block)
+	    public BlockState Block { get; }
+	    public ItemBlock(BlockState block)
 	    {
 		    this.Block = block;
 		    Name = block.Name;

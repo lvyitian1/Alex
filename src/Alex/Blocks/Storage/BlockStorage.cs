@@ -1,44 +1,43 @@
 using System;
 using System.Collections.Generic;
-using Alex.API.Blocks.State;
 using Alex.Blocks.State;
 using Alex.Networking.Java.Util;
 using NLog;
 
 namespace Alex.Blocks.Storage
 {
-    public class BlockStorage
+    public class BlockStorage : IDisposable
     {
-        private FlexibleStorage Storage { get; set; }
+        private IStorage Storage { get; set; }
 
         private int _bits;
-        private IPallete<IBlockState> Pallette { get; set; }
+        private IPallete Pallette { get; set; }
 
-        private static IBlockState Air = BlockFactory.GetBlockState("minecraft:air");
+        private static BlockState Air = BlockFactory.GetBlockState("minecraft:air");
         public BlockStorage()
         {
             _bits = 8;
             
             Storage = new FlexibleStorage(_bits, 4096);
-            Pallette = new IntIdentityHashBiMap<IBlockState>((1 << _bits));
+            Pallette = new IntIdentityHashBiMap((1 << _bits));
 
             Pallette.Add(Air);
         }
 
-        public void Set(int x, int y, int z, IBlockState state)
+        public void Set(int x, int y, int z, BlockState state)
         {
             var idx = GetIndex(x, y, z);
             Set(idx, state);
         }
 
-        private void Set(int idx, IBlockState state)
+        private void Set(int idx, BlockState state)
         {
             uint i = IdFor(state); //BlockFactory.GetBlockStateId(state);
 
             Storage[idx] = i;
         }
 
-        private uint IdFor(IBlockState state)
+        private uint IdFor(BlockState state)
         {
             uint i = Pallette.GetId(state);
 
@@ -46,45 +45,48 @@ namespace Alex.Blocks.Storage
             {
                 i = Pallette.Add(state);
 
-                if (i >= 1 << this._bits)
+                if (i >= (1 << this._bits))
                 {
-                    return Resize(_bits + 1, state);
+                    var newBits = _bits + 1;
+                    if (newBits < 8)
+                    {
+                        var old = Storage;
+                        Storage = new FlexibleStorage(newBits, 4096);
+                        for (int s = 0; s < 4096; s++)
+                        {
+                            Storage[s] = old[s];
+                        }
+                    }
+                    else
+                    {
+                        var bits = (int) Math.Ceiling(Math.Log2(BlockFactory.AllBlockstates.Count));
+                        var oldPalette = Pallette;
+                        var oldStorage = Storage;
+                        Pallette = new DirectPallete();
+                        Storage = new FlexibleStorage(bits, 4096);
+                        for (int s = 0; s < 4096; s++)
+                        {
+                            var oldValue = oldStorage[s];
+                            var newValue = oldPalette.GetId(oldPalette.Get(oldValue));
+                            Storage[s] = newValue;
+                            //data.set(i, newValue);
+                        }
+
+                        return Pallette.GetId(state);
+                    }
+                    //return Resize(_bits + 1, state);
                 }
             }
 
             return i;
         }
 
-        private uint Resize(int bits, IBlockState state)
-        {
-            var oldStorage = Storage;
-            
-            var oldPallete = Pallette; 
-            
-            _bits = bits;
-
-            Pallette = new IntIdentityHashBiMap<IBlockState>(1 << bits);
-            Storage = new FlexibleStorage(bits, 4096);
-            IdFor(Air);
-
-            for (int i = 0; i < oldStorage.Length; i++)
-            {
-                var oldEntry = oldPallete.Get(oldStorage[i]);
-                if (oldEntry != null)
-                {
-                    Set(i, oldEntry);
-                }
-            }
-
-            return IdFor(state);
-        }
-
-        public IBlockState Get(int x, int y, int z)
+        public BlockState Get(int x, int y, int z)
         {
             return Get(GetIndex(x, y, z));
         }
 
-        private IBlockState Get(int index)
+        private BlockState Get(int index)
         {
             var result = Pallette.Get(Storage[index]);
             if (result == null)
@@ -116,19 +118,14 @@ namespace Alex.Blocks.Storage
                 
                 palleteLength = ms.ReadVarInt();
                 
-                Pallette = new IntIdentityHashBiMap<IBlockState>(palleteLength);
+                Pallette = new IntIdentityHashBiMap(palleteLength);
                 Pallette.Add(Air);
-                
-                //else
-                //     palleteLength = 
 
                 for (int id = 0; id < palleteLength; id++)
                 {
                     uint stateId = (uint) ms.ReadVarInt();
-                    IBlockState state = BlockFactory.GetBlockState(stateId);
+                    BlockState state = BlockFactory.GetBlockState(stateId);
                     Pallette.Put(state, (uint) id);
-                    // idToState.Set(id, state);
-                    // stateToId.Set(state, id);
                 }
             }
             else
@@ -144,8 +141,22 @@ namespace Alex.Blocks.Storage
                 dataArray[i] = ms.ReadLong();
             }
 
-            Storage = new FlexibleStorage(_bits, dataArray);
-            //Storage._data = dataArray;
+            Storage = new FlexibleStorage(_bits, 4096);
+            var valueMask = (uint) ((1L << _bits) - 1);
+            for(int index = 0; index < 4096; index++)
+            {
+                var state = index / (64 / _bits);
+                var data = dataArray[state];
+
+                var shiftedData = data >> (index % (64 / _bits) * _bits);
+
+                Storage[index] = (uint) (shiftedData & valueMask);
+            }
+        }
+
+        public void Dispose()
+        {
+            
         }
     }
 }

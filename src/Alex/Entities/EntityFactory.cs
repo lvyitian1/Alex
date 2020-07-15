@@ -5,9 +5,11 @@ using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using Alex.API.Graphics;
+using Alex.API.Resources;
 using Alex.API.Utils;
 using Alex.Graphics.Models.Entity;
 using Alex.ResourcePackLib;
+using Alex.ResourcePackLib.Json.Bedrock.Entity;
 using Alex.ResourcePackLib.Json.Models.Entities;
 using Alex.Utils;
 using fNbt;
@@ -15,6 +17,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Newtonsoft.Json;
 using NLog;
 using PlayerLocation = Alex.API.Utils.PlayerLocation;
+using ResourceLocation = Alex.API.Resources.ResourceLocation;
 using UUID = Alex.API.Utils.UUID;
 
 namespace Alex.Entities
@@ -23,8 +26,8 @@ namespace Alex.Entities
 	{
 		private static readonly Logger Log = LogManager.GetCurrentClassLogger(typeof(EntityFactory));
 
-		private static ConcurrentDictionary<string, Func<PooledTexture2D, EntityModelRenderer>> _registeredRenderers =
-			new ConcurrentDictionary<string, Func<PooledTexture2D, EntityModelRenderer>>();
+		private static ConcurrentDictionary<ResourceLocation, Func<PooledTexture2D, EntityModelRenderer>> _registeredRenderers =
+			new ConcurrentDictionary<ResourceLocation, Func<PooledTexture2D, EntityModelRenderer>>();
 
 		private static IReadOnlyDictionary<long, EntityData> _idToData;
         private static IReadOnlyDictionary<EntityType, long> _typeToId; 
@@ -40,10 +43,13 @@ namespace Alex.Entities
             for (int i = 0; i < entityObjects.Length; i++)
 			{
                 EntityData p = entityObjects[i];
-
+                var originalName = p.Name;
+                p.OriginalName = originalName;
+                p.Name = p.Name.Replace("_", "");
+                
                 long id = 0;
 				progressReceiver?.UpdateProgress(100 * (i / entityObjects.Length), "Loading entity data...", p.Name);
-				if (resourceManager.Registries.Entities.Entries.TryGetValue($"minecraft:{p.Name}",
+				if (resourceManager.Registries.Entities.Entries.TryGetValue($"minecraft:{originalName}",
 					out var registryEntry))
                 {
                     id = registryEntry.ProtocolId;
@@ -56,7 +62,7 @@ namespace Alex.Entities
                     id = unknownId++;
                 }
 
-                if (EntityType.TryParse(p.Name.Replace("_", ""), true, out EntityType entType))
+                if (EntityType.TryParse(p.Name, true, out EntityType entType))
                 {
                     typeToId.TryAdd(entType, id);
                 }
@@ -154,19 +160,22 @@ namespace Alex.Entities
 
 		private static EntityModelRenderer TryGetRendererer(EntityData data, PooledTexture2D texture)
 		{
-			if (_registeredRenderers.TryGetValue(data.Name, out var func))
+			if (_registeredRenderers.TryGetValue(data.OriginalName, out var func))
 			{
 				return func(texture);
 			}
 			else
 			{
-				var f = _registeredRenderers.FirstOrDefault(x => x.Key.ToLowerInvariant().Contains(data.Name.ToLowerInvariant())).Value;
+				var f = _registeredRenderers.Where(x => x.Key.Path.Length >= data.OriginalName.Length)
+				   .OrderBy(x => (x.Key.Path.Length - data.OriginalName.Length)).FirstOrDefault(
+						x => x.Key.ToString().ToLowerInvariant().Contains(data.OriginalName.ToLowerInvariant())).Value;
 
 				if (f != null)
 				{
 					return f(texture);
 				}
 			}
+
 			return null;
 		}
 
@@ -178,7 +187,7 @@ namespace Alex.Entities
 			}
 			else
 			{
-				var f = _registeredRenderers.FirstOrDefault(x => x.Key.ToLowerInvariant().Contains(name.ToLowerInvariant())).Value;
+				var f = _registeredRenderers.FirstOrDefault(x => x.Key.ToString().ToLowerInvariant().Contains(name.ToLowerInvariant())).Value;
 
 				if (f != null)
 				{
@@ -197,7 +206,7 @@ namespace Alex.Entities
 			foreach (var def in entityDefinitions)
 			{
 				double percentage = 100D * ((double)done / (double)total);
-				progressReceiver?.UpdateProgress((int)percentage, $"Importing entity definitions...", def.Key);
+				progressReceiver?.UpdateProgress((int)percentage, $"Importing entity definitions...", def.Key.ToString());
 
                 try
 				{
@@ -208,7 +217,7 @@ namespace Alex.Entities
 
 					var geometry = def.Value.Geometry;
 					string modelKey;
-					if (!geometry.TryGetValue("default", out modelKey))
+					if (!geometry.TryGetValue("default", out modelKey) && !geometry.TryGetValue(new ResourceLocation(def.Value.Identifier).Path, out modelKey))
 					{
 						modelKey = geometry.FirstOrDefault().Value;
 					}
@@ -216,13 +225,13 @@ namespace Alex.Entities
 					EntityModel model;
 				    if (ModelFactory.TryGetModel(modelKey, out model) && model != null)
 				    {
-				        Add(resourceManager, graphics, def.Value, model, def.Value.Filename);
-				        Add(resourceManager, graphics, def.Value, model, def.Key);
+				        Add(resourceManager, graphics, def.Value, model, def.Value.Identifier);
+				        Add(resourceManager, graphics, def.Value, model, def.Key.ToString());
                     }
 				    else if (ModelFactory.TryGetModel(modelKey + ".v1.8", out model) && model != null)
 				    {
-				        Add(resourceManager, graphics, def.Value, model, def.Value.Filename);
-				        Add(resourceManager, graphics, def.Value, model, def.Key);
+				        Add(resourceManager, graphics, def.Value, model, def.Value.Identifier);
+				        Add(resourceManager, graphics, def.Value, model, def.Key.ToString());
 				    }
                     /*if ((resourceManager.BedrockResourcePack.EntityModels.TryGetValue(def.Value.Geometry["default"],
 						    out model)) && model != null)
@@ -251,7 +260,7 @@ namespace Alex.Entities
 		    Log.Info($"Registered {_registeredRenderers.Count} entity model renderers");
         }
 
-		private static void Add(ResourceManager resourceManager, GraphicsDevice graphics, BedrockResourcePack.EntityDefinition def, EntityModel model, string name)
+		private static void Add(ResourceManager resourceManager, GraphicsDevice graphics, EntityDescription def, EntityModel model, ResourceLocation name)
 		{
 			_registeredRenderers.AddOrUpdate(name,
 				(t) =>
@@ -260,7 +269,7 @@ namespace Alex.Entities
 					{
 						var textures = def.Textures;
 						string texture;
-						if (!textures.TryGetValue("default", out texture))
+						if (!textures.TryGetValue("default", out texture) && !textures.TryGetValue(name.Path, out texture))
 						{
 							texture = textures.FirstOrDefault().Value;
 						}
@@ -280,7 +289,7 @@ namespace Alex.Entities
 					{
 						var textures = def.Textures;
 						string texture;
-						if (!textures.TryGetValue("default", out texture))
+						if (!(textures.TryGetValue("default", out texture) || textures.TryGetValue(name.Path, out texture)))
 						{
 							texture = textures.FirstOrDefault().Value;
 						}

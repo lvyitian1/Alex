@@ -9,75 +9,87 @@ using Alex.API.Utils;
 using Alex.API.World;
 using Alex.Entities;
 using Alex.Graphics.Models;
+using Alex.Net;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using ContainmentType = Microsoft.Xna.Framework.ContainmentType;
 
 namespace Alex.Worlds
 {
-    public class EntityManager : IEntityHolder, IDisposable
+    public class EntityManager : IDisposable
 	{
-		private ConcurrentDictionary<long, IEntity> Entities { get; }
-		private ConcurrentDictionary<UUID, IEntity> EntityByUUID { get; }
+		private ConcurrentDictionary<long, Entity> Entities { get; }
+		private ConcurrentDictionary<UUID, Entity> EntityByUUID { get; }
 		private GraphicsDevice Device { get; }
 
 	    public int EntityCount => Entities.Count;
 	    public int EntitiesRendered { get; private set; } = 0;
+	    public long VertexCount { get; private set; }
 		private World World { get; }
-		private INetworkProvider Network { get; }
-
-		private BasicEffect NameTagEffect { get; }
-		private IEntity[] _rendered;
-		public EntityManager(GraphicsDevice device, World world, INetworkProvider networkProvider)
+		private NetworkProvider Network { get; }
+		
+		private Entity[] _rendered;
+		public EntityManager(GraphicsDevice device, World world, NetworkProvider networkProvider)
 		{
 			Network = networkProvider;
 		    World = world;
 		    Device = device;
-			Entities = new ConcurrentDictionary<long, IEntity>();
-			EntityByUUID = new ConcurrentDictionary<UUID, IEntity>();
-			
-			NameTagEffect = new BasicEffect(device)
-			{
-				VertexColorEnabled = true,
-				TextureEnabled = true
-			};
-	    }
+			Entities = new ConcurrentDictionary<long, Entity>();
+			EntityByUUID = new ConcurrentDictionary<UUID, Entity>();
+		}
 
+		public void Tick()
+		{
+			var entities = Entities.Values.ToArray();
+
+			foreach (var entity in entities)
+			{
+				entity.OnTick();
+			}
+		}
+		
 	    public void Update(IUpdateArgs args, SkyBox skyRenderer)
 	    {
 		    var entities = Entities.Values.ToArray();
 		    foreach (var entity in entities)
 		    {
-			    if (entity is Entity e)
-			    {
-				    if (e.ModelRenderer != null)
-						e.ModelRenderer.DiffuseColor = Color.White.ToVector3() * World.BrightnessModifier;
-			    }
-				entity.Update(args);
+			    if (entity.ModelRenderer != null)
+				    entity.ModelRenderer.DiffuseColor = Color.White.ToVector3() * World.BrightnessModifier;
+			    
+			    entity.Update(args);
 		    }
 	    }
 
 	    public void Render(IRenderArgs args)
 	    {
+		    long vertexCount = 0;
 		    int renderCount = 0;
 		    var entities = Entities.Values.ToArray();
 		    
-		    List<IEntity> rendered = new List<IEntity>();
+		    List<Entity> rendered = new List<Entity>();
 		    foreach (var entity in entities)
 		    {
 			    var entityBox = entity.GetBoundingBox();
 
 				if (args.Camera.BoundingFrustum.Contains(new Microsoft.Xna.Framework.BoundingBox(entityBox.Min, entityBox.Max)) != ContainmentType.Disjoint)
-			    {
+				{
+					entity.IsRendered = true;
+					
 				    entity.Render(args);
+				    vertexCount += entity.RenderedVertices;
 				    rendered.Add(entity);
 				    renderCount++;
 			    }
+				else
+				{
+					entity.IsRendered = false;
+				}
 		    }
 
 		    _rendered = rendered.ToArray();
 
 		    EntitiesRendered = renderCount;
+		    VertexCount = vertexCount;
 	    }
 
 	    private static RasterizerState RasterizerState = new RasterizerState()
@@ -91,11 +103,7 @@ namespace Alex.Worlds
 	    
 	    public void Render2D(IRenderArgs args)
 	    {
-		 //   NameTagEffect.Projection = args.Camera.ProjectionMatrix;
-		  //  NameTagEffect.View =  args.Camera.ViewMatrix;
-		  //  NameTagEffect.World = Matrix.CreateScale(1, -1, 1);
-		    
-		    args.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RasterizerState, effect: null);
+		    args.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointWrap, DepthStencilState.DepthRead, RasterizerState);
 		    try
 		    {
 			    var entities = _rendered;
@@ -119,7 +127,7 @@ namespace Alex.Worlds
 
 			foreach (var entity in entities)
 		    {
-				entity.Deconstruct(out long _, out IEntity _);
+				entity.Deconstruct(out long _, out Entity _);
 		    }
 	    }
 
@@ -136,7 +144,7 @@ namespace Alex.Worlds
 
 	    private void Remove(UUID entity, bool removeId = true)
 	    {
-		    if (EntityByUUID.TryRemove(entity, out IEntity e))
+		    if (EntityByUUID.TryRemove(entity, out Entity e))
 		    {
 			    if (removeId)
 			    {
@@ -157,7 +165,7 @@ namespace Alex.Worlds
 
 			    if (!Entities.TryAdd(id, entity))
 			    {
-				    EntityByUUID.TryRemove(entity.UUID, out IEntity _);
+				    EntityByUUID.TryRemove(entity.UUID, out Entity _);
 				    return false;
 			    }
 
@@ -169,21 +177,29 @@ namespace Alex.Worlds
 
 	    public void Remove(long id)
 	    {
-		    if (Entities.TryRemove(id, out IEntity entity))
+		    if (Entities.TryRemove(id, out Entity entity))
 		    {
 				Remove(entity.UUID, false);
 		    }
 	    }
 
-	    public bool TryGet(long id, out IEntity entity)
+	    public bool TryGet(long id, out Entity entity)
 	    {
 		    return Entities.TryGetValue(id, out entity);
 	    }
 
 
-	    public IEnumerable<IEntity> GetEntities(Vector3 camPos, int radius)
+	    public IEnumerable<Entity> GetEntities(Vector3 camPos, int radius)
 	    {
 		    return Entities.Values.ToArray().Where(x => Math.Abs(x.KnownPosition.DistanceTo(new PlayerLocation(camPos))) < radius).ToArray();
+	    }
+
+	    public void ClearEntities()
+	    {
+		    foreach(var entity in Entities.ToArray())
+		    {
+			    Remove(entity.Key);
+		    }
 	    }
 	}
 }

@@ -5,6 +5,7 @@ using Alex.API.Graphics.Typography;
 
 using Alex.API.Gui.Elements.Controls;
 using Alex.API.Gui.Graphics;
+using Alex.API.Input;
 using Alex.API.Utils;
 
 using Microsoft.Xna.Framework;
@@ -115,8 +116,10 @@ namespace Alex.API.Gui.Elements
 			Text = text;
 		}
 		
+		private bool HasBackground { get; }
 	    public GuiTextElement(bool hasBackground = false)
 	    {
+		    HasBackground = hasBackground;
 		    if (hasBackground)
 		    {
 			    BackgroundOverlay = DefaultTextBackgroundColor;
@@ -153,9 +156,14 @@ namespace Alex.API.Gui.Elements
 					size = Font.MeasureString(text, Scale);
 				}*/
 				
-	           // graphics.FillRectangle(new Rectangle(RenderPosition.ToPoint(), GetSize(text, _scale).ToPoint()), Background);
-	            
-	            graphics.DrawString(RenderPosition, text, Font, TextColor, FontStyle, Scale, Rotation, RotationOrigin, TextOpacity);
+	           // graphics.FillRectangle(new Rectangle(RenderPosition.ToPoint(), Size.ToPoint()), BackgroundOverlay);
+	           if (HasBackground && BackgroundOverlay.HasValue && BackgroundOverlay.Color.HasValue)
+	           {
+		           graphics.SpriteBatch.FillRectangle(new Rectangle(RenderPosition.ToPoint(), GetSize(text, _scale).ToPoint()), BackgroundOverlay.Color.Value);
+	           }
+
+	           Font.DrawString(graphics.SpriteBatch, text, RenderPosition, TextColor, FontStyle, _scale, TextOpacity, Rotation, RotationOrigin);
+	          //  graphics.DrawString(RenderPosition, text, Font, TextColor, FontStyle, Scale, Rotation, RotationOrigin, TextOpacity);
 			}
         }
 
@@ -234,9 +242,9 @@ namespace Alex.API.Gui.Elements
 			}
 		}
 
-		protected override void OnCursorPressed(Point cursorPosition)
+		protected override void OnCursorPressed(Point cursorPosition, MouseButton button)
 		{
-			base.OnCursorPressed(cursorPosition);
+			base.OnCursorPressed(cursorPosition, button);
 			foreach (var c in ClickableElements.ToArray())
 			{
 				if (c.Area.Contains(cursorPosition))

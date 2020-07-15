@@ -14,21 +14,68 @@ namespace Alex.Gui.Elements.Inventory
 {
     public class InventoryContainerItem : GuiControl
     {
+        public const int ItemWidth = 18;
+        
         private static readonly Logger Log = LogManager.GetCurrentClassLogger(typeof(InventoryContainerItem));
         
         private Item _item;
-        private GuiTextureElement TextureElement { get; }
-
+       // protected GuiTextureElement TextureElement { get; }
+        protected GuiItem GuiItem { get; }
         public int InventoryIndex { get; set; } = 0;
+        public int InventoryId { get; set; } = 0;
+        
+        private GuiTextElement _counTextElement;
         public InventoryContainerItem()
         {
-            SetFixedSize(18, 18);
-            Padding = new Thickness(2);
+            SetFixedSize(16, 16);
+            Padding = new Thickness(0);
 
-            AddChild(TextureElement = new GuiTextureElement()
+           // AddChild(TextureElement = new GuiTextureElement()
+          //  {
+          //      Anchor = Alignment.Fill
+          //  });
+          
+          AddChild(GuiItem = new GuiItem()
+          {
+              Anchor = Alignment.MiddleCenter,
+              Height = 18,
+              Width = 18,
+          });
+            
+           /* AddChild(_counTextElement = new GuiTextElement()
             {
-                Anchor = Alignment.Fill
-            });
+                TextColor = TextColor.White,
+                Anchor = Alignment.BottomRight,
+                Text = "",
+                Scale = 0.75f,
+                Margin = new Thickness(0, 0, 1, 1),
+                FontStyle = FontStyle.DropShadow,
+                CanHighlight = false,
+                CanFocus = false
+            });*/
+           GuiItem.AddChild(_counTextElement = new GuiTextElement()
+           {
+               TextColor = TextColor.White,
+               Anchor = Alignment.BottomRight,
+               Text = "",
+               Scale = 0.75f,
+               Margin = new Thickness(0, 0, 1, 1),
+               FontStyle = FontStyle.DropShadow,
+               CanHighlight = false,
+               CanFocus = false
+           });
+        }
+        
+        public bool ShowCount
+        {
+            get
+            {
+                return _counTextElement.IsVisible;
+            }
+            set
+            {
+                _counTextElement.IsVisible = value;
+            }
         }
         
         public Item Item
@@ -36,39 +83,27 @@ namespace Alex.Gui.Elements.Inventory
             get => _item;
             set
             {
-                _item = value;
-
-                if (_item == null || _item is ItemAir || _item.Count == 0)
-                {
-                    TextureElement.IsVisible = false;
-                    return;
-                }
+                _item = value.Clone();
                 
-                if (string.IsNullOrWhiteSpace(value?.Name))
+                GuiItem.Item = _item;
+                
+                if (_item == null || _item is ItemAir || _item.Count == 0 || _item.Id <= 0)
                 {
-                   // if (!ItemFactory.TryGetItem())
-                   Log.Warn($"Item name is null or whitespace!");
+                 //   TextureElement.IsVisible = false;
+                    ShowCount = false;
                     return;
                 }
 
-               // TextOverlay.Text = value?.DisplayName ?? value.Name;
-                
-                if (ItemFactory.ResolveItemTexture(_item.Name, out Texture2D texture))
+                if (_item != null && _item.Count > 0)
                 {
-                    TextureElement.Texture = texture;
-                    TextureElement.IsVisible = true;
+                    _counTextElement.Text = _item.Count.ToString();
+                    ShowCount = true;
                 }
                 else
                 {
-                    Log.Warn($"Could not resolve item texture: {_item.Name}");
-                    TextureElement.IsVisible = false;
+                    _counTextElement.Text = "";
                 }
             }
-        }
-
-        protected override void OnCursorPressed(Point cursorPosition)
-        {
-            base.OnCursorPressed(cursorPosition);
         }
 
         private bool _showTooltip = false;

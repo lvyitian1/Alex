@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using Alex.API.Data;
@@ -17,7 +18,7 @@ using BlockCoordinates = Alex.API.Utils.BlockCoordinates;
 
 namespace Alex.Networking.Java.Util
 {
-	public class MinecraftStream : Stream, IMinecraftStream
+	public class MinecraftStream : Stream
 	{
 		private BufferedBlockCipher EncryptCipher { get; set; }
 		private BufferedBlockCipher DecryptCipher { get; set; }
@@ -71,6 +72,13 @@ namespace Alex.Networking.Java.Util
 			BaseStream.SetLength(value);
 		}
 
+		public void Read(Span<byte> memory, int count)
+		{
+			var data = BaseStream.ReadToSpan(count);
+			data.CopyTo(memory);
+			//BaseStream.ReadToSpan()
+		}
+
 		public override int Read(byte[] buffer, int offset, int count)
 		{
 			return BaseStream.Read(buffer, offset, count);
@@ -79,6 +87,11 @@ namespace Alex.Networking.Java.Util
 		public override void Write(byte[] buffer, int offset, int count)
 		{
 			BaseStream.Write(buffer, offset, count);
+		}
+		
+		public void Write(in Memory<byte> buffer, int offset, in int bufferLength)
+		{
+			BaseStream.Write(buffer.Slice(offset, bufferLength).Span);
 		}
 
 		public override void Flush()
@@ -95,15 +108,18 @@ namespace Alex.Networking.Java.Util
 
 		public byte[] Read(int length)
 		{
-			//byte[] d = new byte[length];
-			//Read(d, 0, d.Length);
-			//return d;
-
-			SpinWait s = new SpinWait();
+			if (BaseStream is MemoryStream)
+			{
+				var dat = new byte[length];
+				Read(dat, 0, length);
+				return dat;
+			}
+			
+			//SpinWait s = new SpinWait();
 			int read = 0;
 
 			var buffer = new byte[length];
-			while (read < buffer.Length && !CancelationToken.IsCancellationRequested && s.Count < 25) //Give the network some time to catch up on sending data, but really 25 cycles should be enough.
+			while (read < buffer.Length && !CancelationToken.IsCancellationRequested)
 			{
 				int oldRead = read;
 
@@ -115,11 +131,8 @@ namespace Alex.Networking.Java.Util
 
 				read += r;
 
-				if (read == oldRead)
-				{
-					s.SpinOnce();
-				}
-				if (CancelationToken.IsCancellationRequested) throw new ObjectDisposedException("");
+				if (CancelationToken.IsCancellationRequested) 
+					throw new ObjectDisposedException("");
 			}
 
 			return buffer;
@@ -128,7 +141,8 @@ namespace Alex.Networking.Java.Util
 
 		public int ReadInt()
 		{
-			var dat = Read(4);
+			var dat = new byte[4];
+			Read(dat, 0, 4);
 			var value = BitConverter.ToInt32(dat, 0);
 			return IPAddress.NetworkToHostOrder(value);
 		}
@@ -319,6 +333,17 @@ namespace Alex.Networking.Java.Util
 			slot.ItemDamage = damage;
 
 			return slot;
+		}
+
+		public void WriteSlot(SlotData slot)
+		{
+			WriteBool(slot != null && slot.ItemID != -1);
+			if (slot == null)
+				return;
+			
+			WriteVarInt(slot.ItemID);
+			WriteByte(slot.Count);
+			WriteNbtCompound(slot.Nbt);
 		}
 
 		private double NetworkToHostOrder(byte[] data)
@@ -562,9 +587,14 @@ namespace Alex.Networking.Java.Util
 
 		public void WriteNbtCompound(NbtCompound compound)
 		{
-			NbtFile f = new NbtFile(compound) { BigEndian = true, UseVarInt = false};
+			if (compound == null)
+			{
+				WriteByte(0);
+				return;
+			}
+
+			NbtFile f = new NbtFile(compound) {BigEndian = true, UseVarInt = false};
 			f.SaveToStream(this, NbtCompression.None);
-			
 			//WriteByte(0);
 		}
 
