@@ -4,29 +4,41 @@ using Alex.API.Services;
 using Alex.GuiDebugger.Common;
 using Alex.GuiDebugger.Common.Services;
 using JKang.IpcServiceFramework;
+using JKang.IpcServiceFramework.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Alex.Services
 {
 	public class AlexIpcService : IBackgroundService
 	{
 
-		private IServiceCollection ServiceCollection;
-
-		private IIpcServiceHost _host;
+		private IHost _host;
 
 		private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
 		public AlexIpcService()
 		{
-			ServiceCollection = ConfigureServices(new ServiceCollection());
-
-			_host = new IpcServiceHostBuilder(ServiceCollection.BuildServiceProvider())
-				.AddNamedPipeEndpoint<IGuiDebuggerService>(name: "guiDebuggerNamedPipeEndpoint",
-														   pipeName: GuiDebuggerConstants.NamedPipeName)
-				.AddTcpEndpoint<IGuiDebuggerService>(name: "guiDebuggerTcpEndpoint", ipEndpoint: IPAddress.Loopback, port: GuiDebuggerConstants.TcpEndpointPort)
+			_host = Host.CreateDefaultBuilder()
+				.ConfigureServices(services =>
+				{
+					services.AddScoped<IGuiDebuggerService, GuiDebuggerService>();
+				})
+				.ConfigureIpcHost(builder =>
+				{
+					builder.AddNamedPipeEndpoint<IGuiDebuggerService>(options =>
+					{
+						
+						options.PipeName = GuiDebuggerConstants.NamedPipeName;
+						options.MaxConcurrentCalls = 2;
+					});
+				})
+				.ConfigureLogging(builder =>
+				{
+					builder.SetMinimumLevel(LogLevel.Debug);
+				})
 				.Build();
-
 		}
 
 		public void Start()
@@ -37,17 +49,6 @@ namespace Alex.Services
 		public void Stop()
 		{
 			_cancellationTokenSource.Cancel();
-		}
-
-		private static IServiceCollection ConfigureServices(IServiceCollection services)
-		{
-			services.AddIpc(x =>
-			{
-				x.AddNamedPipe(options => { options.ThreadCount = 2; })
-				 .AddService<IGuiDebuggerService, GuiDebuggerService>();
-			});
-
-			return services;
 		}
 
 	}

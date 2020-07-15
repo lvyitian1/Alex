@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using JKang.IpcServiceFramework;
+using JKang.IpcServiceFramework.Services;
 using Newtonsoft.Json;
 
 namespace Alex.GuiDebugger.Common.Serialization

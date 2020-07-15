@@ -198,6 +198,7 @@ namespace Alex
 			
 			Services = serviceCollection.BuildServiceProvider();
 			
+			
 			PluginManager.Setup(Services);
 			
 			PluginManager.LoadPlugins();
@@ -304,6 +305,8 @@ namespace Alex
 			
 			GuiManager = new GuiManager(this, Services, InputManager, GuiRenderer, options);
 			GuiManager.Init(GraphicsDevice, Services);
+			
+			Services.GetService<AlexIpcService>().Start();
 
 			options.AlexOptions.VideoOptions.UseVsync.Bind((value, newValue) => { SetVSync(newValue); });
 			if (options.AlexOptions.VideoOptions.UseVsync.Value)

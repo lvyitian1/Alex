@@ -1,0 +1,26 @@
+﻿<UserControl x:Class="Alex.GuiDebugger.Views.MainView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:tools="clr-namespace:Alex.GuiDebugger.Views.Tools"
+             xmlns:documents="clr-namespace:Alex.GuiDebugger.Views.Documents"
+             xmlns:viewModels="clr-namespace:Alex.GuiDebugger.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="400">
+
+    <Design.DataContext>
+        <viewModels:MainViewModel/>
+    </Design.DataContext>
+    
+    <Grid Focusable="True" ColumnDefinitions="2*,*">
+
+        <tools:ElementTreeToolView Name="ElementTreeTool" 
+                                   DataContext="{Binding ElementTreeToolViewModel}"
+                                   Grid.Column="0" />
+
+        <documents:ElementTreeDocument Name="ElementTreeDocument"
+                                       DataContext="{Binding ElementTreeDocumentViewModel}"
+                                       Grid.Column="1" />
+
+    </Grid>
+</UserControl>
