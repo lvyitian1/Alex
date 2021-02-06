@@ -25,7 +25,7 @@ jobs:
       run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
       
     - name: Build
-      run: dotnet publish --configuration Release -o "build-linux" --version-suffix ${{steps.vars.outputs.sha_short}} -r linux-x86 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:IncludeAllContentForselfExtract=true /p:PublishReadyToRun=true
+      run: dotnet publish --configuration Release -o "build-linux" --version-suffix ${{steps.vars.outputs.sha_short}} -r linux-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:IncludeAllContentForselfExtract=true /p:PublishReadyToRun=true
       working-directory: src/Alex
 
     - name: Set executable permissions
