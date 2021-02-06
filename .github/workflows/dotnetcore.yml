@@ -25,7 +25,7 @@ jobs:
       run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
       
     - name: Build
-      run: dotnet publish --configuration Release -o "build-linux" --version-suffix ${{steps.vars.outputs.sha_short}} -r linux-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:IncludeAllContentForselfExtract=true /p:PublishReadyToRun=true
+      run: dotnet publish --configuration Release -o "build-linux" --version-suffix ${{steps.vars.outputs.sha_short}} -r linux-x86 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:IncludeAllContentForselfExtract=true /p:PublishReadyToRun=true
       working-directory: src/Alex
 
     - name: Set executable permissions
@@ -60,7 +60,7 @@ jobs:
       run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
       
     - name: Build
-      run: dotnet publish --configuration Release -o /build-win --version-suffix ${{steps.vars.outputs.sha_short}} -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:IncludeAllContentForselfExtract=true /p:PublishReadyToRun=true
+      run: dotnet publish --configuration Release -o /build-win --version-suffix ${{steps.vars.outputs.sha_short}} -r win-x86 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:IncludeAllContentForselfExtract=true /p:PublishReadyToRun=true
       working-directory: src/Alex
 
     - name: Upload artifact
@@ -91,7 +91,7 @@ jobs:
       run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
       
     - name: Build
-      run: dotnet publish --configuration DirectX -o /build-win --version-suffix ${{steps.vars.outputs.sha_short}} -r win10-x64 /p:DefineConstants=DIRECTX /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:IncludeAllContentForselfExtract=true /p:PublishReadyToRun=true
+      run: dotnet publish --configuration DirectX -o /build-win --version-suffix ${{steps.vars.outputs.sha_short}} -r win10-x86 /p:DefineConstants=DIRECTX /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:IncludeAllContentForselfExtract=true /p:PublishReadyToRun=true
       working-directory: src/Alex
 
     - name: Upload artifact
